@@ -1,2 +1,4 @@
 ^dap\.Rproj$
 ^\.Rproj\.user$
+^doc$
+^Meta$
