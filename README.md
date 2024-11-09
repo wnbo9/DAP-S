@@ -1,12 +1,12 @@
-# Deterministic Approximation of Posteriors using Pseudo Importance Resampling (DAP-PIR)
+# DAP-PIR: Deterministic Approximation of Posteriors with Pseudo Importance Resampling
 
 ## Overview
 
-`dap` is an R package that helps users to fit linear models. It can be used to carry out linear regression and output the details of the fitting result. Furthermore, it can carry out analysis of covariance (ANOVA) and there is also a function `lm_anova_fit` to facilitate ANOVA. In `mypackage`, there is also an internal dataset `mt_cars` to help illustrate to usage of `mypackage`.
+In genetic fine mapping, identifying causal variants remains a key challenge due to computational limitations. Here, we introduce a novel method, DAP-PIR, which builds upon the Sum of Single Effects (SuSiE) results by integrating pseudo-importance resampling (PIR) to efficiently explore models with high probability. Specifically, DAP-PIR leverages SuSiE's variational approximation to identify high-priority SNPs in independent effects and refines posterior probabilities through the deterministic approximation of posteriors (DAP) based on pseudo importance resampling (PIR) strategy.
 
 ## Installation
 
-To get a bug fix or to use a feature from the development version, you can install the development version of `mypackage` from GitHub.
+The `dap` package implements the algorithm of DAP-PIR. You can install the development version of `dap` from GitHub.
 
 ``` r
 # install devtools
@@ -20,4 +20,5 @@ library(dap)
 ```
 
 ## Usage
-Check the [Vignettes](https://github.com/wnbo9/dap-pir/tree/main/dap/vignettes/).
+
+Check the [vignettes](https://github.com/wnbo9/dap-pir/tree/main/dap/vignettes/).
