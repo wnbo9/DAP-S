@@ -1,43 +1,266 @@
-\documentclass[12pt]{article}
-\usepackage[utf8]{inputenc}
-\usepackage{amsmath, amssymb, amsfonts}
-\usepackage{graphicx}
-\usepackage{xcolor}
-\usepackage{hyperref}
-\usepackage{geometry}
-\usepackage{natbib}
+%%\documentclass[pdflatex,sn-nature]{sn-jnl}% Style for submissions to Nature Portfolio journals
+%%\documentclass[pdflatex,sn-basic]{sn-jnl}% Basic Springer Nature Reference Style/Chemistry Reference Style
+\documentclass[pdflatex,sn-mathphys-num]{sn-jnl}% Math and Physical Sciences Numbered Reference Style 
+%%\documentclass[pdflatex,sn-mathphys-ay]{sn-jnl}% Math and Physical Sciences Author Year Reference Style
+%%\documentclass[pdflatex,sn-aps]{sn-jnl}% American Physical Society (APS) Reference Style
+%%\documentclass[pdflatex,sn-vancouver,Numbered]{sn-jnl}% Vancouver Reference Style
+%%\documentclass[pdflatex,sn-apa]{sn-jnl}% APA Reference Style 
+%%\documentclass[pdflatex,sn-chicago]{sn-jnl}% Chicago-based Humanities Reference Style
 
-\geometry{a4paper, margin=1in}
+\usepackage{graphicx}%
+\usepackage{multirow}%
+\usepackage{amsmath,amssymb,amsfonts}%
+\usepackage{amsthm}%
+\usepackage{mathrsfs}%
+\usepackage[title]{appendix}%
+\usepackage{xcolor}%
+\usepackage{textcomp}%
+\usepackage{manyfoot}%
+\usepackage{booktabs}%
+\usepackage{algorithm}%
+\usepackage{algorithmicx}%
+\usepackage{algpseudocode}%
+\usepackage{listings}%
+\theoremstyle{thmstyleone}%
+\newtheorem{theorem}{Theorem}%
+\newtheorem{proposition}[theorem]{Proposition}%
+\theoremstyle{thmstyletwo}%
+\newtheorem{example}{Example}%
+\newtheorem{remark}{Remark}%
+\theoremstyle{thmstylethree}%
+\newtheorem{definition}{Definition}%
+\raggedbottom
 
-\title{Your Paper Title}
-\author{Your Name}
-\date{\today}
+
 
 \begin{document}
 
+\title[Article Title]{DAP-PIR: Efficient Genetic Association Analysis through Pseudo Importance Resampling}
+
+\author[1]{\fnm{Bo} \sur{Wang}}\email{wnbo@umich.edu}
+
+\author*[1]{\fnm{Xiaoquan} \sur{Wen}}\email{xwen@umich.edu}
+
+\affil[1]{\orgdiv{Department of Biostatistics}, \orgname{University of Michigan}, \orgaddress{\city{Ann Arbor}, \state{MI} \postcode{48109}, \country{USA}}}
+
+\abstract{In genome-wide association studies (GWAS), identifying causal variants from a vast number of genetic variants is challenging. This paper presents DAP-PIR, a method combining Deterministic Approximation of Posteriors (DAP) with Pseudo-Importance Resampling (PIR), to enhance computational efficiency and improve the accuracy of fine-mapping in genetic studies. By selecting a limited number of high-probability models, DAP-PIR effectively narrows down the candidate models, maintaining accuracy in posterior estimation while reducing computational costs. Simulations and real data analyses show the superiority of DAP-PIR over existing methods, including SuSiE, particularly in managing high-dimensional genetic data.}
+
+
+\keywords{Genetic fine mapping, variable selection, importance sampling, variational inference}
+
 \maketitle
 
-\begin{abstract}
-This is the abstract of your paper. It provides a brief summary of the content.
-\end{abstract}
 
-\section{Introduction}
-This is the introduction section. Here you introduce the topic and provide background information. For example, you can cite an article like this: \cite{example2023}. You can also cite a book like this: \cite{examplebook2023}.
 
-\section{Methods}
-This section describes the methods used in your research.
+\section{Introduction}\label{sec1}
+Genome-wide association studies (GWAS) have successfully uncovered thousands of genetic variants associated with complex traits and diseases \cite{visscher201710}. However, due to the intricate linkage disequilibrium (LD) structure in the human genome, many variants identified in GWAS are merely correlated with true causal variants rather than causative themselves \cite{ardlie2002patterns}. Fine mapping analysis is therefore essential to refine these associations and identify specific genetic variants likely to be causal \cite{spain2015strategies, schaid2018genome}.
 
-\section{Results}
-This section presents the results of your research.
+To address this challenge, Bayesian variable selection regression (BVSR) methods are widely employed to account for the uncertainty in identifying candidate causal variants. Traditional methods like CAVIAR rely on exhaustive searches \cite{hormozdiari2014identifying}, while DAP-G employs a boosting approach to prioritize variants, which, although effective, can sometimes be slow in practice \cite{wen2016efficient, lee2018bayesian}. Alternatively, the SuSiE method offers an efficient, variational approach to prioritize SNPs based on posterior inclusion probabilities (PIP) \cite{wang2020simple}. However, SuSiE can occasionally experience accuracy issues with PIP, particularly in complex LD structures.
 
-\section{Discussion}
-This section discusses the implications of your results and how they relate to other work in the field.
+Here, we propose DAP-PIR, which combines the strengths of both DAP and SuSiE to achieve efficient and accurate deterministic approximation of posteriors. By leveraging SuSiE's variational approximation results, DAP-PIR efficiently prioritizes models for deterministic posterior estimation. This approach ensures computational efficiency while providing a robust solution to fine mapping challenges in GWAS. Through both simulations and real data applications, we demonstrate DAP-PIR’s advantages over existing methods in terms of both speed and accuracy, making it an effective tool for fine mapping causal variants in GWAS.
 
-\section{Conclusion}
-This section provides a brief conclusion and summary of your findings.
 
-\section*{References}
-\bibliographystyle{plainnat}
+
+\section{Results}\label{sec2}
+\subsection{Overview of the DAP-PIR algorithm}\label{subsec1}
+\subsection{Simulation studies}\label{subsec2}
+We conduct several simulation studies to show the accuracy and efficiency of the DAP-PIR algorithm.
+
+\subsection{Comparison of fine mapping methods}\label{subsec3}
+Comparing the (1) power; (2) coverage; (3) PIP calibration; (4) computational efficiency among fine mapping methods.
+
+\subsection{Real data results}\label{subsec4}
+We analyze some real data using various fine mapping methods.
+
+\section{Discussion}\label{sec3}
+
+
+
+\section{Methods}\label{sec4}
+\subsection{DAP-PIR}\label{subsec1}
+\subsubsection{Bayesian variable selection model}\label{subsubsec1}
+We consider the context of association analysis for a single quantitative trait. Let $\mathbf{y}=\left(y_1,y_2,\cdots,y_n\right)^T$ denote an $n$-dimensional vector representing the trait of interest, $\mathbf{G} = \left(\mathbf{g}_1,\mathbf{g}_2,\cdots,\mathbf{g}_p\right)$ represent an $n \times p$ genotype matrix, where each column $\mathbf{g}_j$ is an $n$-dimensional vector of genotypes for the $j$-th variant. We assume that $\mathbf{y}$ and the columns of $\mathbf{G}$ are centered to have a mean of zero to avoid the need for an intercept term. The model is then defined as:
+\begin{equation}
+    \mathbf{y} = \sum_{j=1}^{p} \beta_j \mathbf{g}_j  + \mathbf{e}, \; \mathbf{e} \sim N_n\left(0, \tau^{-1}I_n\right),
+\end{equation}
+where $\beta_j$ denotes the genetic effect of the $j$-th variant, and $\tau$ represents the precision. The goal of GWAS fine mapping is to prioritize causal variants rather than estimate their effect sizes, therefore we introduce an inclusion indicator $\gamma_j = I(\beta_j \neq 0)$ for each variant, where $\gamma_j=1$ indicates that the $j$-th variant is causal. The primary aim is infer the posterior distribution of the causal status vector: $\boldsymbol{\gamma} = \left(\gamma_1,\gamma_2,\cdots,\gamma_p\right)^T$. While evaluating each possible model configuration $\boldsymbol{\gamma}$ is straightforward as it only requires integrating out $\beta_j$'s and $\tau$, summing over all $2^p$ model configurations becomes computationally intractable as $p$ increases. This makes traditional Markov Chain Monte Carlo (MCMC) methods inefficient for fine mapping tasks involving even a moderate number of variants. Therefore, we utilize the efficient pseudo importance resampling method to explore the model space and estimate the posterior distribution of $\boldsymbol{\gamma}$.
+
+
+
+\subsubsection{Pseudo importance resampling}\label{subsubsec3}
+For a discrete random variable $\mathbf{X}$, the target distribution is its distribution $p\left(\mathbf{x}\right)$, and the real-valued function of interest is $f\left(\mathbf{x}\right) = \mathbf{x}$. The expectation of $f\left(\mathbf{X}\right)$ under the target distribution $p$ is calculated by:
+$$\mathbb{E}_{p}[f\left( \mathbf{X} \right)] = \sum_{\mathbf{x}} f\left( \mathbf{x} \right) p\left( \mathbf{x}  \right).$$
+For high-dimensional settings, directly summing over the entire sample space for the target distribution $p\left(\mathbf{x}\right)$ can be computationally intractable. Instead, we can use Importance Sampling (IS) to approximate this expectation by drawing samples from a more convenient proposal distribution $q\left(\mathbf{x}\right)$, with $q\left(\mathbf{x}\right)>0$ whenever $p\left(\mathbf{x}\right)>0$. For each sample $\mathbf{x}^{i}$ drawn from $q\left(\mathbf{x}\right)$, an importance weight $w\left( \mathbf{x}^{i} \right)$ is assigned with the ratio $p\left( \mathbf{x}^{i} \right)/q\left( \mathbf{x}^{i} \right)$, which offsets the probability of sampling from the proposal distribution. Assuming we draw $n$ independent samples $\left\{\mathbf{x}^{i}: i=1,\cdots,n\right\}$, IS estimates the expectation using the unnormalized posterior density $p'\left( \mathbf{x}  \right) = p\left( \mathbf{x}  \right)/c$, where the normalizing constant $c$ cancels out in the calculation:
+$$\tilde{\boldsymbol{\mu}}_{\operatorname{IS}} =  \frac{\sum_{i=1}^{n}w\left( \mathbf{x}^{i} \right) f\left( \mathbf{x}^{i} \right)}{\sum_{i=1}^n w\left( \mathbf{x}^{i} \right)}, \; \mathbf{x}^{i} \sim q\left( \mathbf{x} \right),$$
+where $w\left( \mathbf{x}^{i} \right) = p'\left(\mathbf{x}^{i}\right)/q\left(\mathbf{x}^{i}\right)$ are the importance weights. The IS estimate $\tilde{\boldsymbol{\mu}}_{\operatorname{IS}}$ converges to $\mathbb{E}_{p}[f\left( \mathbf{X} \right)]$ almost surely as $n \rightarrow \infty$.
+
+The IS method is efficient only when the proposal distribution $q\left(\mathbf{x}\right)$ is easy to sample from and closely approximates the target distribution. The proposal distribution that minimizes the variance of the IS estimate is proportional to $\left|f\left(\mathbf{x}\right)p\left(\mathbf{x}\right)\right|$ \cite{kahn1953methods, owen2000safe}. This means an ideal proposal distribution places more weight on regions where $f\left(\mathbf{x}\right)p\left(\mathbf{x}\right)$ has high absolute values. However, designing such a proposal distribution is difficult, especially in high-dimensional spaces where the normalizing constant is unknown. Recent research suggests that variational approximations of the target distribution can serve as an effective proposal distribution for IS, offering relatively low variance in the estimation \cite{su2021variational}.
+
+Variational approximation (VA) simplifies Bayesian inference by approximating the target distribution $p(\mathbf{x})$ with a tractable distribution $q(\mathbf{x})$ from a predefined family $\mathcal{Q}$. The optimal approximation is found by minimizing the Kullback-Leibler (KL) divergence between the target distribution and the approximation:
+$$q(\mathbf{x}) = \underset{q \in \mathcal{Q}}{\arg \min } \operatorname{KL}\left(q(\mathbf{x}) \| p(\mathbf{x})\right).$$
+
+VA offers a computationally efficient and scalable method for approximating the target distribution, but it also introduces bias due to the divergence from the target, particularly when the assumptions of independence are violated. On the other hand, IS provides a consistent estimate but requires careful design of the proposal distribution. Variational Importance Sampling (VIS) can address these issues by combining VA with IS. This hybrid method leverages the computational efficiency of VA while mitigating bias through IS. The generic steps for VIS are outlined in Algorithm \ref{alg:variational_is}.
+
+
+\begin{algorithm}
+    \caption{Variational Importance Sampling (VIS)}
+    \label{alg:variational_is}
+    \begin{enumerate}
+        \item Target distribution: derive the analytical expression of \(p'(\mathbf{x})\) up to a normalizing constant.
+        \item Proposal distribution: obtain the variational approximation \( q(\mathbf{x}) \) to \( p(\mathbf{x}) \) within the family $\mathcal{Q}$.
+        \item Sampling: for \( i \in \{1, \dots, n\} \),
+        \begin{enumerate}
+            \item draw \( \mathbf{x}^{i} \) from the proposal distribution \( q(\mathbf{x}) \).
+            \item calculate the function value $f\left(\mathbf{x}^{i}\right)$.
+            \item calculate the importance weight \( w\left(\mathbf{x}^{i}\right) = p'\left(\mathbf{x}^{i}\right) / q\left(\mathbf{x}^{i}\right) \).
+        \end{enumerate}
+        \item Estimation: estimating $\mathbb{E}_{p}[f\left( \mathbf{X} \right)]$ by \( \tilde{\boldsymbol{\mu}}_{\operatorname{IS}}=\frac{\sum_{i=1}^{n}w\left( \mathbf{x}^{i} \right) f\left( \mathbf{x}^{i} \right)}{\sum_{i=1}^n w\left( \mathbf{x}^{i} \right)}\).
+    \end{enumerate}
+\end{algorithm}
+
+
+
+From IS, we can approximate the expectation with respect to the target distribution, but it does not directly yield samples from the target distribution $p\left(\mathbf{x}\right)$. To generate samples that accurately represent the target distribution, we can apply Sampling Importance Resampling (SIR) \cite{rubin1987calculation, db1988using}. SIR selects IS-generated samples based on their importance weights, ensuring that the resampled sets reflect the target distribution.
+
+Given $n$ samples with importance weights $\left\{ \left(\mathbf{x}^{i}, w\left(\mathbf{x}^{i}\right)\right): i=1,\cdots,n   \right\}$ from IS, we resample $m$ $(m<n)$ samples $\mathbf{x}^{*j}$ from $\left\{\mathbf{x}^{i}: i=1,\cdots,n\right\}$ with replacement. The probability of selecting a sample $\mathbf{x}^{k}$ is proportional to its importance weight:
+$$\operatorname{Pr}\left[\mathbf{x}^{*} = \mathbf{x}^{k}\right] = \frac{w\left(\mathbf{x}^{k}\right)}{\sum_{i=1}^{n}w\left(\mathbf{x}^{i}\right)}.$$
+The resampled set $\left\{\mathbf{x}^{*j}: j=1,\cdots,m\right\}$ has equal weights and represents the target distribution $p$. The SIR algorithm is outlines in Algorithm \ref{alg:variational_sir}. The rationale behind SIR is based on the fact that as $n/m$ tends to infinity, the $m$ samples are drawn with probabilities given by:
+$$p^*\left(\mathbf{x}\right) \propto q\left(\mathbf{x}\right)w\left(\mathbf{x}\right) \propto q\left(\mathbf{x}\right)\frac{p\left(\mathbf{x}\right)}{q\left(\mathbf{x}\right)} = p\left(\mathbf{x}\right),$$
+which shows that the SIR algorithm generates independent and identically distributed (i.i.d) samples from the target distribution $p\left(\mathbf{x}\right)$, as desired. However, drawing such a large number of samples can be computationally expensive. To balance computational efficiency and performance, Rubin suggested using $n/m=20$ as a practical ratio for resampling, which provides adequate performance without requiring excessive duplicates in the resampling \cite{rubin1987calculation}.
+
+\begin{algorithm}
+\caption{Sampling Importance Resampling (SIR)}
+\label{alg:variational_sir}
+\begin{enumerate}
+    \item Target distribution: the distribution $p\left(\mathbf{x}\right)$ with the expression of \(p'\left(\mathbf{x}\right)\) up to a normalizing constant.
+    \item Proposal distribution: the variational approximation \( q\left(\mathbf{x}\right) \) to \( p\left(\mathbf{x}\right) \) within the family $\mathcal{Q}$.
+    \item Sampling: for \( i \in \{1, \dots, n\} \),
+    \begin{enumerate}
+        \item draw \( \mathbf{x}^{i} \) from the proposal distribution \( q\left(\mathbf{x}\right) \).
+        \item calculate the importance weight \( w\left(\mathbf{x}^{i}\right) = p'\left(\mathbf{x}^{i}\right) / q\left(\mathbf{x}^{i}\right) \).
+    \end{enumerate}
+    \item Resampling: for \( j \in \{1, \dots, m\} \),
+    \begin{enumerate}
+        \item resample \( \mathbf{x}^{*j} \) from the samples $\left\{\mathbf{x}^{i}: i=1,\cdots,n\right\}$ with probabilities proportional to the importance weights.
+        \item include \( \mathbf{x}^{*j} \) in the resampled set.
+    \end{enumerate}
+    \item Result: the resampled set $\left\{\mathbf{x}^{*j}: j=1,\cdots,m\right\}$ which is approximately distributed according to the target distribution $p\left(\mathbf{x}\right)$.
+\end{enumerate}
+\end{algorithm}
+
+
+Despite its advantage, the traditional SIR method still incurs computational costs due to the need for both sampling and resampling, offering a stochastic approximation of the target distribution. To address this, we propose an alternative approach, Pseudo Importance Resampling. This method avoids the need for sampling and resampling by shrinking the proposal distribution, allowing for a deterministic approximation of the target probability density in a reduced space, thereby enhancing computational efficiency.
+
+In practice, if a value of $\mathbf{x}$ exhibits a near-zero probability density under the target distribution $p\left(\mathbf{x}\right)$, its contribution to the final result becomes negligible. In such cases, the proposal distribution can be effectively reduced to zero for that region, excluding it from further consideration. This reduction in the number of regions to explore allows us to focus computational resources on areas where $p\left(\mathbf{x}\right)$ significantly impacts the result. Prioritizing these high-priority regions improves efficiency in high-dimensional settings, making the process more computational feasible. The KL divergence penalizes cases where $p$ is large while $q\left(\mathbf{x}\right)$ is small, implying that when $q\left(\mathbf{x}\right)$ is small, it is highly probable that $p\left(\mathbf{x}\right)$ is also small. As a result, we can safely reduce the sample space by identifying and excluding values of $\mathbf{x}$ that are negligible under the proposal distribution. Even in cases where $p\left(\mathbf{x}\right)$ is small but $q\left(\mathbf{x}\right)$ is large (and thus not excluded), the contribution to the overall result remains minimal due to the small value of $p\left(\mathbf{x}\right)$.
+
+For a specific point $\mathbf{x}^{(k)}$ in the target distribution, the proposal distribution shrinkage is defined as:
+$$q'\left(\mathbf{x}^{(k)}\right) = \begin{cases} 
+    0, & \text{if } q\left(\mathbf{x}^{(k)}\right)<\epsilon, \\
+    q\left(\mathbf{x}^{(k)}\right), & \text{if } q\left(\mathbf{x}^{(k)}\right)\geq \epsilon, \end{cases}
+$$
+where $\epsilon$ is a threshold value. The normalized proposal distribution is given by:
+$$q^*\left(\mathbf{x}^{(k)}\right) = \frac{q'\left(\mathbf{x}^{(k)}\right)}{\sum_{i=1}^{N} q'\left(\mathbf{x}^{(i)}\right)}=\frac{q'\left(\mathbf{x}^{(k)}\right)}{\sum_{j=1}^{M} q\left(\mathbf{x}^{(j)}\right)},$$
+where $\mathbf{x}^{(j)}$ corresponds to points with non-zero proposal density, $N$ is the total number of possible values, and $M$ is the number of points with non-zero proposal density. During the SIR process, the probability of selecting a value $\mathbf{x}^{(k)}$ in the reduced sample space is calculated as:
+$$\begin{aligned}
+    \operatorname{Pr}\left(\mathbf{x}^* = \mathbf{x}^{(k)}\right) & = \frac{w\left(\mathbf{x}^{(k)}\right)\#\left(\mathbf{x}^{(k)}\right)}{\sum_{i=1}^{N}w\left(\mathbf{x}^{(i)}\right)\#\left(\mathbf{x}^{(i)}\right)} \\
+    &= \frac{w\left(\mathbf{x}^{(k)}\right)\#\left(\mathbf{x}^{(k)}\right)}{\sum_{j=1}^{M}w\left(\mathbf{x}^{(j)}\right)\#\left(\mathbf{x}^{(j)}\right)}\\
+    &\xrightarrow{n \to \infty} \frac{\frac{p'\left(\mathbf{x}^{(k)}\right)}{q^*\left(\mathbf{x}^{(k)}\right)}q^*\left(\mathbf{x}^{(k)}\right)\times n}{\sum_{j=1}^{M}\frac{p'\left(\mathbf{x}^{(j)}\right)}{q^*\left(\mathbf{x}^{(j)}\right)}q^*\left(\mathbf{x}^{(j)}\right)\times n} \\
+    &= \frac{p'\left(\mathbf{x}^{(k)}\right)}{\sum_{j=1}^{M}p'\left(\mathbf{x}^{(j)}\right)},
+\end{aligned}$$
+where $\#\left(\mathbf{x}^{(k)}\right)$ is the number of samples with value equal to $\mathbf{x}^{(k)}$. Thus, instead of drawing an large number of $n$ samples and resampling an adequate number of $m$ from them, we can directly approximate the probability of each value in the target distribution by focusing only on the $M$ points with non-negligible probability. This process, based on SIR but avoiding the separate steps of sampling and resampling, is referred to as Pseudo Importance Resampling (PIR) outlined in Algorithm \ref{alg:variational_pir}. PIR effectively reduces the sample space by shrinking the proposal distribution and concentrating on the regions that matter most, providing a good approximation to the target distribution.
+
+\begin{algorithm}
+\caption{Pseudo Importance Resampling (PIR)}
+\label{alg:variational_pir}
+\begin{enumerate}
+    \item Target distribution: the distribution $p\left(\mathbf{x}\right)$ with the expression of \(p'\left(\mathbf{x}\right)\) up to a normalizing constant.
+    \item Proposal distribution: the variational approximation \( q\left(\mathbf{x}\right) \) to \( p\left(\mathbf{x}\right) \) within the family $\mathcal{Q}$.
+    \item Proposal distribution shrinkage: shrink $q\left(\mathbf{x}\right)$ to obtain $q^*\left(\mathbf{x}\right)$, reducing the sample space to $M$ non-negligible partitions.
+    \item Pseudo resampling: for \( j \in \{1, \dots, M\} \),
+    \begin{enumerate}
+        \item calculate the probability score \( p'\left(\mathbf{x}^{(j)}\right) \).
+        \item calculate the approximation \( p'\left(\mathbf{x}^{(j)}\right)/ \sum_{j=1}^{M}p'\left(\mathbf{x}^{(j)}\right) \).
+    \end{enumerate}
+\end{enumerate}
+\end{algorithm}
+
+\subsubsection{Deterministic approximation of poseteriors through PIR}\label{subsubsec4}
+The posterior probability of one model configuration $\boldsymbol{\gamma}^{(i)}$ can be derived using Bayes' theorem:
+$$p\left(\boldsymbol{\gamma} = \boldsymbol{\gamma}^{(i)} \mid \mathbf{G},\mathbf{y}\right)     =\frac{\pi\left(\boldsymbol{\gamma}^{(i)}\right)\operatorname{BF}\left(\boldsymbol{\gamma}^{(i)}\right)}{\sum_{\boldsymbol{\gamma}'\in \Gamma}\pi \left(\boldsymbol{\gamma}'\right)\operatorname{BF}\left(\boldsymbol{\gamma}'\right)},$$
+where $\Gamma$ denotes all $2^p$ possible model configurations, $\pi\left(\boldsymbol{\gamma}^{(i)}\right)$ is the prior probability of model $\boldsymbol{\gamma}^{(i)}$, and $\operatorname{BF}\left(\boldsymbol{\gamma}^{(i)}\right)$ is the Bayes factor, which measures the marginal likelihood of $\boldsymbol{\gamma}$ evaluated at $\boldsymbol{\gamma}^{(i)}$. The posterior inclusion probability (PIP) for each variant is then calculated by marginalizing the posterior probabilities across all model configurations:
+$$\operatorname{PIP}_j:=\operatorname{Pr}\left(\gamma_j=1|\mathbf{G},\mathbf{y}\right)=\sum_{\boldsymbol{\gamma}':\gamma_j=1} p(\boldsymbol{\gamma}=\boldsymbol{\gamma}'|\mathbf{G},\mathbf{y}).$$
+
+
+Under the $D_2$ prior, the prior distribution for $\tau$ is given by:
+$$\tau \sim \Gamma\left(\kappa/2, \lambda/2\right),$$
+where the limiting form of the prior is obtained as $\kappa,\lambda \rightarrow 0$. And we assign a spike-and-slab prior for the effect size $\beta_j$:
+$$\beta_j \mid \gamma_j \sim (1-\gamma_j)\delta_0 + \gamma_j N\left(0, \phi^2/\tau\right),$$
+where $\delta_0$ refers to Dirac's delta function, and $\phi^2$ is the prior variance of the effect size of the causal variant. In the computation of the Bayes factor, we use $\phi^2=0.6^2$. For a specific value of $\phi^2$ and a model configuration $\boldsymbol{\gamma}=\left(\gamma_1,\cdots,\gamma_{p}\right)$, the limiting of the Bayes factor is calculated by:
+\begin{equation}
+    \lim _{\substack{\kappa \rightarrow 0 \\ \lambda \rightarrow 0}} \operatorname{BF}(\boldsymbol{\gamma})= \frac{1}{|\phi^{-2}I + \mathbf{X}^T\mathbf{X}|^{1 / 2}}  \frac{1}{\phi} \left[\frac{\mathbf{y}^T\left(I-\mathbf{X}\left(\phi^{-2}I+\mathbf{X}^T \mathbf{X}\right)^{-1} \mathbf{X}^T\right) \mathbf{y}}{\mathbf{y}^T \mathbf{y}}\right]^{-n / 2},
+\end{equation}
+where $\mathbf{X}$ represents genotypes indicated by non-zero entry in $\boldsymbol{\gamma}$.
+
+
+
+
+\subsection{Simulations}\label{subsec2}
+\subsubsection{Simulation with normal distribution}
+We simulate the genotype data $\boldsymbol{G}_{n\times p}$ of $p=10$ SNPs, and each SNP is generated independently from a standard normal distribution. For the phenotype data, we randomly select one to five variants and specify them as causal variants with the setting:
+\begin{align}
+    g_{ij} &\sim \operatorname{N}\left(0,1\right),\\
+    y_i &= \sum_{j=1}^{10} \beta_j g_{ij}  + \epsilon_i,\\
+    \epsilon_i &\sim \operatorname{N}(0, \tau^{-1}),\\
+    \beta_j  &\sim (1-\gamma_j)\delta_0 + \gamma_j\operatorname{N}\left(0, \sigma^2_{0}/\tau\right),
+\end{align}
+where $\boldsymbol{\beta}=\left(\beta_1,\cdots, \beta_{10}\right)$ is the 10-vector of effect sizes, $\tau^{-1}$ is the residual variance, and $\sigma_0^2/\tau$ is the prior effect size variance. $\boldsymbol{\gamma} = \left(\gamma_1,\cdots,\gamma_{10}\right)$ is the 10-vector of binary variables such that only $S$ entries are 1 and the other entries are 0. In the simulation, we set $\tau=1$, $\sigma^2_0 = 0.6^2$, and choose $S \in \left\{1,2,3,4,5\right\}$. For each setting, we simulate 1000 times.
+
+
+\subsubsection{Simulation on GTEx V8 data}
+We use GTEx data \cite{gtex2015genotype} with $n=670$ individual to simulate phenotypes with various combinations of: (1) number of effects: $S \in \{1,2,3,4,5\}$; (2) proportion of variance explained (PVE) by genotypes: $\phi \in \{0.05,0.1,0.2,0.4\}$. We randomly select 1000 genes as well 1000 SNPs near the region of the selected gene. For each gene, we randomly assigned $S$ variants to be causal, while their effect sizes were independently drawn from $N(0, 0.6^2)$. The variance of the error term $\sigma^2$ is given by $\frac{1-\phi}{\phi}\text{Var}(\mathbf{X}\beta)$ and the simulated phenotypes follow $N(\mathbf{X}\beta, \sigma^2)$, where $\mathbf{X}$ represents the real genotype of 670 individuals. Then we have simulated $1000\times 5 \times 4 = 20,000$ datasets for further investigation.
+
+
+\subsection{Real data application}\label{subsec3}
+
+
+
+
+
+\newpage
+\section{Figures and tables}\label{sec6}
+
+
+
+\begin{algorithm}
+\caption{Calculate $y = x^n$}\label{algo1}
+\begin{algorithmic}[1]
+\Require $n \geq 0 \vee x \neq 0$
+\Ensure $y = x^n$ 
+\State $y \Leftarrow 1$
+\If{$n < 0$}\label{algln2}
+        \State $X \Leftarrow 1 / x$
+        \State $N \Leftarrow -n$
+\Else
+        \State $X \Leftarrow x$
+        \State $N \Leftarrow n$
+\EndIf
+\While{$N \neq 0$}
+        \If{$N$ is even}
+            \State $X \Leftarrow X \times X$
+            \State $N \Leftarrow N / 2$
+        \Else[$N$ is odd]
+            \State $y \Leftarrow y \times X$
+            \State $N \Leftarrow N - 1$
+        \EndIf
+\EndWhile
+\end{algorithmic}
+\end{algorithm}
+
+
+
+
+
+\newpage
 \bibliography{references}
 
 \end{document}
