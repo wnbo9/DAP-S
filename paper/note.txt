@@ -1,3 +1,0 @@
-DAP: select sets of priority SNPs.
-DAP-PIR: select sets of priority models efficiently.
-SuSiE: select sets of priority SNPs in independent effects.
