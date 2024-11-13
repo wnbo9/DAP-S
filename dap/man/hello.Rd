@@ -2,16 +2,10 @@
 % Please edit documentation in R/hello.R
 \name{hello}
 \alias{hello}
-\title{Say Hello}
+\title{Test function}
 \usage{
 hello()
 }
-\value{
-A character string "Hello, world!".
-}
 \description{
-This function prints "Hello, world!".
-}
-\examples{
-hello()
+Test function
 }
