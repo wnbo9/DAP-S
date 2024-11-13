@@ -20,5 +20,3 @@ library(dap)
 ```
 
 ## Usage
-
-Check the [vignettes](https://github.com/wnbo9/dap-pir/tree/main/dap/vignettes/).
