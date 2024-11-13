@@ -3,6 +3,7 @@
 ## Simulation with normal distribution
 
 To evaluate the performance of DAP-PIR, we conduct a simulation study with a normal distribution for the genotype data. Specifically, we consider a scenario with $n=500$ individuals and $p=10$ SNPs to relive the computational burden of exact computation of the posterior. Each SNP $g_{ij}$ is generated independently from a standard normal distribution. We randomly select one to five variants and specify them as causal variants with the setting:
+
 $$
 g_{ij} \sim N(0,1),
 $$
