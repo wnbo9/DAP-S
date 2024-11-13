@@ -13,7 +13,7 @@ The `dap` package implements the algorithm of DAP-PIR. You can install the devel
 install.packages("devtools")
 
 # install DAP-PIR package
-devtools::install_github("wnbo9/dap-pir/dap")
+devtools::install_github("wnbo9/DAP-PIR/dap")
 
 # load the package
 library(dap)
