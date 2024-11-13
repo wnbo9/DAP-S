@@ -1,6 +1,6 @@
 %% BioMed_Central_Bib_Style_v1.01
 
-\begin{thebibliography}{14}
+\begin{thebibliography}{11}
 % BibTex style file: bmc-mathphys.bst (version 2.1), 2014-07-24
 \ifx \bisbn   \undefined \def \bisbn  #1{ISBN #1}\fi
 \ifx \binits  \undefined \def \binits#1{#1}\fi
@@ -162,45 +162,6 @@ BioRxiv,
 \endbibitem
 
 %%% 9
-\bibitem[\protect\citeauthoryear{Kahn and Marshall}{1953}]{kahn1953methods}
-\begin{barticle}
-\bauthor{\bsnm{Kahn}, \binits{H.}},
-\bauthor{\bsnm{Marshall}, \binits{A.W.}}:
-\batitle{Methods of reducing sample size in monte carlo computations}.
-\bjtitle{Journal of the Operations Research Society of America}
-\bvolume{1}(\bissue{5}),
-\bfpage{263}--\blpage{278}
-(\byear{1953})
-\end{barticle}
-\endbibitem
-
-%%% 10
-\bibitem[\protect\citeauthoryear{Owen and Zhou}{2000}]{owen2000safe}
-\begin{barticle}
-\bauthor{\bsnm{Owen}, \binits{A.}},
-\bauthor{\bsnm{Zhou}, \binits{Y.}}:
-\batitle{Safe and effective importance sampling}.
-\bjtitle{Journal of the American Statistical Association}
-\bvolume{95}(\bissue{449}),
-\bfpage{135}--\blpage{143}
-(\byear{2000})
-\end{barticle}
-\endbibitem
-
-%%% 11
-\bibitem[\protect\citeauthoryear{Su and Chen}{2021}]{su2021variational}
-\begin{barticle}
-\bauthor{\bsnm{Su}, \binits{X.}},
-\bauthor{\bsnm{Chen}, \binits{Y.}}:
-\batitle{Variational approximation for importance sampling}.
-\bjtitle{Computational Statistics}
-\bvolume{36}(\bissue{3}),
-\bfpage{1901}--\blpage{1930}
-(\byear{2021})
-\end{barticle}
-\endbibitem
-
-%%% 12
 \bibitem[\protect\citeauthoryear{Rubin}{1987}]{rubin1987calculation}
 \begin{barticle}
 \bauthor{\bsnm{Rubin}, \binits{D.B.}}:
@@ -212,7 +173,7 @@ BioRxiv,
 \end{barticle}
 \endbibitem
 
-%%% 13
+%%% 10
 \bibitem[\protect\citeauthoryear{Rubin}{1988}]{db1988using}
 \begin{bchapter}
 \bauthor{\bsnm{Rubin}, \binits{D.B.}}:
@@ -224,7 +185,7 @@ pp. \bfpage{395}--\blpage{402}
 \end{bchapter}
 \endbibitem
 
-%%% 14
+%%% 11
 \bibitem[\protect\citeauthoryear{Consortium et~al.}{2015}]{gtex2015genotype}
 \begin{barticle}
 \bauthor{\bsnm{Consortium}, \binits{G.}},

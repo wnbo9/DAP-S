@@ -63,11 +63,9 @@ Here, we propose DAP-PIR, which combines the strengths of both DAP and SuSiE to 
 
 \section{Results}\label{sec2}
 \subsection{Overview of the DAP-PIR algorithm}\label{subsec1}
-\subsection{Simulation studies}\label{subsec2}
-We conduct several simulation studies to show the accuracy and efficiency of the DAP-PIR algorithm.
 
 \subsection{Comparison of fine mapping methods}\label{subsec3}
-Comparing the (1) power; (2) coverage; (3) PIP calibration; (4) computational efficiency among fine mapping methods.
+We conduct several simulation studies to show the accuracy and efficiency of the DAP-PIR algorithm. Comparing the (1) power; (2) coverage; (3) PIP calibration; (4) computational efficiency among fine mapping methods.
 
 \subsection{Real data results}\label{subsec4}
 We analyze some real data using various fine mapping methods.
@@ -83,24 +81,18 @@ We consider the context of association analysis for a single quantitative trait.
 \begin{equation}
     \mathbf{y} = \sum_{j=1}^{p} \beta_j \mathbf{g}_j  + \mathbf{e}, \; \mathbf{e} \sim N_n\left(0, \tau^{-1}I_n\right),
 \end{equation}
-where $\beta_j$ denotes the genetic effect of the $j$-th variant, and $\tau$ represents the precision. The goal of GWAS fine mapping is to prioritize causal variants rather than estimate their effect sizes, therefore we introduce an inclusion indicator $\gamma_j = I(\beta_j \neq 0)$ for each variant, where $\gamma_j=1$ indicates that the $j$-th variant is causal. The primary aim is infer the posterior distribution of the causal status vector: $\boldsymbol{\gamma} = \left(\gamma_1,\gamma_2,\cdots,\gamma_p\right)^T$. While evaluating each possible model configuration $\boldsymbol{\gamma}$ is straightforward as it only requires integrating out $\beta_j$'s and $\tau$, summing over all $2^p$ model configurations becomes computationally intractable as $p$ increases. This makes traditional Markov Chain Monte Carlo (MCMC) methods inefficient for fine mapping tasks involving even a moderate number of variants. Therefore, we utilize the efficient pseudo importance resampling method to explore the model space and estimate the posterior distribution of $\boldsymbol{\gamma}$.
+where $\beta_j$ denotes the genetic effect of the $j$-th variant, and $\tau$ represents the precision. The goal of GWAS fine mapping is to prioritize causal variants rather than estimate their effect sizes, therefore we introduce an inclusion indicator $\gamma_j = I(\beta_j \neq 0)$ for each variant, where $\gamma_j=1$ indicates that the $j$-th variant is causal. The primary aim is infer the posterior distribution of the causal status vector: $\boldsymbol{\gamma} = \left(\gamma_1,\gamma_2,\cdots,\gamma_p\right)^T$. While evaluating each possible model configuration $\boldsymbol{\gamma}$ is straightforward as it only requires integrating out $\beta_j$'s and $\tau$, summing over all $2^p$ model configurations becomes computationally intractable as $p$ increases. This makes traditional Markov Chain Monte Carlo (MCMC) methods inefficient for fine mapping tasks involving even a moderate number of variants. Therefore, we utilize the efficient pseudo importance resampling method to explore the model space and approximate the posterior distribution of $\boldsymbol{\gamma}$.
 
 
 
 \subsubsection{Pseudo importance resampling}\label{subsubsec3}
-For a discrete random variable $\mathbf{X}$, the target distribution is its distribution $p\left(\mathbf{x}\right)$, and the real-valued function of interest is $f\left(\mathbf{x}\right) = \mathbf{x}$. The expectation of $f\left(\mathbf{X}\right)$ under the target distribution $p$ is calculated by:
-$$\mathbb{E}_{p}[f\left( \mathbf{X} \right)] = \sum_{\mathbf{x}} f\left( \mathbf{x} \right) p\left( \mathbf{x}  \right).$$
-For high-dimensional settings, directly summing over the entire sample space for the target distribution $p\left(\mathbf{x}\right)$ can be computationally intractable. Instead, we can use Importance Sampling (IS) to approximate this expectation by drawing samples from a more convenient proposal distribution $q\left(\mathbf{x}\right)$, with $q\left(\mathbf{x}\right)>0$ whenever $p\left(\mathbf{x}\right)>0$. For each sample $\mathbf{x}^{i}$ drawn from $q\left(\mathbf{x}\right)$, an importance weight $w\left( \mathbf{x}^{i} \right)$ is assigned with the ratio $p\left( \mathbf{x}^{i} \right)/q\left( \mathbf{x}^{i} \right)$, which offsets the probability of sampling from the proposal distribution. Assuming we draw $n$ independent samples $\left\{\mathbf{x}^{i}: i=1,\cdots,n\right\}$, IS estimates the expectation using the unnormalized posterior density $p'\left( \mathbf{x}  \right) = p\left( \mathbf{x}  \right)/c$, where the normalizing constant $c$ cancels out in the calculation:
-$$\tilde{\boldsymbol{\mu}}_{\operatorname{IS}} =  \frac{\sum_{i=1}^{n}w\left( \mathbf{x}^{i} \right) f\left( \mathbf{x}^{i} \right)}{\sum_{i=1}^n w\left( \mathbf{x}^{i} \right)}, \; \mathbf{x}^{i} \sim q\left( \mathbf{x} \right),$$
-where $w\left( \mathbf{x}^{i} \right) = p'\left(\mathbf{x}^{i}\right)/q\left(\mathbf{x}^{i}\right)$ are the importance weights. The IS estimate $\tilde{\boldsymbol{\mu}}_{\operatorname{IS}}$ converges to $\mathbb{E}_{p}[f\left( \mathbf{X} \right)]$ almost surely as $n \rightarrow \infty$.
+For a discrete random variable $\mathbf{X}$ with target distribution $p\left(\mathbf{x}\right)$, the objective is to approxiamte the expectation $\mathbb{E}_{p}[f\left( \mathbf{X} \right)]$ for a function $f\left(\mathbf{x}\right) = \mathbf{x}$. Due to the high-dimensional sample space, exact computation is impractical. We employ Importance Sampling to estimate this expectation by sampling from a proposal distribution $q\left(\mathbf{x}\right)$ and assigning importance weights $w\left( \mathbf{x}^{i} \right) = p\left(\mathbf{x}^{i}\right)/q\left(\mathbf{x}^{i}\right)$ for samples $\mathbf{x}^i \sim q\left(\mathbf{x}\right)$. The IS estimate is:
+\begin{equation}
+    \tilde{\boldsymbol{\mu}}_{\operatorname{IS}} =  \frac{\sum_{i=1}^{n}w\left( \mathbf{x}^{i} \right) f\left( \mathbf{x}^{i} \right)}{\sum_{i=1}^n w\left( \mathbf{x}^{i} \right)}.
+\end{equation}
+To obtain a reliable estimate, $q\left(\mathbf{x}\right)$ should closely approximate $p\left(\mathbf{x}\right)$, particularly in regions where $f\left(\mathbf{x}\right)p\left(\mathbf{x}\right)$ has significant values.
 
-The IS method is efficient only when the proposal distribution $q\left(\mathbf{x}\right)$ is easy to sample from and closely approximates the target distribution. The proposal distribution that minimizes the variance of the IS estimate is proportional to $\left|f\left(\mathbf{x}\right)p\left(\mathbf{x}\right)\right|$ \cite{kahn1953methods, owen2000safe}. This means an ideal proposal distribution places more weight on regions where $f\left(\mathbf{x}\right)p\left(\mathbf{x}\right)$ has high absolute values. However, designing such a proposal distribution is difficult, especially in high-dimensional spaces where the normalizing constant is unknown. Recent research suggests that variational approximations of the target distribution can serve as an effective proposal distribution for IS, offering relatively low variance in the estimation \cite{su2021variational}.
-
-Variational approximation (VA) simplifies Bayesian inference by approximating the target distribution $p(\mathbf{x})$ with a tractable distribution $q(\mathbf{x})$ from a predefined family $\mathcal{Q}$. The optimal approximation is found by minimizing the Kullback-Leibler (KL) divergence between the target distribution and the approximation:
-$$q(\mathbf{x}) = \underset{q \in \mathcal{Q}}{\arg \min } \operatorname{KL}\left(q(\mathbf{x}) \| p(\mathbf{x})\right).$$
-
-VA offers a computationally efficient and scalable method for approximating the target distribution, but it also introduces bias due to the divergence from the target, particularly when the assumptions of independence are violated. On the other hand, IS provides a consistent estimate but requires careful design of the proposal distribution. Variational Importance Sampling (VIS) can address these issues by combining VA with IS. This hybrid method leverages the computational efficiency of VA while mitigating bias through IS. The generic steps for VIS are outlined in Algorithm \ref{alg:variational_is}.
-
+We use Variational Approximation (VA) to construct an effective proposal distribution by minimizing the Kullback-Leibler (KL) divergence between $p\left(\mathbf{x}\right)$ to $q\left(\mathbf{x}\right)$. VA provides a tractable approxiamtion, balancing efficiency and accuracy. The Variational Importance Sampling (VIS) method integrates VA with IS, leveraging VA's computational efficiency while reducing bias through IS.
 
 \begin{algorithm}
     \caption{Variational Importance Sampling (VIS)}
@@ -120,10 +112,10 @@ VA offers a computationally efficient and scalable method for approximating the 
 
 
 
-From IS, we can approximate the expectation with respect to the target distribution, but it does not directly yield samples from the target distribution $p\left(\mathbf{x}\right)$. To generate samples that accurately represent the target distribution, we can apply Sampling Importance Resampling (SIR) \cite{rubin1987calculation, db1988using}. SIR selects IS-generated samples based on their importance weights, ensuring that the resampled sets reflect the target distribution.
-
-Given $n$ samples with importance weights $\left\{ \left(\mathbf{x}^{i}, w\left(\mathbf{x}^{i}\right)\right): i=1,\cdots,n   \right\}$ from IS, we resample $m$ $(m<n)$ samples $\mathbf{x}^{*j}$ from $\left\{\mathbf{x}^{i}: i=1,\cdots,n\right\}$ with replacement. The probability of selecting a sample $\mathbf{x}^{k}$ is proportional to its importance weight:
-$$\operatorname{Pr}\left[\mathbf{x}^{*} = \mathbf{x}^{k}\right] = \frac{w\left(\mathbf{x}^{k}\right)}{\sum_{i=1}^{n}w\left(\mathbf{x}^{i}\right)}.$$
+Sampling Importance Resampling (SIR) selects IS-generated samples proportional to their importance weights to approximate $p\left(\mathbf{x}\right)$ \cite{rubin1987calculation, db1988using}. Given $n$ samples $\left\{ \left(\mathbf{x}^{i}, w\left(\mathbf{x}^{i}\right)\right): i=1,\cdots,n\right\}$, SIR resamples $m$ values from them according to their importance weights:
+\begin{equation}
+    \operatorname{Pr}\left[\mathbf{x}^{*} = \mathbf{x}^{k}\right] = \frac{w\left(\mathbf{x}^{k}\right)}{\sum_{i=1}^{n}w\left(\mathbf{x}^{i}\right)}.
+\end{equation}
 The resampled set $\left\{\mathbf{x}^{*j}: j=1,\cdots,m\right\}$ has equal weights and represents the target distribution $p$. The SIR algorithm is outlines in Algorithm \ref{alg:variational_sir}. The rationale behind SIR is based on the fact that as $n/m$ tends to infinity, the $m$ samples are drawn with probabilities given by:
 $$p^*\left(\mathbf{x}\right) \propto q\left(\mathbf{x}\right)w\left(\mathbf{x}\right) \propto q\left(\mathbf{x}\right)\frac{p\left(\mathbf{x}\right)}{q\left(\mathbf{x}\right)} = p\left(\mathbf{x}\right),$$
 which shows that the SIR algorithm generates independent and identically distributed (i.i.d) samples from the target distribution $p\left(\mathbf{x}\right)$, as desired. However, drawing such a large number of samples can be computationally expensive. To balance computational efficiency and performance, Rubin suggested using $n/m=20$ as a practical ratio for resampling, which provides adequate performance without requiring excessive duplicates in the resampling \cite{rubin1987calculation}.
@@ -148,8 +140,7 @@ which shows that the SIR algorithm generates independent and identically distrib
 \end{enumerate}
 \end{algorithm}
 
-
-Despite its advantage, the traditional SIR method still incurs computational costs due to the need for both sampling and resampling, offering a stochastic approximation of the target distribution. To address this, we propose an alternative approach, Pseudo Importance Resampling. This method avoids the need for sampling and resampling by shrinking the proposal distribution, allowing for a deterministic approximation of the target probability density in a reduced space, thereby enhancing computational efficiency.
+To enhance efficiency, we introduce Pseudo Importance Resampling (PIR), which eliminates explicit resampling by shrinking the proposal distribution. PIR focuses on regions where $p\left(\mathbf{x}\right)$ has meaningful contributions, reducing computational cost in high-dimensional settings.
 
 In practice, if a value of $\mathbf{x}$ exhibits a near-zero probability density under the target distribution $p\left(\mathbf{x}\right)$, its contribution to the final result becomes negligible. In such cases, the proposal distribution can be effectively reduced to zero for that region, excluding it from further consideration. This reduction in the number of regions to explore allows us to focus computational resources on areas where $p\left(\mathbf{x}\right)$ significantly impacts the result. Prioritizing these high-priority regions improves efficiency in high-dimensional settings, making the process more computational feasible. The KL divergence penalizes cases where $p$ is large while $q\left(\mathbf{x}\right)$ is small, implying that when $q\left(\mathbf{x}\right)$ is small, it is highly probable that $p\left(\mathbf{x}\right)$ is also small. As a result, we can safely reduce the sample space by identifying and excluding values of $\mathbf{x}$ that are negligible under the proposal distribution. Even in cases where $p\left(\mathbf{x}\right)$ is small but $q\left(\mathbf{x}\right)$ is large (and thus not excluded), the contribution to the overall result remains minimal due to the small value of $p\left(\mathbf{x}\right)$.
 
@@ -206,18 +197,26 @@ where $\mathbf{X}$ represents genotypes indicated by non-zero entry in $\boldsym
 
 \subsection{Simulations}\label{subsec2}
 \subsubsection{Simulation with normal distribution}
-We simulate the genotype data $\boldsymbol{G}_{n\times p}$ of $p=10$ SNPs, and each SNP is generated independently from a standard normal distribution. For the phenotype data, we randomly select one to five variants and specify them as causal variants with the setting:
+To evaluate the performance of DAP-PIR, we conduct a simulation study with a normal distribution for the genotype data. Specifically, we consider a scenario with $n=500$ individuals and $p=10$ SNPs to relive the computational burden of exact computation of the posterior. Each SNP $g_{ij}$ is generated independently from a standard normal distribution. We randomly select one to five variants and specify them as causal variants with the setting:
 \begin{align}
     g_{ij} &\sim \operatorname{N}\left(0,1\right),\\
     y_i &= \sum_{j=1}^{10} \beta_j g_{ij}  + \epsilon_i,\\
     \epsilon_i &\sim \operatorname{N}(0, \tau^{-1}),\\
     \beta_j  &\sim (1-\gamma_j)\delta_0 + \gamma_j\operatorname{N}\left(0, \sigma^2_{0}/\tau\right),
 \end{align}
-where $\boldsymbol{\beta}=\left(\beta_1,\cdots, \beta_{10}\right)$ is the 10-vector of effect sizes, $\tau^{-1}$ is the residual variance, and $\sigma_0^2/\tau$ is the prior effect size variance. $\boldsymbol{\gamma} = \left(\gamma_1,\cdots,\gamma_{10}\right)$ is the 10-vector of binary variables such that only $S$ entries are 1 and the other entries are 0. In the simulation, we set $\tau=1$, $\sigma^2_0 = 0.6^2$, and choose $S \in \left\{1,2,3,4,5\right\}$. For each setting, we simulate 1000 times.
+where $\beta_j$ represents the effect size of the $j$-th SNP, $\epsilon_i$ is the residual term with varaince $\tau^{-1}$, and $\sigma_0^2/\tau$ is the prior effect size variance. The effect sizes $\beta_j$ are determined by a binary indicator $\gamma_j$: if $\gamma_j=0$, $\beta_j$ is set to zero and indicates a non-causal SNP; if $\gamma_j=1$, $\beta_j$ is drawn from a normal distribution with mean zero and variance $\sigma^2_0/\tau$, representing a causal SNP. The prior probability of each SNP being causal is set to $1/10$ by default, and we randomly assign $S$ causal variants. The indicator vector $\boldsymbol{\gamma} = \left(\gamma_1,\cdots,\gamma_{10}\right)$ is a 10-vector of binary variables such that only $S$ entries are 1 and the other entries are 0. In the simulation, we set $\tau=1$, $\sigma^2_0 = 0.6^2$, and choose $S \in \left\{1,2,3,4,5\right\}$. For each setting, we simulate 1000 times. Then we have simulated $1,000\times 5 = 5,000$ datasets for further investigation.
 
 
 \subsubsection{Simulation on GTEx V8 data}
-We use GTEx data \cite{gtex2015genotype} with $n=670$ individual to simulate phenotypes with various combinations of: (1) number of effects: $S \in \{1,2,3,4,5\}$; (2) proportion of variance explained (PVE) by genotypes: $\phi \in \{0.05,0.1,0.2,0.4\}$. We randomly select 1000 genes as well 1000 SNPs near the region of the selected gene. For each gene, we randomly assigned $S$ variants to be causal, while their effect sizes were independently drawn from $N(0, 0.6^2)$. The variance of the error term $\sigma^2$ is given by $\frac{1-\phi}{\phi}\text{Var}(\mathbf{X}\beta)$ and the simulated phenotypes follow $N(\mathbf{X}\beta, \sigma^2)$, where $\mathbf{X}$ represents the real genotype of 670 individuals. Then we have simulated $1000\times 5 \times 4 = 20,000$ datasets for further investigation.
+Using the GTEx V8 data \cite{gtex2015genotype} with $n=670$ individual, we select 1,000 genes and $p=1,000$ SNPs near the region of each selected gene. We simulate the phenotypes with various combinations of the number of effects, $S$, and proportion of variance explained (PVE) by genotypes, $\phi$. The simulation settings are as follows:
+\begin{align}
+    y_i &= \sum_{j=1}^{1000} \beta_j g_{ij}  + \epsilon_i,\\
+    \epsilon_i &\sim \operatorname{N}(0, \sigma^2),\\
+    \sigma^2 &= \frac{1-\phi}{\phi}\text{Var}(\mathbf{G}\boldsymbol{\beta}),\\
+    \beta_j  &\sim (1-\gamma_j)\delta_0 + \gamma_j\operatorname{N}\left(0, 0.6^2\right).
+\end{align}
+Specifically, for each gene, we randomly assign $S$ variants to be causal, while their effect sizes are independently drawn from $\operatorname{N}(0, 0.6^2)$ and set the other effect sizes to zero. The variance of the error term $\sigma^2$ is given by $\frac{1-\phi}{\phi}\text{Var}(\mathbf{G}\boldsymbol{\beta})$ and the simulated phenotypes follow $\operatorname{N}(\mathbf{G}\boldsymbol{\beta}, \sigma^2)$. We follow the SuSiE setting and generate data with pairwise combinations of $S \in \{1,2,3,4,5\}$ and $\phi \in \{0.05,0.1,0.2,0.4\}$. Then we have simulated $1,000\times 5 \times 4 = 20,000$ datasets for further investigation.
+
 
 
 \subsection{Real data application}\label{subsec3}
