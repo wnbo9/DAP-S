@@ -20,13 +20,14 @@ $$
 \beta_j \sim (1 - \gamma_j)\delta_0 + \gamma_j N\left(0, \frac{\sigma^2_0}{\tau}\right),
 $$
 
-where $\beta_j$ represents the effect size of the $j$-th SNP, $\epsilon_i$ is the residual term with varaince $\tau^{-1}$, and $\sigma_0^2/\tau$ is the prior effect size variance. The effect sizes $\beta_j$ are determined by a binary indicator $\gamma_j$: if $\gamma_j=0$, $\beta_j$ is set to zero and indicates a non-causal SNP; if $\gamma_j=1$, $\beta_j$ is drawn from a normal distribution with mean zero and variance $\sigma^2_0/\tau$, representing a causal SNP. The prior probability of each SNP being causal is set to $1/10$ by default, and we randomly assign $S$ causal variants. The indicator vector $\boldsymbol{\gamma} = \left(\gamma_1,\cdots,\gamma_{10}\right)$ is a 10-vector of binary variables such that only $S$ entries are 1 and the other entries are 0. In the simulation, we set $\tau=1$, $\sigma^2_0 = 0.6^2$, and choose $S \in \left\{1,2,3,4,5\right\}$. For each setting, we simulate 1000 times. Then we have simulated $1,000\times 5 = 5,000$ datasets for further investigation.
+where $\beta_j$ represents the effect size of the $j$-th SNP, $\epsilon_i$ is the residual term with varaince $\tau^{-1}$, and $\sigma_0^2/\tau$ is the prior effect size variance. The effect sizes $\beta_j$ are determined by a binary indicator $\gamma_j$: if $\gamma_j=0$, $\beta_j$ is set to zero and indicates a non-causal SNP; if $\gamma_j=1$, $\beta_j$ is drawn from a normal distribution with mean zero and variance $\sigma^2_0/\tau$, representing a causal SNP. The prior probability of each SNP being causal is set to $1/10$ by default, and we randomly assign $S$ causal variants. The indicator vector $\boldsymbol{\gamma} = \left(\gamma_1,\cdots,\gamma_{10}\right)$ is a 10-vector of binary variables such that only $S$ entries are 1 and the other entries are 0. In the simulation, we set $\tau=1$, $\sigma^2_0 = 0.6^2$, and choose $S \in \{1,2,3,4,5\}$. For each setting, we simulate 1000 times. Then we have simulated $1,000\times 5 = 5,000$ datasets for further investigation.
 
 
 
 
 ## Simulation on GTEx V8 data
 Using the GTEx V8 data with $n=670$ individual, we select 1,000 genes and $p=1,000$ SNPs near the region of each selected gene. We simulate the phenotypes following SuSiE with various combinations of the number of effects, $S$, and proportion of variance explained (PVE) by genotypes, $\phi$. The simulation settings are as follows:
+
 $$
 y_i = \sum_{j=1}^{1000} \beta_j g_{ij}  + \epsilon_i,
 $$
