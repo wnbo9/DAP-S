@@ -22,3 +22,12 @@ compute_log10_posterior <- function(X, y, cmfg_matrix, pi_vec, phi2_vec) {
     .Call(`_dap_compute_log10_posterior`, X, y, cmfg_matrix, pi_vec, phi2_vec)
 }
 
+#' Find all model combinations that have a proposal density greater than or equal to a threshold
+#' @param mat A p x L matrix of proposal densities from SuSiE
+#' @param threshold The threshold value of the proposal density
+#' @return A NumericMatrix containing the unique combinations
+#' @export
+pir <- function(mat, threshold) {
+    .Call(`_dap_pir`, mat, threshold)
+}
+

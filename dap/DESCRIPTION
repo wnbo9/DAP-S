@@ -14,5 +14,6 @@ LinkingTo:
     Rcpp
 Imports: 
     Rcpp,
-    susieR
+    susieR,
+    Rfast
 SystemRequirements: GNU Scientific Library (GSL)

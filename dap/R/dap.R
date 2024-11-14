@@ -11,6 +11,7 @@
 #'
 #' @import Rfast
 #' @importFrom susieR susie
+#' @importFrom dplyr %>% arrange
 #' @return Fine mapping results
 #'
 #' @export
@@ -23,7 +24,7 @@ dap <- function(X, y, L,
                 phi2_vec = NULL) {
 
   # load data
-  print('Loading input...')
+  print("Loading data...")
   ## check input
   X <- scale(X, scale = FALSE)
   y <- scale(y, scale = FALSE)
@@ -43,22 +44,38 @@ dap <- function(X, y, L,
     residual_tau = 1/var(y)
   }
 
-
-
-
-
   # pseudo importance resampling
   print("Pseudo importance resampling...")
   rst <- susie(X, y, L, max_iter = 1000, coverage = 0.95, standardize = FALSE,
                null_weight = null_weight, prior_weights = prior_weights,
                estimate_residual_variance = FALSE, residual_variance = 1/residual_tau,
                estimate_prior_variance = FALSE, scaled_prior_variance = phi2)
-  matrix <- rst$alpha
-  #cmfg_mat <- pir(matrix, threshold = threshold)
+  matrix <- t(rst$alpha)
+  mcfg_mat <- pir(matrix, threshold = threshold)
+  mcfg_mat <- mcfg_mat[, 1:p]
 
   # deterministic approximation of posteriors
   print("Running DAP...")
-  log10_posterior_scores <- compute_log10_posterior(X, y, cmfg_mat, prior_weights, phi2_vec)
+  log10_posterior <- compute_log10_posterior(X, y, mcfg_mat, prior_weights, phi2_vec)
 
-  # results
+  # print results
+  print("Fine mapping results...")
+  max_log_posterior <- max(log10_posterior)
+  log_nc <- max_log_posterior + log10(sum(10^(log10_posterior - max_log_posterior)))
+  posterior_probs <- 10^(log10_posterior - log_nc)
+  # Compute the PIP for each variant using matrix multiplication
+  pip_vector <- posterior_probs %*% mcfg_mat
+  pip_vector <- round(pip_vector, digits = 4)
+  model_configurations <- apply(mcfg_mat, 1, function(row) {
+    if (all(row == 0)) {
+      return("NULL")
+    } else {
+      return(paste(which(row == 1), collapse = "+"))
+    }
+  })
+  result_df <- data.frame(Model = model_configurations, Log10_Posterior = log10_posterior, stringsAsFactors = FALSE)
+  result_df <- result_df %>% arrange(desc(Log10_Posterior))
+
+  # Return a list containing the PIP vector and the dataframe
+  return(list(pip = pip_vector, models = result_df, log10_nc = log_nc))
 }
