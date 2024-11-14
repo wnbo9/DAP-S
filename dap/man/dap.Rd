@@ -11,8 +11,9 @@ dap(
   prior_weights = NULL,
   null_weight = NULL,
   residual_tau = NULL,
-  threshold = NULL,
-  phi2 = NULL
+  threshold = 1e-06,
+  phi2 = 0.36,
+  phi2_vec = NULL
 )
 }
 \arguments{
@@ -31,6 +32,8 @@ dap(
 \item{threshold}{Threshold for proposal density}
 
 \item{phi2}{Scaled prior effect size variance}
+
+\item{phi2_vec}{Scaled prior effect size variance vector}
 }
 \value{
 Fine mapping results

@@ -1,11 +1,11 @@
 Package: dap
-Type: Package
-Title: What the Package Does (Title Case)
+Title: Deterministic Approximation of Posteriors though Pseudo Importance Resampling
 Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
+Authors@R: c(
+    person("Bo", "Wang", email = "wnbo@umich.edu", role = c("aut", "cre")),
+    person("Xiaoquan", "Wen", role = "aut")
+    )
+Description: This package provides a deterministic approximation of the posterior distribution of the regression coefficients in a linear regression model with a spike-and-slab prior. The approximation is based on the pseudo importance resampling (PIR) algorithm. The package also provides a function to compute the marginal likelihood of the model using the PIR approximation. The package is designed to be used with the 'susieR' package, which provides a fast and scalable algorithm for fitting the spike-and-slab regression model. The 'dap' package is particularly useful when the number of predictors is large and the number of observations is small.
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
@@ -15,3 +15,4 @@ LinkingTo:
 Imports: 
     Rcpp,
     susieR
+SystemRequirements: GNU Scientific Library (GSL)

@@ -1,0 +1,2 @@
+PKG_CPPFLAGS += -I/opt/homebrew/opt/gsl/include
+PKG_LIBS += -L/opt/homebrew/opt/gsl/lib -lgsl -lgslcblas

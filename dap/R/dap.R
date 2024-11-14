@@ -7,6 +7,7 @@
 #' @param residual_tau Residual variance
 #' @param threshold Threshold for proposal density
 #' @param phi2 Scaled prior effect size variance
+#' @param phi2_vec Scaled prior effect size variance vector
 #'
 #' @import Rfast
 #' @importFrom susieR susie
@@ -17,8 +18,9 @@ dap <- function(X, y, L,
                 prior_weights = NULL,
                 null_weight = NULL,
                 residual_tau = NULL,
-                threshold = NULL,
-                phi2 = NULL) {
+                threshold = 1e-6,
+                phi2 = 0.36,
+                phi2_vec = NULL) {
 
   # load data
   print('Loading input...')
@@ -34,14 +36,11 @@ dap <- function(X, y, L,
   if (is.null(prior_weights)) {
     prior_weights = rep(1/p, p)
   }
-  if (is.null(phi2)) {
-    phi2 = 0.6^2
+  if (is.null(phi2_vec)) {
+    phi2_vec = c(0.04, 0.16, 0.36, 0.64)
   }
   if (is.null(residual_tau)) {
     residual_tau = 1/var(y)
-  }
-  if (is.null(threshold)) {
-    threshold = 1e-6
   }
 
 
@@ -55,11 +54,11 @@ dap <- function(X, y, L,
                estimate_residual_variance = FALSE, residual_variance = 1/residual_tau,
                estimate_prior_variance = FALSE, scaled_prior_variance = phi2)
   matrix <- rst$alpha
-
-  print(dim(matrix))
+  #cmfg_mat <- pir(matrix, threshold = threshold)
 
   # deterministic approximation of posteriors
   print("Running DAP...")
+  log10_posterior_scores <- compute_log10_posterior(X, y, cmfg_mat, prior_weights, phi2_vec)
 
   # results
 }
