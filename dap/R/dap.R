@@ -66,6 +66,7 @@ dap <- function(X, y, L,
   # Compute the PIP for each variant using matrix multiplication
   pip_vector <- posterior_probs %*% mcfg_mat
   pip_vector <- round(pip_vector, digits = 4)
+  pip_vector <- as.vector(pip_vector)
   model_configurations <- apply(mcfg_mat, 1, function(row) {
     if (all(row == 0)) {
       return("NULL")

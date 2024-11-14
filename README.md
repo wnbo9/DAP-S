@@ -20,3 +20,58 @@ library(dap)
 ```
 
 ## Usage
+``` r
+# setting
+library(dap)
+library(susieR)
+library(ggplot2)
+set.seed(2024)
+n <- 500
+p <- 1000
+tau <- 1
+phi <- 0.6
+S <- 3
+threshold <- 1e-6
+
+# generate genotype, effect variants, and phenotype data
+X <- matrix(rnorm(n * p, mean = 0, sd = 1), nrow = n, ncol = p)
+# generate effect size
+gv = rep(0, p)
+causal_set = sample(1:p, S)
+gv[causal_set] = 1
+bv = rnorm(p, sd=phi/sqrt(tau))
+bv = bv*gv
+Yhat = X%*%bv
+y = Yhat + rnorm(n, sd=1/sqrt(tau))
+
+X = scale(X, scale = FALSE)
+y = scale(y, scale = FALSE)
+
+# run susie
+rst = susie(X, y, max_iter = 1000, coverage = 0.95, L = 5, null_weight = exp(-1))
+# run dap
+rst_dap <- dap(X, y, L = 5, threshold = threshold)
+
+# comparison
+data_all = cbind(SuSiE = rst$pip, DAP = rst_dap$pip)
+ggplot(data_all, aes(x = DAP, y = SuSiE)) +
+  geom_abline(intercept = 0, slope = 1, color = "red", size = 0.5) +
+  geom_point(size = 1) +
+  labs(x = "DAP-PIR", y = "SuSiE",
+       title = paste0("PIP Comparison between DAP-PIR and SuSiE\nS=", S, ", threshold=", 1e-6)) +
+  scale_color_identity() +
+  coord_fixed(ratio = 1) +
+  xlim(0, 1) +
+  ylim(0, 1) +
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    axis.line = element_line(color = "black"),
+    axis.title.x = element_text(size = 12, hjust = 0.5),
+    axis.title.y = element_text(size = 12, angle = 90),
+    axis.text = element_text(size = 10),
+    axis.ticks = element_line(color = "black")
+  )
+```
