@@ -57,12 +57,8 @@ data_all = cbind(SuSiE = rst$pip, DAP = rst_dap$pip)
 ggplot(data_all, aes(x = DAP, y = SuSiE)) +
   geom_abline(intercept = 0, slope = 1, color = "red", size = 0.5) +
   geom_point(size = 1) +
-  labs(x = "DAP-PIR", y = "SuSiE",
-       title = paste0("PIP Comparison between DAP-PIR and SuSiE\nS=", S, ", threshold=", 1e-6)) +
-  scale_color_identity() +
-  coord_fixed(ratio = 1) +
-  xlim(0, 1) +
-  ylim(0, 1) +
+  labs(x = "DAP-PIR", y = "SuSiE", title = paste0("PIP Comparison between DAP-PIR and SuSiE\nS=", S, ", threshold=", 1e-6)) +
+  scale_color_identity() + coord_fixed(ratio = 1) + xlim(0, 1) + ylim(0, 1) +
   theme_minimal() +
   theme(
     panel.grid.major = element_blank(),
