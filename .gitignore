@@ -2,7 +2,6 @@
 .Rhistory
 .RData
 .Ruserdata
-/*.tar.gz
 /*.Rcheck/
 .DS_Store
 .vscode/

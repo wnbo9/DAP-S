@@ -9,11 +9,12 @@ In genetic fine mapping, identifying causal variants remains a key challenge due
 The `dap` package implements the algorithm of DAP-PIR. You can install the development version of `dap` from GitHub.
 
 ``` r
-# install devtools
+# install DAP-PIR package via devtools
 install.packages("devtools")
-
-# install DAP-PIR package
 devtools::install_github("wnbo9/DAP-PIR/dap")
+
+# or install DAP-PIR source package
+install.packages("dap_0.1.0.tar.gz", repos = NULL, type="source")
 
 # load the package
 library(dap)
@@ -41,8 +42,8 @@ causal_set = sample(1:p, S)
 gv[causal_set] = 1
 bv = rnorm(p, sd=phi/sqrt(tau))
 bv = bv*gv
-Yhat = X%*%bv
-y = Yhat + rnorm(n, sd=1/sqrt(tau))
+yhat = X%*%bv
+y = yhat + rnorm(n, sd=1/sqrt(tau))
 
 X = scale(X, scale = FALSE)
 y = scale(y, scale = FALSE)
@@ -53,7 +54,7 @@ rst = susie(X, y, max_iter = 1000, coverage = 0.95, L = 5, null_weight = exp(-1)
 rst_dap <- dap(X, y, L = 5, threshold = threshold)
 
 # comparison
-data_all = cbind(SuSiE = rst$pip, DAP = rst_dap$pip)
+data_all = data.frame(SuSiE = rst$pip, DAP = rst_dap$pip)
 ggplot(data_all, aes(x = DAP, y = SuSiE)) +
   geom_abline(intercept = 0, slope = 1, color = "red", size = 0.5) +
   geom_point(size = 1) +
