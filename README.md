@@ -48,9 +48,9 @@ X = scale(X, scale = FALSE)
 y = scale(y, scale = FALSE)
 
 # run susie
-rst = susie(X, y, max_iter = 1000, coverage = 0.95, L = 10, null_weight = exp(-1))
+rst = susie(X, y, max_iter = 1000, coverage = 0.95, L = 5, null_weight = exp(-1))
 # run dap
-rst_dap <- dap(X, y, L = 10, threshold = 1e-6)
+rst_dap <- dap(X, y, L = 5, threshold = 1e-6)
 
 # comparison
 data_all = data.frame(SuSiE = rst$pip, DAP = rst_dap$pip)

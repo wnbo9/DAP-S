@@ -208,7 +208,7 @@ where $\beta_j$ represents the effect size of the $j$-th SNP, $\epsilon_i$ is th
 
 
 \subsubsection{Simulation on GTEx V8 data}
-Using the GTEx V8 data \cite{gtex2015genotype} with $n=670$ individual, we select 1,000 genes and $p=1,000$ SNPs near the region of each selected gene. We simulate the phenotypes with various combinations of the number of effects, $S$, and proportion of variance explained (PVE) by genotypes, $\phi$. The simulation settings are as follows:
+Using the GTEx V8 data \cite{gtex2015genotype} with $n=670$ individual, we select 1,000 genes and choose $p=1000$ neighboring \textit{cis}-SNPs of each gene. We simulate the phenotypes with various combinations of the number of effects, $S$, and proportion of variance explained (PVE) by genotypes, $\phi$. The simulation settings are as follows:
 \begin{align}
     y_i &= \sum_{j=1}^{1000} \beta_j g_{ij}  + \epsilon_i,\\
     \epsilon_i &\sim \operatorname{N}(0, \sigma^2),\\
