@@ -48,12 +48,12 @@ X = scale(X, scale = FALSE)
 y = scale(y, scale = FALSE)
 
 # run susie
-rst = susie(X, y, max_iter = 1000, coverage = 0.95, L = 5, null_weight = exp(-1))
+rst1 = susie(X, y, max_iter = 1000, coverage = 0.95, L = 10, null_weight = exp(-1))
 # run dap
-rst_dap <- dap(X, y, L = 5, threshold = 1e-6)
+rst2 <- dap(X, y, L = 10, threshold = 1e-6, phi2_vec = c(0.36))
 
 # comparison
-data_all = data.frame(SuSiE = rst$pip, DAP = rst_dap$pip)
+data_all = data.frame(SuSiE = rst1$pip, DAP = rst2$pip)
 ggplot(data_all, aes(x = DAP, y = SuSiE)) +
   geom_abline(intercept = 0, slope = 1, color = "red", size = 0.5) +
   geom_point(size = 1) +
@@ -71,3 +71,6 @@ ggplot(data_all, aes(x = DAP, y = SuSiE)) +
     axis.ticks = element_line(color = "black")
   )
 ```
+<div style="text-align: center;">
+  <img src="simulation/plot_usage.png" alt="PIP Comparison Plot">
+</div>
