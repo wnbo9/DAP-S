@@ -72,5 +72,5 @@ ggplot(data_all, aes(x = DAP, y = SuSiE)) +
   )
 ```
 <div style="text-align: center;">
-  <img src="simulation/plot_usage.png" alt="PIP Comparison Plot" width="385" height="249">
+  <img src="simulation/plot_usage.png" alt="PIP Comparison Plot" width="577" height="374">
 </div>
