@@ -64,8 +64,23 @@ Here, we propose DAP-PIR, which combines the strengths of both DAP and SuSiE to 
 \section{Results}\label{sec2}
 \subsection{Overview of the DAP-PIR algorithm}\label{subsec1}
 
-\subsection{Comparison of fine mapping methods}\label{subsec3}
+\subsection{Simulation studies}\label{subsec3}
+\subsubsection*{Accuracy of the DAP-PIR algorithm}
+To demonstrate the accuracy and efficiency of the DAP-PIR algorithm, we first compare its posterior approxmiations to those obtained through exact calculations. We simulate genotypes from a standard normal distribution and focus on a scenariow with $p=10$ \textit{cis}-SNPs to reduce the computational burden of exact posterior calculations. We randomly select one to five variants as causal and generate phenotypes after adding random noise. For each scenario, we conduct 1,000 simulations. The approxiamtions of posteriors obtained via the DAP-PIR algorithm are then compared with the exact posterior calculations.
+
+Using a dataset of 5,000 simulations, we evaluate the performance of the DAP-PIR algorithm alongside exact posteiror calculations and results from the DAP-G algorithm, employing the same prior specifications for all methods. The SuSiE algorithm is also included to assess its posterior approximations. For the DAP-PIR algorithm, we set the threshold value $\lambda=10^{-6}$.
+
+We begin by exmaining the ratio of the estimated normalizing constant $C$ from the DAP-PIR and DAP-G algorithms to the true normalizing constant $C^*$, derived from exact calculations. For the $C/C^*$, a value close to 1 means a better model space exploration. The results, presented in Figures \ref{fig1}-\ref{fig5}, reveal that the DAP-PIR algorithm achieves a high $C/C^*$ raio across various numbers of causal effects. This indicates that the DAP-PIR algorithm efficiently explores high-probability model spaces and provides a more accurate estimate of the normalizing constant compared to the DAP-G algorithm.
+
+Additionally, the Root Mean Squared Error (RMSE) of the posterior inclusion probabilities (PIPs) from the DAP-PIR algorithm is smaller than that of both the DAP-G and SuSiE algorithms, demonstrating better posterior approxiamtion. Calibration plots (Figures \ref{fig11}-\ref{fig51}) further confirm that the DAP-PIR algorithm yields more accurate PIP estimates for each vairant than the other methods.
+
+Notably, the DAP-PIR algorithm explores a significantly smaller number of models, with the average number of explored models being fewer than 30 -- much lower than the $2^{10}=1,024$ models required for exact calculations. This demonstrates that by focusing on high-probability regions of the model space, the algorithm achieves accurate posterior approximations while remaining computationally efficient, particularly as $p$ increases.
+
+
+\subsubsection*{Power comparions of fine mapping algorithms}
 We conduct several simulation studies to show the accuracy and efficiency of the DAP-PIR algorithm. Comparing the (1) power; (2) coverage; (3) PIP calibration; (4) computational efficiency among fine mapping methods.
+
+
 
 \subsection{Real data results}\label{subsec4}
 We analyze some real data using various fine mapping methods.
@@ -228,33 +243,68 @@ Specifically, for each gene, we randomly assign $S$ variants to be causal, while
 \newpage
 \section{Figures and tables}\label{sec6}
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth, page=2]{files/S1.pdf}
+    \caption{Comparison plots of DAP-PIR and DAP-G with exact calculation with $S=1$: (a) histogram of DAP-PIR $C/C^*$ ratio; (b) histogram of DAP-G $C/C^*$ ratio; (c) histogram of DAP-PIR number of models explored; (d) boxplot of PIP RMSE comparing with exact PIP; (e) boxplot of DAP-PIR and DAP-G $C/C^*$ ratio.}
+    \label{fig1}
+\end{figure}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth, page=2]{files/S2.pdf}
+    \caption{Comparison plots of DAP-PIR and DAP-G with exact calculation with $S=2$: (a) histogram of DAP-PIR $C/C^*$ ratio; (b) histogram of DAP-G $C/C^*$ ratio; (c) histogram of DAP-PIR number of models explored; (d) boxplot of PIP RMSE comparing with exact PIP; (e) boxplot of DAP-PIR and DAP-G $C/C^*$ ratio.}
+    \label{fig2}
+\end{figure}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth, page=2]{files/S3.pdf}
+    \caption{Comparison plots of DAP-PIR and DAP-G with exact calculation with $S=3$: (a) histogram of DAP-PIR $C/C^*$ ratio; (b) histogram of DAP-G $C/C^*$ ratio; (c) histogram of DAP-PIR number of models explored; (d) boxplot of PIP RMSE comparing with exact PIP; (e) boxplot of DAP-PIR and DAP-G $C/C^*$ ratio.}
+    \label{fig3}
+\end{figure}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth, page=2]{files/S4.pdf}
+    \caption{Comparison plots of DAP-PIR and DAP-G with exact calculation with $S=4$: (a) histogram of DAP-PIR $C/C^*$ ratio; (b) histogram of DAP-G $C/C^*$ ratio; (c) histogram of DAP-PIR number of models explored; (d) boxplot of PIP RMSE comparing with exact PIP; (e) boxplot of DAP-PIR and DAP-G $C/C^*$ ratio.}
+    \label{fig4}
+\end{figure}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth, page=2]{files/S5.pdf}
+    \caption{Comparison plots of DAP-PIR and DAP-G with exact calculation with $S=5$: (a) histogram of DAP-PIR $C/C^*$ ratio; (b) histogram of DAP-G $C/C^*$ ratio; (c) histogram of DAP-PIR number of models explored; (d) boxplot of PIP RMSE comparing with exact PIP; (e) boxplot of DAP-PIR and DAP-G $C/C^*$ ratio.}
+    \label{fig5}
+\end{figure}
 
 
-\begin{algorithm}
-\caption{Calculate $y = x^n$}\label{algo1}
-\begin{algorithmic}[1]
-\Require $n \geq 0 \vee x \neq 0$
-\Ensure $y = x^n$ 
-\State $y \Leftarrow 1$
-\If{$n < 0$}\label{algln2}
-        \State $X \Leftarrow 1 / x$
-        \State $N \Leftarrow -n$
-\Else
-        \State $X \Leftarrow x$
-        \State $N \Leftarrow n$
-\EndIf
-\While{$N \neq 0$}
-        \If{$N$ is even}
-            \State $X \Leftarrow X \times X$
-            \State $N \Leftarrow N / 2$
-        \Else[$N$ is odd]
-            \State $y \Leftarrow y \times X$
-            \State $N \Leftarrow N - 1$
-        \EndIf
-\EndWhile
-\end{algorithmic}
-\end{algorithm}
-
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth, page=1]{files/S1.pdf}
+    \caption{PIP calibration plots of DAP-PIR, DAP-G, SuSiE and exact calculation with $S=1$.}
+    \label{fig11}
+\end{figure}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth, page=1]{files/S2.pdf}
+    \caption{PIP calibration plots of DAP-PIR, DAP-G, SuSiE and exact calculation with $S=2$.}
+    \label{fig21}
+\end{figure}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth, page=1]{files/S3.pdf}
+    \caption{PIP calibration plots of DAP-PIR, DAP-G, SuSiE and exact calculation with $S=3$.}
+    \label{fig31}
+\end{figure}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth, page=1]{files/S4.pdf}
+    \caption{PIP calibration plots of DAP-PIR, DAP-G, SuSiE and exact calculation with $S=4$.}
+    \label{fig41}
+\end{figure}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth, page=1]{files/S5.pdf}
+    \caption{PIP calibration plots of DAP-PIR, DAP-G, SuSiE and exact calculation with $S=5$.}
+    \label{fig51}
+\end{figure}
 
 
 
