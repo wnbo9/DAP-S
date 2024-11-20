@@ -49,11 +49,24 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// pir2
+NumericMatrix pir2(NumericMatrix mat, double threshold);
+RcppExport SEXP _dap_pir2(SEXP matSEXP, SEXP thresholdSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type mat(matSEXP);
+    Rcpp::traits::input_parameter< double >::type threshold(thresholdSEXP);
+    rcpp_result_gen = Rcpp::wrap(pir2(mat, threshold));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_dap_compute_log10_prior", (DL_FUNC) &_dap_compute_log10_prior, 2},
     {"_dap_compute_log10_posterior", (DL_FUNC) &_dap_compute_log10_posterior, 5},
     {"_dap_pir", (DL_FUNC) &_dap_pir, 2},
+    {"_dap_pir2", (DL_FUNC) &_dap_pir2, 2},
     {NULL, NULL, 0}
 };
 

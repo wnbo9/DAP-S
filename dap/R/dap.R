@@ -32,16 +32,16 @@ dap <- function(X, y, L,
   p <- ncol(X)
   ## initialize
   if (is.null(null_weight)) {
-    null_weight = (1-1/p)^p
+    null_weight <- (1-1/p)^p
   }
   if (is.null(prior_weights)) {
-    prior_weights = rep(1/p, p)
+    prior_weights <- rep(1/p, p)
   }
   if (is.null(phi2_vec)) {
-    phi2_vec = c(0.04, 0.16, 0.36, 0.64)
+    phi2_vec <- c(0.04, 0.16, 0.36, 0.64)
   }
   if (is.null(residual_tau)) {
-    residual_tau = 1/var(y)
+    residual_tau <- 1/var(y)
   }
 
   # pseudo importance resampling
@@ -53,13 +53,15 @@ dap <- function(X, y, L,
   matrix <- t(rst$alpha)
   mcfg_mat <- pir(matrix, threshold = threshold)
   mcfg_mat <- mcfg_mat[, 1:p]
+  mcfg_mat <- unique(mcfg_mat)
+  m_size <- nrow(mcfg_mat)
 
   # deterministic approximation of posteriors
-  print("Running DAP...")
+  print(paste0("Calculating posterior of ", m_size, " models..."))
   log10_posterior <- compute_log10_posterior(X, y, mcfg_mat, prior_weights, phi2_vec)
 
   # print results
-  print("Fine mapping results...")
+  print("Summarizing fine mapping results...")
   max_log_posterior <- max(log10_posterior)
   log_nc <- max_log_posterior + log10(sum(10^(log10_posterior - max_log_posterior)))
   posterior_probs <- 10^(log10_posterior - log_nc)
@@ -77,6 +79,7 @@ dap <- function(X, y, L,
   result_df <- data.frame(Model = model_configurations, Log10_Posterior = log10_posterior, stringsAsFactors = FALSE)
   result_df <- result_df %>% arrange(desc(Log10_Posterior))
 
+  print("Done!")
   # Return a list containing the PIP vector and the dataframe
   return(list(pip = pip_vector, models = result_df, log10_nc = log_nc))
 }

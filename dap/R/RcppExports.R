@@ -31,3 +31,12 @@ pir <- function(mat, threshold) {
     .Call(`_dap_pir`, mat, threshold)
 }
 
+#' Find all model combinations that have a proposal density greater than or equal to a threshold
+#' @param mat A p x L matrix of proposal densities from SuSiE
+#' @param threshold The threshold value of the proposal density
+#' @return A NumericMatrix containing the unique combinations
+#' @export
+pir2 <- function(mat, threshold) {
+    .Call(`_dap_pir2`, mat, threshold)
+}
+
