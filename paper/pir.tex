@@ -63,6 +63,11 @@ Here, we propose DAP-PIR, which combines the strengths of both DAP and SuSiE to 
 
 \section{Results}\label{sec2}
 \subsection{Overview of the DAP-PIR algorithm}\label{subsec1}
+The DAP-PIR algorithm uses two steps to efficiently approximate the posteiror distributions both at the variant-level and cluster-level. In the first step, the algorithm utilizes the variational approximation of the posterior distribution in a lower dimensional space as the proposal distribution in the importance sampling. Then, the algorithm employs the pseudo importance resampling (PIR) to further reduce the sample space and avoiding the need to draw random samples, instead focus on the high-probability regions. In the second step, the algorithm conduct the deterministic approximation of posteriors (DAP) by calculating the posterior inclusion probabilities (PIPs) for each high-probability model obtained in the first step by marginalizing over the priror. The DAP-PIR algorithm outputs the PIP of each variant by marginalizing the posterior model probability, and also provides level-$\rho$ credible sets, which is a subset of variants that has a specific probability of containing at least one causal variants.
+
+
+
+
 
 \subsection{Simulation studies}\label{subsec3}
 \subsubsection*{Accuracy of the DAP-PIR algorithm}
@@ -72,7 +77,7 @@ Using a dataset of 5,000 simulations, we evaluate the performance of the DAP-PIR
 
 We begin by exmaining the ratio of the estimated normalizing constant $C$ from the DAP-PIR and DAP-G algorithms to the true normalizing constant $C^*$, derived from exact calculations. For the $C/C^*$, a value close to 1 means a better model space exploration. The results, presented in Figures \ref{fig1}-\ref{fig5}, reveal that the DAP-PIR algorithm achieves a high $C/C^*$ raio across various numbers of causal effects. This indicates that the DAP-PIR algorithm efficiently explores high-probability model spaces and provides a more accurate estimate of the normalizing constant compared to the DAP-G algorithm.
 
-Additionally, the Root Mean Squared Error (RMSE) of the posterior inclusion probabilities (PIPs) from the DAP-PIR algorithm is smaller than that of both the DAP-G and SuSiE algorithms, demonstrating better posterior approxiamtion. Calibration plots (Figures \ref{fig11}-\ref{fig51}) further confirm that the DAP-PIR algorithm yields more accurate PIP estimates for each vairant than the other methods.
+Additionally, the Root Mean Squared Error (RMSE) of the PIPs from the DAP-PIR algorithm is smaller than that of both the DAP-G and SuSiE algorithms, demonstrating better posterior approxiamtion. Calibration plots (Figures \ref{fig11}-\ref{fig51}) further confirm that the DAP-PIR algorithm yields more accurate PIP estimates for each vairant than the other methods.
 
 Notably, the DAP-PIR algorithm explores a significantly smaller number of models, with the average number of explored models being fewer than 30 -- much lower than the $2^{10}=1,024$ models required for exact calculations. This demonstrates that by focusing on high-probability regions of the model space, the algorithm achieves accurate posterior approximations while remaining computationally efficient, particularly as $p$ increases.
 
@@ -89,9 +94,9 @@ We analyze some real data using various fine mapping methods.
 
 
 
+\newpage
 \section{Methods}\label{sec4}
-\subsection{DAP-PIR}\label{subsec1}
-\subsubsection{Bayesian variable selection model}\label{subsubsec1}
+\subsection{Bayesian variable selection model}
 We consider the context of association analysis for a single quantitative trait. Let $\mathbf{y}=\left(y_1,y_2,\cdots,y_n\right)^T$ denote an $n$-dimensional vector representing the trait of interest, $\mathbf{G} = \left(\mathbf{g}_1,\mathbf{g}_2,\cdots,\mathbf{g}_p\right)$ represent an $n \times p$ genotype matrix, where each column $\mathbf{g}_j$ is an $n$-dimensional vector of genotypes for the $j$-th variant. We assume that $\mathbf{y}$ and the columns of $\mathbf{G}$ are centered to have a mean of zero to avoid the need for an intercept term. The model is then defined as:
 \begin{equation}
     \mathbf{y} = \sum_{j=1}^{p} \beta_j \mathbf{g}_j  + \mathbf{e}, \; \mathbf{e} \sim N_n\left(0, \tau^{-1}I_n\right),
@@ -100,7 +105,7 @@ where $\beta_j$ denotes the genetic effect of the $j$-th variant, and $\tau$ rep
 
 
 
-\subsubsection{Pseudo importance resampling}\label{subsubsec3}
+\subsection{Pseudo importance resampling}
 For a discrete random variable $\mathbf{X}$ with target distribution $p\left(\mathbf{x}\right)$, the objective is to approxiamte the expectation $\mathbb{E}_{p}[f\left( \mathbf{X} \right)]$ for a function $f\left(\mathbf{x}\right) = \mathbf{x}$. Due to the high-dimensional sample space, exact computation is impractical. We employ Importance Sampling to estimate this expectation by sampling from a proposal distribution $q\left(\mathbf{x}\right)$ and assigning importance weights $w\left( \mathbf{x}^{i} \right) = p\left(\mathbf{x}^{i}\right)/q\left(\mathbf{x}^{i}\right)$ for samples $\mathbf{x}^i \sim q\left(\mathbf{x}\right)$. The IS estimate is:
 \begin{equation}
     \tilde{\boldsymbol{\mu}}_{\operatorname{IS}} =  \frac{\sum_{i=1}^{n}w\left( \mathbf{x}^{i} \right) f\left( \mathbf{x}^{i} \right)}{\sum_{i=1}^n w\left( \mathbf{x}^{i} \right)}.
@@ -190,12 +195,10 @@ where $\#\left(\mathbf{x}^{(k)}\right)$ is the number of samples with value equa
 \end{enumerate}
 \end{algorithm}
 
-\subsubsection{Deterministic approximation of poseteriors through PIR}\label{subsubsec4}
+\subsection{Computation of Bayes factors over prior distributions}
 The posterior probability of one model configuration $\boldsymbol{\gamma}^{(i)}$ can be derived using Bayes' theorem:
 $$p\left(\boldsymbol{\gamma} = \boldsymbol{\gamma}^{(i)} \mid \mathbf{G},\mathbf{y}\right)     =\frac{\pi\left(\boldsymbol{\gamma}^{(i)}\right)\operatorname{BF}\left(\boldsymbol{\gamma}^{(i)}\right)}{\sum_{\boldsymbol{\gamma}'\in \Gamma}\pi \left(\boldsymbol{\gamma}'\right)\operatorname{BF}\left(\boldsymbol{\gamma}'\right)},$$
-where $\Gamma$ denotes all $2^p$ possible model configurations, $\pi\left(\boldsymbol{\gamma}^{(i)}\right)$ is the prior probability of model $\boldsymbol{\gamma}^{(i)}$, and $\operatorname{BF}\left(\boldsymbol{\gamma}^{(i)}\right)$ is the Bayes factor, which measures the marginal likelihood of $\boldsymbol{\gamma}$ evaluated at $\boldsymbol{\gamma}^{(i)}$. The posterior inclusion probability (PIP) for each variant is then calculated by marginalizing the posterior probabilities across all model configurations:
-$$\operatorname{PIP}_j:=\operatorname{Pr}\left(\gamma_j=1|\mathbf{G},\mathbf{y}\right)=\sum_{\boldsymbol{\gamma}':\gamma_j=1} p(\boldsymbol{\gamma}=\boldsymbol{\gamma}'|\mathbf{G},\mathbf{y}).$$
-
+where $\Gamma$ denotes all $2^p$ possible model configurations, $\pi\left(\boldsymbol{\gamma}^{(i)}\right)$ is the prior probability of model $\boldsymbol{\gamma}^{(i)}$, and $\operatorname{BF}\left(\boldsymbol{\gamma}^{(i)}\right)$ is the Bayes factor, which measures the marginal likelihood of $\boldsymbol{\gamma}$ evaluated at $\boldsymbol{\gamma}^{(i)}$.
 
 Under the $D_2$ prior, the prior distribution for $\tau$ is given by:
 $$\tau \sim \Gamma\left(\kappa/2, \lambda/2\right),$$
@@ -205,8 +208,65 @@ where $\delta_0$ refers to Dirac's delta function, and $\phi^2$ is the prior var
 \begin{equation}
     \lim _{\substack{\kappa \rightarrow 0 \\ \lambda \rightarrow 0}} \operatorname{BF}(\boldsymbol{\gamma})= \frac{1}{|\phi^{-2}I + \mathbf{X}^T\mathbf{X}|^{1 / 2}}  \frac{1}{\phi} \left[\frac{\mathbf{y}^T\left(I-\mathbf{X}\left(\phi^{-2}I+\mathbf{X}^T \mathbf{X}\right)^{-1} \mathbf{X}^T\right) \mathbf{y}}{\mathbf{y}^T \mathbf{y}}\right]^{-n / 2},
 \end{equation}
-where $\mathbf{X}$ represents genotypes indicated by non-zero entry in $\boldsymbol{\gamma}$.
+where $\mathbf{X}$ represents genotypes indicated by non-zero entry in $\boldsymbol{\gamma}$. We can also use a grid of values for the prior variance of the effect size to capture a spectrum of effect sizes, which is particularly useful when the true effect size is unknown, and the Bayes factor can be calculated by averaging over the grid of values.
 
+
+
+\subsection{Posterior inference of the DAP-PIR algorithm}
+\subsubsection{Calculation of variant-level PIPs}
+The posterior inclusion probability (PIP) for each variant is then calculated by marginalizing the posterior probabilities across all model configurations:
+\begin{equation}
+    \operatorname{PIP}_j:=\operatorname{Pr}\left(\gamma_j=1 \mid \mathbf{G},\mathbf{y}\right)=\sum_{\boldsymbol{\gamma}':\gamma_j=1} p(\boldsymbol{\gamma}=\boldsymbol{\gamma}' \mid \mathbf{G},\mathbf{y}).
+\end{equation}
+
+\subsubsection{Procedure to constuct signal clusters}
+We propose a procedure to construct signal clusters from multiple single-effects detected by SuSiE and calculate signal-level PIPs, as detailed in Algorithm \ref{signal_clusters}. This procedure requires genotype data $\mathbf{X}$, a genotype $R^2$ threshold $\tau$, and SuSiE results as input. Alternatively, genotype data can be replaced with the LD information $\mathbf{R}$. From the SuSiE results, we use only the vector of posterior probabilities $\boldsymbol{\alpha}_l$. Additionally, we define a function $\operatorname{get\_r2}\left(s,\mathcal{Q}\right)$ to compute the pairwise genotype $R^2$ between a variant $s$ and all elements in the set $\mathcal{Q}$.
+
+First, we identify the indices of variables based on their posterior probabilities in the effect, which is identical to SuSiE's initial ranking. The variable with the highest posterior probability is then included in the cluster. For the remaining $p-1$ variables, we sequentially evaluate them according to their indices and check if they are correlated with the elements in the cluster. A variable is included in the signal cluster if the minimum pairwise correlation with \textbf{all variables already in the cluster} exceeds the threshold. Once all variables have been processed, the cluster construction is finalized. This procedure is repeated for all $L$ effects detected by SuSiE, resulting in $L$ signal clusters.
+
+For each signal cluster, we can compute its signal-level PIP by marginalizing the posterior proababilities of models with at least one variant in the signal cluster $C$:
+\begin{align}
+    \operatorname{SPIP}_{C} &:= \operatorname{Pr}\left(\text{at least one }\gamma_j=1, \; j \in C \mid \mathbf{G},\mathbf{y}\right) \\
+    &= 1 - \operatorname{Pr}\left(\text{all }\gamma_j=0,\; j \in C \mid \mathbf{G},\mathbf{y}\right) \\
+    &= 1 - \sum_{\boldsymbol{\gamma}':\gamma_{j} = 0, \; \forall j \in C} p(\boldsymbol{\gamma}=\boldsymbol{\gamma}'|\mathbf{G},\mathbf{y}).
+\end{align}
+The signal-level PIP $\operatorname{SPIP}_{C}$ is the probability of containing at least one causal variant in the signal cluster $C$.
+    
+\begin{algorithm}
+    \caption{Algorithm for Constructing Signal Clusters}\label{signal_clusters}
+    \begin{algorithmic}[1]
+    \Require Genotype data $\mathbf{G}$ (or equivalently the LD information $\mathbf{R}$), genotype $R^2$ threshold $\tau$, and posterior probabilities $\boldsymbol{\alpha}_1, \cdots, \boldsymbol{\alpha}_L$ from SuSiE
+    \Require Function $\operatorname{get\_r2}\left(s,\mathcal{Q}\right)$ to compute the pairwise genotype $R^2$ between variant $s$ and all variants in the set $\mathcal{Q}$
+    \Ensure Construct signal clusters $C_1, \cdots, C_L$ and calculate their signal-level PIPs $\operatorname{SPIP}_{C_1}, \cdots, \operatorname{SPIP}_{C_L}$ using genotype data and SuSiE results
+    \State Initialize clusters: $C_1, \cdots, C_L \gets \varnothing$
+    \For{$l = 1, \cdots, L$}
+        \State Obtain indices $\boldsymbol{r} = \left(r_1,\ldots,r_p\right)$, where $\alpha_{l_{r_1}} > \alpha_{l_{r_2}} > \ldots > \alpha_{l_{r_p}}$ \Comment{Rank variants}
+        \State $C_l \gets \left\{r_1\right\}$ \Comment{Add the variant with highest posterior probability}
+        \For{$i = 2, \cdots, p$}
+            \If{$\min(\operatorname{get\_r2}(r_i,C_l)) \geq \tau$}
+                \State $C_l \gets C_l \cup \left\{r_i\right\}$ \Comment{Add variant $r_i$ if correlated with the cluster}
+            \EndIf
+        \EndFor
+        \State Calculate $\operatorname{SPIP}_{C_l}$ for signal cluster $C_l$ \Comment{Compute signal-level PIP}
+    \EndFor
+    \end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Recovering level-$\rho$ credible sets from signal clusters}
+We can then recover the level-$\rho$ credible set from the signal cluster $C$ by adding variants one by one to the subset $\Omega$ in descending order of their posterior probabilities in the effect, until the cumulative sum of the posterior probabilities $\operatorname{SPIP}_{\Omega}$ exceeds the threshold $\rho$. For the subset of variants $\Omega$, the posterior probability of $\Omega$ containing at least one causal variant is given by \cite{samaddar2024bayesian}:
+\begin{align}
+    \operatorname{SPIP}_{\Omega} &:= \operatorname{Pr}\left(\text{at least one }\gamma_j=1, \; j \in \Omega \mid \mathbf{G},\mathbf{y}\right) \\
+    &= 1 - \operatorname{Pr}\left(\text{all }\gamma_j=0,\; j \in \Omega \mid \mathbf{G},\mathbf{y}\right) \\
+    &= 1 - \sum_{\boldsymbol{\gamma}':\gamma_{j} = 0, \; \forall j \in \Omega} p(\boldsymbol{\gamma}=\boldsymbol{\gamma}'|\mathbf{G},\mathbf{y}).
+\end{align}
+The computation of $\operatorname{SPIP}_{\Omega}$ is also trivial, when adding one variant $k$ to $\Omega_0$ and getting to the new $\Omega$, the updated $\operatorname{SPIP}_{\Omega}$ is computed by adding the posterior probability of models with $\gamma_k=1,\; \gamma_j=0, \; \forall j \in \Omega_0$:
+\begin{equation}
+    \operatorname{SPIP}_{\Omega} = \operatorname{SPIP}_{\Omega_0} + \sum_{\boldsymbol{\gamma}':\gamma_{k} = 1, \; \gamma_{j} = 0, \; \forall j \in \Omega_0} p(\boldsymbol{\gamma}=\boldsymbol{\gamma}'|\mathbf{G},\mathbf{y}).    
+\end{equation}
+
+To put it more explicitly, for current subset $\Omega_0$, we can divide all model configurations into two partitions: $\boldsymbol{\gamma}_{0}$ with $\gamma_j=0,$ for all $j \in \Omega_0$, and $\boldsymbol{\gamma}_{1}$ with at least one $\gamma_j=1, \; j\in \Omega_0$. The $\operatorname{SPIP}_{\Omega_0}$ is computed as the summation of the model posterior probabilities in the partion $\boldsymbol{\gamma}_1$. After adding a new variant $k$, we can find models with $\gamma_k=1$ in the partition $\boldsymbol{\gamma}_0$, and the updated $\operatorname{SPIP}_{\Omega}$ is calculated by adding the posterior probabilities of these models with $\gamma_k=1$ in the partition $\boldsymbol{\gamma}_0$, which is easy to find. This process is repeated until the cumulative sum of the posterior probabilities $\operatorname{SPIP}_{\Omega}$ exceeds the threshold $\rho$, and the level-$\rho$ credible set is obtained by the subset $\Omega$.
+
+The signal-level PIP is also the maximum of the posterior probabilities of the level-$\rho$ credible sets: we can only recover at most the level-$\rho$ credible set with $\rho \leq \operatorname{SPIP}_{C}$ from the signal cluster $C$.
 
 
 

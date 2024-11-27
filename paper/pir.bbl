@@ -1,6 +1,6 @@
 %% BioMed_Central_Bib_Style_v1.01
 
-\begin{thebibliography}{11}
+\begin{thebibliography}{12}
 % BibTex style file: bmc-mathphys.bst (version 2.1), 2014-07-24
 \ifx \bisbn   \undefined \def \bisbn  #1{ISBN #1}\fi
 \ifx \binits  \undefined \def \binits#1{#1}\fi
@@ -186,6 +186,19 @@ pp. \bfpage{395}--\blpage{402}
 \endbibitem
 
 %%% 11
+\bibitem[\protect\citeauthoryear{Samaddar et~al.}{2024}]{samaddar2024bayesian}
+\begin{botherref}
+\oauthor{\bsnm{Samaddar}, \binits{A.}},
+\oauthor{\bsnm{Maiti}, \binits{T.}},
+\oauthor{\bsnm{Los~Campos}, \binits{G.}}:
+Bayesian hierarchical hypothesis testing in large-scale genome-wide association analysis.
+Genetics,
+164
+(2024)
+\end{botherref}
+\endbibitem
+
+%%% 12
 \bibitem[\protect\citeauthoryear{Consortium et~al.}{2015}]{gtex2015genotype}
 \begin{barticle}
 \bauthor{\bsnm{Consortium}, \binits{G.}},
