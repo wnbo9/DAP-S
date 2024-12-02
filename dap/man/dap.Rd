@@ -7,7 +7,7 @@
 dap(
   X,
   y,
-  L,
+  L = min(10, ncol(X)),
   prior_weights = NULL,
   null_weight = NULL,
   residual_tau = NULL,

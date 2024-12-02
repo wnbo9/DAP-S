@@ -34,26 +34,26 @@ phi <- 0.6
 S <- 3
 
 # generate genotype, effect variants, and phenotype data
-X <- matrix(rnorm(n * p, mean = 0, sd = 1), nrow = n, ncol = p)
+X <- matrix(rnorm(n*p, mean = 0, sd = 1), nrow = n, ncol = p)
 # generate effect size
-gv = rep(0, p)
-causal_set = sample(1:p, S)
-gv[causal_set] = 1
-bv = rnorm(p, sd=phi/sqrt(tau))
-bv = bv*gv
-yhat = X%*%bv
-y = yhat + rnorm(n, sd=1/sqrt(tau))
+gv <- rep(0, p)
+causal_set <- sample(1:p, S)
+gv[causal_set] <- 1
+bv <- rnorm(p, sd=phi/sqrt(tau))
+bv <- bv*gv
+yhat <- X%*%bv
+y <- yhat + rnorm(n, sd=1/sqrt(tau))
 
-X = scale(X, scale = FALSE)
-y = scale(y, scale = FALSE)
+X <- scale(X, scale = FALSE)
+y <- scale(y, scale = FALSE)
 
 # run susie
-rst1 = susie(X, y, max_iter = 1000, coverage = 0.95, L = 10, null_weight = exp(-1))
+rst1 <- susie(X, y, L = 10, max_iter = 1000, coverage = 0.95, null_weight = (1-1/p)^p)
 # run dap
-rst2 <- dap(X, y, L = 10, threshold = 1e-6, phi2_vec = c(0.36))
+rst2 <- dap(X, y, L = 10, threshold = 1e-6, phi2 = 0.36, phi2_vec = c(0.36))
 
 # comparison
-data_all = data.frame(SuSiE = rst1$pip, DAP = rst2$pip)
+data_all <- data.frame(SuSiE = rst1$pip, DAP = rst2$pip)
 ggplot(data_all, aes(x = DAP, y = SuSiE)) +
   geom_abline(intercept = 0, slope = 1, color = "red", size = 0.5) +
   geom_point(size = 1) +
