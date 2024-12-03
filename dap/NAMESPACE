@@ -3,6 +3,7 @@
 export(compute_log10_posterior)
 export(compute_log10_prior)
 export(dap)
+export(dap_main)
 export(pir)
 import(Rfast)
 importFrom(Rcpp,sourceCpp)

@@ -8,6 +8,27 @@ NumericVector compute_log10_posterior(NumericMatrix X, NumericVector y,
                                     NumericMatrix binaryCombinations, 
                                     NumericVector pi_vec, NumericVector phi2_vec);
 
+//' Main function for DAP-PIR algorithm
+//' 
+//' Performs fine mapping using DAP-PIR algorithm
+//'
+//' @param X Genotype matrix
+//' @param y Phenotype vector
+//' @param L Number of causal variants
+//' @param matrix Proposal density matrix from SuSiE
+//' @param threshold Threshold for proposal density
+//' @param prior_weights Vector of prior probabilities
+//' @param phi2_vec Vector of scaled prior effect size variances
+//'
+//' @return A list containing:
+//' \itemize{
+//'   \item model_config - Model configurations
+//'   \item posterior_prob - Posterior probabilities
+//'   \item log10_posterior_score - Log10 posterior scores
+//'   \item log10_nc - Log10 normalizing constant
+//'   \item pip - Posterior inclusion probabilities
+//' }
+//' @export
 // [[Rcpp::export]]
 List dap_main(NumericMatrix X, 
               NumericVector y,
