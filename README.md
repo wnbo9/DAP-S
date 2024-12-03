@@ -27,14 +27,15 @@ library(dap)
 library(susieR)
 library(ggplot2)
 set.seed(2024)
-n <- 500
-p <- 1000
+n <- 1000
+p <- 5000
 tau <- 1
 phi <- 0.6
 S <- 3
 
 # generate genotype, effect variants, and phenotype data
 X <- matrix(rnorm(n*p, mean = 0, sd = 1), nrow = n, ncol = p)
+colnames(X) <- paste0("SNP_", 1:p)
 # generate effect size
 gv <- rep(0, p)
 causal_set <- sample(1:p, S)

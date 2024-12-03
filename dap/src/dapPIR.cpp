@@ -134,5 +134,5 @@ NumericMatrix pir(NumericMatrix mat, double threshold) {
     }
     i++;
   }
-  return result;
+  return result; // m*p binary matrix of model configurations
 }

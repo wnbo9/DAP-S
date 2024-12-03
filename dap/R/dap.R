@@ -33,18 +33,10 @@ dap <- function(X, y,
 
 
   ## Initialize parameters
-  if (is.null(null_weight)) {
-    null_weight <- (1-1/p)^p
-  }
-  if (is.null(prior_weights)) {
-    prior_weights <- rep(1/p, p)
-  }
-  if (is.null(phi2_vec)) {
-    phi2_vec <- c(0.04, 0.16, 0.36, 0.64)
-  }
-  if (is.null(residual_tau)) {
-    residual_tau <- 1/var(y)
-  }
+  if (is.null(null_weight)) null_weight <- (1-1/p)^p
+  if (is.null(prior_weights)) prior_weights <- rep(1/p, p)
+  if (is.null(phi2_vec)) phi2_vec <- c(0.04, 0.16, 0.36, 0.64)
+  if (is.null(residual_tau)) residual_tau <- 1/var(y)
 
 
   # Run SuSiE
@@ -82,6 +74,6 @@ dap <- function(X, y,
         alpha = matrix,
         pip = results$pip,
         models = result_df,
-        params = params  # Combined parameters in a single list
+        params = params
   ))
 }

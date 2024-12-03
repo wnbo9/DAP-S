@@ -49,7 +49,7 @@ List dap_main(NumericMatrix X,
     int m_size = cmfg_mat.nrow();
 
     // Compute log10 posterior
-    Rcpp::Rcout << "Calculating posterior of " << m_size << " model configurationss...\n";
+    Rcpp::Rcout << "Calculating posterior of " << m_size << " model configurations...\n";
     NumericVector log10_posterior = compute_log10_posterior(X, y, cmfg_mat, prior_weights, phi2_vec);
 
     // Calculate normalizing constant
