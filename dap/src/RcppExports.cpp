@@ -10,6 +10,23 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
+// dap_main
+List dap_main(NumericMatrix X, NumericVector y, int L, NumericMatrix matrix, double threshold, NumericVector prior_weights, NumericVector phi2_vec);
+RcppExport SEXP _dap_dap_main(SEXP XSEXP, SEXP ySEXP, SEXP LSEXP, SEXP matrixSEXP, SEXP thresholdSEXP, SEXP prior_weightsSEXP, SEXP phi2_vecSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type X(XSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type y(ySEXP);
+    Rcpp::traits::input_parameter< int >::type L(LSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type matrix(matrixSEXP);
+    Rcpp::traits::input_parameter< double >::type threshold(thresholdSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type prior_weights(prior_weightsSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type phi2_vec(phi2_vecSEXP);
+    rcpp_result_gen = Rcpp::wrap(dap_main(X, y, L, matrix, threshold, prior_weights, phi2_vec));
+    return rcpp_result_gen;
+END_RCPP
+}
 // compute_log10_prior
 double compute_log10_prior(IntegerVector mcfg, NumericVector pi_vec);
 RcppExport SEXP _dap_compute_log10_prior(SEXP mcfgSEXP, SEXP pi_vecSEXP) {
@@ -23,14 +40,14 @@ BEGIN_RCPP
 END_RCPP
 }
 // compute_log10_posterior
-NumericVector compute_log10_posterior(NumericMatrix X, NumericVector y, IntegerMatrix cmfg_matrix, NumericVector pi_vec, NumericVector phi2_vec);
+NumericVector compute_log10_posterior(NumericMatrix X, NumericVector y, NumericMatrix cmfg_matrix, NumericVector pi_vec, NumericVector phi2_vec);
 RcppExport SEXP _dap_compute_log10_posterior(SEXP XSEXP, SEXP ySEXP, SEXP cmfg_matrixSEXP, SEXP pi_vecSEXP, SEXP phi2_vecSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< NumericMatrix >::type X(XSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type y(ySEXP);
-    Rcpp::traits::input_parameter< IntegerMatrix >::type cmfg_matrix(cmfg_matrixSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type cmfg_matrix(cmfg_matrixSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type pi_vec(pi_vecSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type phi2_vec(phi2_vecSEXP);
     rcpp_result_gen = Rcpp::wrap(compute_log10_posterior(X, y, cmfg_matrix, pi_vec, phi2_vec));
@@ -51,6 +68,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_dap_dap_main", (DL_FUNC) &_dap_dap_main, 7},
     {"_dap_compute_log10_prior", (DL_FUNC) &_dap_compute_log10_prior, 2},
     {"_dap_compute_log10_posterior", (DL_FUNC) &_dap_compute_log10_posterior, 5},
     {"_dap_pir", (DL_FUNC) &_dap_pir, 2},

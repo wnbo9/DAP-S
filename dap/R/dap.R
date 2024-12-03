@@ -24,14 +24,15 @@ dap <- function(X, y,
                 phi2 = 0.36,
                 phi2_vec = NULL) {
 
-  # load data
-  print("Loading data...")
-  ## check input
+  # Process inputs
+  cat("Processing inputs...\n")
   X <- scale(X, scale = FALSE)
   y <- scale(y, scale = FALSE)
   n <- length(y)
   p <- ncol(X)
-  ## initialize
+
+
+  ## Initialize parameters
   if (is.null(null_weight)) {
     null_weight <- (1-1/p)^p
   }
@@ -45,42 +46,42 @@ dap <- function(X, y,
     residual_tau <- 1/var(y)
   }
 
-  # pseudo importance resampling
-  print("Pseudo importance resampling...")
-  rst <- susie(X, y, L, max_iter = 1000, coverage = 0.95, standardize = FALSE,
+
+  # Run SuSiE
+  susie_fit <- susie(X, y, L, max_iter = 1000, coverage = 0.95, standardize = FALSE,
                null_weight = null_weight, prior_weights = prior_weights,
                estimate_residual_variance = FALSE, residual_variance = 1/residual_tau,
                estimate_prior_variance = FALSE, scaled_prior_variance = phi2)
-  matrix <- t(rst$alpha)
-  mcfg_mat <- pir(matrix, threshold = threshold)
-  mcfg_mat <- mcfg_mat[, 1:p]
-  mcfg_mat <- unique(mcfg_mat)
-  m_size <- nrow(mcfg_mat)
+  matrix <- t(susie_fit$alpha)
 
-  # deterministic approximation of posteriors
-  print(paste0("Calculating posterior of ", m_size, " models..."))
-  log10_posterior <- compute_log10_posterior(X, y, mcfg_mat, prior_weights, phi2_vec)
+  # Run PIR
+  results <- dap_main(X, y, L, matrix, threshold, prior_weights, phi2_vec)
 
-  # print results
-  print("Summarizing fine mapping results...")
-  max_log_posterior <- max(log10_posterior)
-  log_nc <- max_log_posterior + log10(sum(10^(log10_posterior - max_log_posterior)))
-  posterior_probs <- 10^(log10_posterior - log_nc)
-  # Compute the PIP for each variant using matrix multiplication
-  pip_vector <- posterior_probs %*% mcfg_mat
-  pip_vector <- round(pip_vector, digits = 4)
-  pip_vector <- as.vector(pip_vector)
-  model_configurations <- apply(mcfg_mat, 1, function(row) {
-    if (all(row == 0)) {
-      return("NULL")
-    } else {
-      return(paste(which(row == 1), collapse = "+"))
-    }
-  })
-  result_df <- data.frame(Model = model_configurations, Log10_Posterior = log10_posterior, stringsAsFactors = FALSE)
-  result_df <- result_df %>% arrange(desc(Log10_Posterior))
 
-  print("Done!")
-  # Return a list containing the PIP vector and the dataframe
-  return(list(pip = pip_vector, models = result_df, log10_nc = log_nc))
+  # Create results dataframe
+  result_df <- data.frame(
+    Model = results$model_config,
+    Posterior_Prob = results$posterior_prob,
+    Log10_Posterior_Score = results$log10_posterior_score,
+    stringsAsFactors = FALSE
+  ) %>% arrange(desc(Log10_Posterior_Score))
+  params <- list(
+        log10_nc = results$log10_nc,
+        threshold = threshold,
+        phi2 = phi2,
+        phi2_vec = phi2_vec,
+        prior_weights = prior_weights,
+        null_weight = null_weight,
+        residual_tau = residual_tau
+  )
+
+
+  # Return results
+  cat("Done!\n")
+  return(list(
+        alpha = matrix,
+        pip = results$pip,
+        models = result_df,
+        params = params  # Combined parameters in a single list
+  ))
 }

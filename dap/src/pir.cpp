@@ -44,13 +44,16 @@ NumericMatrix pir(NumericMatrix mat, double threshold) {
 
   while (!done) {
     double currentSum = 0.0;
-    vector<int> combination(L, 0); // keep track of model name
+    vector<int> combination(L, -1); // keep track of model name
     int pos = -1;
 
     // Generate the current combination
     for (int i = 0; i < L; ++i) {
         currentSum += sortedMat[i][indices[i]].first;
-        combination[i] = sortedMat[i][indices[i]].second;
+        // Only set combination[i] if the index is not p (the null SNP)
+        if (sortedMat[i][indices[i]].second < p-1){
+            combination[i] = sortedMat[i][indices[i]].second;
+        }
         if (currentSum < logThreshold) {
             pos = i;
             break;
@@ -115,16 +118,18 @@ NumericMatrix pir(NumericMatrix mat, double threshold) {
   for (const auto& combination : Combinations) {
     vector<int> binaryVector(p, 0);
     for (int name : combination) {
-      binaryVector[name] = 1; // Convert the name to a binary entry
+      if (name >= 0){
+        binaryVector[name] = 1; // Convert the name to a binary entry
+      }
     }
     binaryCombinations.insert(binaryVector);
   }
-
+  
   // Convert binaryCombinations to NumericMatrix
-  NumericMatrix result(binaryCombinations.size(), p);
+  NumericMatrix result(binaryCombinations.size(), p-1); // Exclude the null row
   size_t i = 0; // Index for rows of the result matrix
   for (const auto& binaryVector : binaryCombinations) {
-    for (size_t j = 0; j < p; j++) {
+    for (size_t j = 0; j < p-1; j++) {
         result(i, j) = binaryVector[j];
     }
     i++;

@@ -175,27 +175,34 @@ double MLR::log10_weighted_sum(const vector<double> &vec, const vector<double> &
 //' @return An m-vector of log10 posterior scores
 //' @export
 // [[Rcpp::export]]
- NumericVector compute_log10_posterior(NumericMatrix X, NumericVector y, IntegerMatrix cmfg_matrix, NumericVector pi_vec, NumericVector phi2_vec) {
+ NumericVector compute_log10_posterior(NumericMatrix X, NumericVector y,
+                                      NumericMatrix cmfg_matrix,
+                                      NumericVector pi_vec, NumericVector phi2_vec) {
    int n = X.nrow();
    int p = X.ncol();
    int m = cmfg_matrix.nrow();
 
-   // Compute GtG and Gty
+   gsl_matrix *Y = gsl_matrix_calloc(n, 1);
+   double yty = 0;
+   for (int i = 0; i < n; i++){
+    double val = y[i];
+    yty += val * val;
+    gsl_matrix_set(Y, i, 0, val);
+   }
+
+   gsl_matrix *G = gsl_matrix_calloc(n, p);
+   for (int j = 0; j < p; j++){
+    for (int i = 0; i < n; i++){
+      gsl_matrix_set(G, i, j, X(i, j));
+    }
+   }
+
    gsl_matrix *GtG = gsl_matrix_calloc(p, p);
    gsl_matrix *Gty = gsl_matrix_calloc(p, 1);
-   double yty = 0;
+    
+   gsl_blas_dgemm(CblasTrans, CblasNoTrans, 1.0, G, G, 0.0, GtG);
+   gsl_blas_dgemm(CblasTrans, CblasNoTrans, 1.0, G, Y, 0.0, Gty);
 
-   for (int i = 0; i < n; i++) {
-     for (int j = 0; j < p; j++) {
-       for (int k = 0; k < p; k++) {
-         double val = gsl_matrix_get(GtG, j, k) + X(i, j) * X(i, k);
-         gsl_matrix_set(GtG, j, k, val);
-       }
-       double val = gsl_matrix_get(Gty, j, 0) + X(i, j) * y[i];
-       gsl_matrix_set(Gty, j, 0, val);
-     }
-     yty += y[i] * y[i];
-   }
 
    // Initialize MLR
    MLR mlr;
@@ -205,8 +212,12 @@ double MLR::log10_weighted_sum(const vector<double> &vec, const vector<double> &
    // Compute log10 posterior scores for each model configuration
    NumericVector log10_posterior_scores(m);
    for (int i = 0; i < m; i++) {
-     IntegerVector cmfg = cmfg_matrix(i, _);
-     vector<int> indicator(cmfg.begin(), cmfg.end());
+     vector<int> indicator;
+     NumericVector row = cmfg_matrix(i, _);
+     for(int j = 0; j < p; j++) {
+        indicator.push_back(row[j]);
+     }
+     IntegerVector cmfg(indicator.begin(), indicator.end());
 
      double log10BF = mlr.compute_log10_BF(indicator);
      double log10_prior = compute_log10_prior(cmfg, pi_vec);
@@ -215,6 +226,8 @@ double MLR::log10_weighted_sum(const vector<double> &vec, const vector<double> &
    }
 
    // Free allocated memory
+   gsl_matrix_free(G);
+   gsl_matrix_free(Y);
    gsl_matrix_free(GtG);
    gsl_matrix_free(Gty);
 
