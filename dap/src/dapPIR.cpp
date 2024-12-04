@@ -41,6 +41,7 @@ NumericMatrix pir(NumericMatrix mat, double threshold) {
   vector<int> indices(L, 0);
   set<vector<int>> Combinations;
   bool done = false;
+  bool hasNull = false;
 
   while (!done) {
     double currentSum = 0.0;
@@ -62,6 +63,16 @@ NumericMatrix pir(NumericMatrix mat, double threshold) {
     
     // If the sum is greater than the threshold, save the combination
     if (currentSum >= logThreshold) {
+      bool isNull = true;
+      for (int i = 0; i < L; i++) {
+        if (combination[i] != -1){
+          isNull = false;
+          break;
+        }
+      }
+      if (isNull){
+        hasNull = true;
+      }
       Combinations.insert(combination);
     }
 
@@ -108,7 +119,7 @@ NumericMatrix pir(NumericMatrix mat, double threshold) {
 
 
   // Add null row and single entry rows
-  for (int i = 0; i < p; i++) {
+  for (int i = 0; i < (hasNull ? p-1 : p); i++) {
     vector<int> singleEntryRow(L, i);
     Combinations.insert(singleEntryRow);
   }
