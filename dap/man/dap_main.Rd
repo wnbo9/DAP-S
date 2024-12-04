@@ -2,9 +2,19 @@
 % Please edit documentation in R/RcppExports.R
 \name{dap_main}
 \alias{dap_main}
-\title{Main function for DAP-PIR algorithm}
+\title{Implementation of DAP-PIR algorithm in C++}
 \usage{
-dap_main(X, y, L, matrix, threshold, prior_weights, phi2_vec)
+dap_main(
+  X,
+  y,
+  L,
+  matrix,
+  threshold,
+  prior_weights,
+  phi2_vec,
+  r2_threshold,
+  coverage
+)
 }
 \arguments{
 \item{X}{Genotype matrix}
@@ -20,6 +30,10 @@ dap_main(X, y, L, matrix, threshold, prior_weights, phi2_vec)
 \item{prior_weights}{Vector of prior probabilities}
 
 \item{phi2_vec}{Vector of scaled prior effect size variances}
+
+\item{r2_threshold}{Threshold for LD}
+
+\item{coverage}{Coverage for credible set}
 }
 \value{
 A list containing:

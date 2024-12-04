@@ -1,4 +1,4 @@
-#' DAP-PIR
+#' DAP fine mapping
 #' @param X Genotype data
 #' @param y Phenotype data
 #' @param L Number of causal variants
@@ -8,6 +8,8 @@
 #' @param threshold Threshold for proposal density
 #' @param phi2 Scaled prior effect size variance
 #' @param phi2_vec Scaled prior effect size variance vector
+#' @param r2_threshold Genotype R2 threshold for LD
+#' @param coverage Coverage of credible sets. When set as 1, it will output signal clusters; otherwise, it outputs credible sets at the specified coverage level
 #'
 #' @import Rfast
 #' @importFrom susieR susie
@@ -22,7 +24,9 @@ dap <- function(X, y,
                 residual_tau = NULL,
                 threshold = 1e-6,
                 phi2 = 0.36,
-                phi2_vec = NULL) {
+                phi2_vec = NULL,
+                r2_threshold = 0.25,
+                coverage = 1) {
 
   # Process inputs
   cat("Processing inputs...\n")
@@ -30,6 +34,7 @@ dap <- function(X, y,
   y <- scale(y, scale = FALSE)
   n <- length(y)
   p <- ncol(X)
+  if (is.null(colnames(X))) colnames(X) <- paste0("SNP_",1:p)
 
 
   ## Initialize parameters
@@ -47,7 +52,7 @@ dap <- function(X, y,
   matrix <- t(susie_fit$alpha)
 
   # Run PIR
-  results <- dap_main(X, y, L, matrix, threshold, prior_weights, phi2_vec)
+  results <- dap_main(X, y, L, matrix, threshold, prior_weights, phi2_vec, r2_threshold, coverage)
 
 
   # Create results dataframe
@@ -74,6 +79,7 @@ dap <- function(X, y,
         alpha = matrix,
         pip = results$pip,
         models = result_df,
+        sets = results$signal_cluster,
         params = params
   ))
 }

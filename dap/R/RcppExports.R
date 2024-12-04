@@ -22,7 +22,7 @@ compute_log10_posterior <- function(X, y, cmfg_matrix, pi_vec, phi2_vec) {
     .Call(`_dap_compute_log10_posterior`, X, y, cmfg_matrix, pi_vec, phi2_vec)
 }
 
-#' Main function for DAP-PIR algorithm
+#' Implementation of DAP-PIR algorithm in C++
 #' 
 #' Performs fine mapping using DAP-PIR algorithm
 #'
@@ -33,6 +33,8 @@ compute_log10_posterior <- function(X, y, cmfg_matrix, pi_vec, phi2_vec) {
 #' @param threshold Threshold for proposal density
 #' @param prior_weights Vector of prior probabilities
 #' @param phi2_vec Vector of scaled prior effect size variances
+#' @param r2_threshold Threshold for LD
+#' @param coverage Coverage for credible set
 #'
 #' @return A list containing:
 #' \itemize{
@@ -43,8 +45,8 @@ compute_log10_posterior <- function(X, y, cmfg_matrix, pi_vec, phi2_vec) {
 #'   \item pip - Posterior inclusion probabilities
 #' }
 #' @export
-dap_main <- function(X, y, L, matrix, threshold, prior_weights, phi2_vec) {
-    .Call(`_dap_dap_main`, X, y, L, matrix, threshold, prior_weights, phi2_vec)
+dap_main <- function(X, y, L, matrix, threshold, prior_weights, phi2_vec, r2_threshold, coverage) {
+    .Call(`_dap_dap_main`, X, y, L, matrix, threshold, prior_weights, phi2_vec, r2_threshold, coverage)
 }
 
 #' Find all model combinations that have a proposal density greater than or equal to a threshold
@@ -54,5 +56,37 @@ dap_main <- function(X, y, L, matrix, threshold, prior_weights, phi2_vec) {
 #' @export
 pir <- function(mat, threshold) {
     .Call(`_dap_pir`, mat, threshold)
+}
+
+#' Compute R-squared between two vectors
+#' 
+#' @param X NumericMatrix containing the vectors
+#' @param i Index of first vector
+#' @param j Index of second vector
+#' @return Double containing R-squared value
+#' @noRd
+NULL
+
+#' Get signal clusters or credible sets at given coverage level
+#' 
+#' This function identifies clusters of correlated signals based on R-squared values
+#' and model posterior probabilities.
+#' 
+#' @param X NumericMatrix containing the raw data
+#' @param mat NumericMatrix containing the alpha matrix
+#' @param cmfg_mat NumericMatrix containing the CMFG matrix
+#' @param posterior_probs NumericVector of posterior probabilities
+#' @param col_names CharacterVector of column names
+#' @param r2_threshold Double specifying the R-squared threshold for correlation
+#' @param coverage Double specifying the coverage threshold
+#' @return List containing:
+#'   \item{clusters}{List of character vectors containing cluster memberships}
+#'   \item{spip}{Numeric vector of signal posterior inclusion probabilities}
+#'   \item{sizes}{Integer vector of cluster sizes}
+#'   \item{r2_threshold}{Double containing the R-squared threshold used}
+#'   \item{coverage}{Double containing the coverage threshold used}
+#' @export
+get_sc <- function(X, mat, cmfg_mat, posterior_probs, col_names, r2_threshold, coverage) {
+    .Call(`_dap_get_sc`, X, mat, cmfg_mat, posterior_probs, col_names, r2_threshold, coverage)
 }
 

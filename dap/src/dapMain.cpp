@@ -4,11 +4,10 @@ using namespace Rcpp;
 using namespace std;
 
 NumericMatrix pir(NumericMatrix mat, double threshold);
-NumericVector compute_log10_posterior(NumericMatrix X, NumericVector y,
-                                    NumericMatrix binaryCombinations, 
-                                    NumericVector pi_vec, NumericVector phi2_vec);
+NumericVector compute_log10_posterior(NumericMatrix X, NumericVector y, NumericMatrix binaryCombinations, NumericVector pi_vec, NumericVector phi2_vec);
+List get_sc(const NumericMatrix& X, const NumericMatrix& mat, const NumericMatrix& cmfg_mat, const NumericVector& posterior_probs, const CharacterVector& col_names, double r2_threshold, double coverage);
 
-//' Main function for DAP-PIR algorithm
+//' Implementation of DAP-PIR algorithm in C++
 //' 
 //' Performs fine mapping using DAP-PIR algorithm
 //'
@@ -19,6 +18,8 @@ NumericVector compute_log10_posterior(NumericMatrix X, NumericVector y,
 //' @param threshold Threshold for proposal density
 //' @param prior_weights Vector of prior probabilities
 //' @param phi2_vec Vector of scaled prior effect size variances
+//' @param r2_threshold Threshold for LD
+//' @param coverage Coverage for credible set
 //'
 //' @return A list containing:
 //' \itemize{
@@ -36,7 +37,9 @@ List dap_main(NumericMatrix X,
               NumericMatrix matrix,
               double threshold,
               NumericVector prior_weights,
-              NumericVector phi2_vec) {
+              NumericVector phi2_vec,
+              double r2_threshold,
+              double coverage) {
 
     // Get the number of rows and columns
     int n = X.nrow();
@@ -94,7 +97,6 @@ List dap_main(NumericMatrix X,
                 first = false;
             }
         }
-        
         if(all_zero) {
             model_configs[i] = "NULL";
         } else {
@@ -104,11 +106,7 @@ List dap_main(NumericMatrix X,
     
 
     // Construct signal clusters
-    // Compute signal level PIP
-
-    // Construct credible sets
-
-
+    List sc_results = get_sc(X, matrix, cmfg_mat, posterior_probs, col_names, r2_threshold, coverage);
 
 
     // Return simplified results
@@ -117,7 +115,7 @@ List dap_main(NumericMatrix X,
         Named("posterior_prob") = posterior_probs,
         Named("log10_posterior_score") = log10_posterior,
         Named("log10_nc") = log_nc,
-        Named("pip") = pip
+        Named("pip") = pip,
+        Named("signal_cluster") = sc_results
     );
 }
-

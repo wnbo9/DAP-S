@@ -2,7 +2,7 @@
 % Please edit documentation in R/dap.R
 \name{dap}
 \alias{dap}
-\title{DAP-PIR}
+\title{DAP fine mapping}
 \usage{
 dap(
   X,
@@ -13,7 +13,9 @@ dap(
   residual_tau = NULL,
   threshold = 1e-06,
   phi2 = 0.36,
-  phi2_vec = NULL
+  phi2_vec = NULL,
+  r2_threshold = 0.25,
+  coverage = 1
 )
 }
 \arguments{
@@ -34,10 +36,14 @@ dap(
 \item{phi2}{Scaled prior effect size variance}
 
 \item{phi2_vec}{Scaled prior effect size variance vector}
+
+\item{r2_threshold}{Genotype R2 threshold for LD}
+
+\item{coverage}{Coverage of credible sets. When set as 1, it will output signal clusters; otherwise, it outputs credible sets at the specified coverage level}
 }
 \value{
 Fine mapping results
 }
 \description{
-DAP-PIR
+DAP fine mapping
 }

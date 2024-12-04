@@ -61,15 +61,7 @@ ggplot(data_all, aes(x = DAP, y = SuSiE)) +
   labs(x = "DAP-PIR", y = "SuSiE", title = paste0("PIP Comparison between DAP-PIR and SuSiE\nS=", S, ", threshold=", 1e-6)) +
   scale_color_identity() + coord_fixed(ratio = 1) + xlim(0, 1) + ylim(0, 1) +
   theme_minimal() +
-  theme(
-    panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank(),
-    panel.border = element_blank(),
-    axis.line = element_line(color = "black"),
-    axis.title.x = element_text(size = 12, hjust = 0.5),
-    axis.title.y = element_text(size = 12, angle = 90),
-    axis.text = element_text(size = 10),
-    axis.ticks = element_line(color = "black")
+  theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_blank(),axis.line = element_line(color = "black"),axis.title.x = element_text(size = 12, hjust = 0.5),axis.title.y = element_text(size = 12, angle = 90),axis.text = element_text(size = 10),axis.ticks = element_line(color = "black")
   )
 ```
 <div style="text-align: center;">
