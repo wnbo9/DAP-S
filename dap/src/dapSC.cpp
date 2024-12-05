@@ -26,6 +26,18 @@ double compute_r2(const NumericMatrix& X, int i, int j) {
     return r2;
 }
 
+//' Compute median of a sorted vector
+//' @name median
+//' @param v Vector of sorted values
+//' @return Median value
+//' @noRd
+double median(vector<double>& v) {
+    size_t n = v.size();
+    if(n % 2 == 0) {
+        return (v[n/2 - 1] + v[n/2]) / 2;
+    }
+    return v[n/2];
+}
 
 //' Get signal clusters or credible sets at given coverage level
 //' 
@@ -60,6 +72,7 @@ List get_sc(const NumericMatrix& X,
     int m = cmfg_mat.nrow();
     std::vector<std::vector<int>> clusters;
     std::vector<double> mps_values;
+    std::vector<std::vector<double>> r2_values;
 
 
     // Sort each column in descending order
@@ -80,10 +93,11 @@ List get_sc(const NumericMatrix& X,
 
         // Start with the top SNP
         std::vector<int> current_cluster = {top_snp};
+        std::vector<double> current_r2s; // Track R2 values for current cluster
 
         // Initialize vector to track models with no SNPs in it
         std::vector<int> models_without_snps;
-        double sum_prob_without = 0.0;
+        double sum_prob_without = 0.0; // Sum of posterior probabilities for models without snps in current cluster
 
         // Initially find models without top_snp
         for(int i = 0; i < m; i++) {
@@ -94,19 +108,30 @@ List get_sc(const NumericMatrix& X,
         }
         double mps = 1.0 - sum_prob_without;
 
+        if (mps >= coverage) {
+            clusters.push_back(current_cluster);
+            current_r2s.push_back(1.0);
+            mps_values.push_back(mps);
+            r2_values.push_back(current_r2s);
+            continue;  // Skip to next column
+        }
+
         // Add SNP
         for (size_t j = 1; j < p; j++){
             int next_snp = sortedMat[col][j].second;
             if (next_snp == p - 1) continue;
 
             bool add_to_cluster = true;
+            double r2;
 
             // Check R2 with all SNPs in current cluster
             for (int cluster_snp : current_cluster) {
-                if (compute_r2(X, cluster_snp, next_snp) < r2_threshold) {
+                r2 = compute_r2(X, cluster_snp, next_snp);
+                if (r2 < r2_threshold) {
                     add_to_cluster = false;
                     break;
                 }
+                current_r2s.push_back(r2);
             }
 
             // Calculate MPS for current cluster
@@ -133,49 +158,47 @@ List get_sc(const NumericMatrix& X,
             }
         }
 
-        // After going through all SNPs, add the final cluster
-        if(!current_cluster.empty()) {
+        // After going through all SNPs, add the final cluster if it has mps > coverage
+        if(coverage == 10.0 || mps >= coverage) {
             clusters.push_back(current_cluster);
             mps_values.push_back(mps);
-        }
-    }
-
-    // Only include non-empty clusters in results
-    std::vector<std::vector<int>> non_empty_clusters;
-    std::vector<double> non_empty_mps;
-    for(size_t i = 0; i < clusters.size(); i++) {
-        if(!clusters[i].empty()) {
-            non_empty_clusters.push_back(clusters[i]);
-            non_empty_mps.push_back(mps_values[i]);
+            r2_values.push_back(current_r2s);
         }
     }
 
     // Convert results to R objects
-    int n_clusters = non_empty_clusters.size();
+    int n_clusters = clusters.size();
     List r_clusters(n_clusters);
     NumericVector r_mps(n_clusters);
     IntegerVector cluster_sizes(n_clusters);
+    List r2_stats(n_clusters);
     
     for(int i = 0; i < n_clusters; i++) {
-        CharacterVector cluster_names(non_empty_clusters[i].size());
-        for(size_t j = 0; j < non_empty_clusters[i].size(); j++) {
-            cluster_names[j] = col_names[non_empty_clusters[i][j]];
+        CharacterVector cluster_names(clusters[i].size());
+        for(size_t j = 0; j < clusters[i].size(); j++) {
+            cluster_names[j] = col_names[clusters[i][j]];
         }
         
         r_clusters[i] = cluster_names;
-        r_mps[i] = non_empty_mps[i];
-        cluster_sizes[i] = non_empty_clusters[i].size();
+        r_mps[i] = mps_values[i];
+        cluster_sizes[i] = clusters[i].size();
+
+        // Calculate R² statistics
+        vector<double>& r2s = r2_values[i];
+        sort(r2s.begin(), r2s.end());
+        r2_stats[i] = DataFrame::create(
+            Named("min_r2") = r2s.front(),
+            Named("mean_r2") = accumulate(r2s.begin(), r2s.end(), 0.0) / r2s.size(),
+            Named("median_r2") = median(r2s)
+        );
     }
     
     return List::create(
         Named("clusters") = r_clusters,
         Named("spip") = r_mps,
-        Named("sizes") = cluster_sizes,
+        Named("size") = cluster_sizes,
+        Named("cluster_r2") = r2_stats,
         Named("r2_threshold") = r2_threshold,
         Named("coverage") = coverage
     );
 }
-
-
-
-

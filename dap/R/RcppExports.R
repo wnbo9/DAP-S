@@ -67,6 +67,13 @@ pir <- function(mat, threshold) {
 #' @noRd
 NULL
 
+#' Compute median of a sorted vector
+#' @name median
+#' @param v Vector of sorted values
+#' @return Median value
+#' @noRd
+NULL
+
 #' Get signal clusters or credible sets at given coverage level
 #' 
 #' This function identifies clusters of correlated signals based on R-squared values

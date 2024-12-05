@@ -9,7 +9,7 @@
 #' @param phi2 Scaled prior effect size variance
 #' @param phi2_vec Scaled prior effect size variance vector
 #' @param r2_threshold Genotype R2 threshold for LD
-#' @param coverage Coverage of credible sets. When set as 1, it will output signal clusters; otherwise, it outputs credible sets at the specified coverage level
+#' @param coverage Coverage of credible sets. When not set, it will output signal clusters; otherwise, it outputs credible sets at the specified coverage level
 #'
 #' @import Rfast
 #' @importFrom susieR susie
@@ -26,7 +26,7 @@ dap <- function(X, y,
                 phi2 = 0.36,
                 phi2_vec = NULL,
                 r2_threshold = 0.25,
-                coverage = 1) {
+                coverage = NULL) {
 
   # Process inputs
   cat("Processing inputs...\n")
@@ -42,7 +42,7 @@ dap <- function(X, y,
   if (is.null(prior_weights)) prior_weights <- rep(1/p, p)
   if (is.null(phi2_vec)) phi2_vec <- c(0.04, 0.16, 0.36, 0.64)
   if (is.null(residual_tau)) residual_tau <- 1/var(y)
-
+  if (is.null(coverage)) coverage <- 10
 
   # Run SuSiE
   susie_fit <- susie(X, y, L, max_iter = 1000, coverage = 0.95, standardize = FALSE,
