@@ -84,7 +84,6 @@ List get_sc(const NumericMatrix& X,
         sort(sortedMat[i].begin(), sortedMat[i].end(), greater<pair<double, int>>());
     }
 
-
     // For each column in alpha matrix
     for (int col = 0; col < L; col++) {
         // Skip if the null SNP is top in the column
@@ -149,8 +148,7 @@ List get_sc(const NumericMatrix& X,
                         idx++;
                     }
                 }
-                mps = 1 - sum_prob_without;
-
+                mps = 1.0 - sum_prob_without;
                 // If MPS exceeds coverage threshold, add cluster and break
                 if (mps >= coverage) {
                     break;
@@ -159,10 +157,11 @@ List get_sc(const NumericMatrix& X,
         }
 
         // After going through all SNPs, add the final cluster if it has mps > coverage
-        if(coverage == 10.0 || mps >= coverage) {
+        if(coverage > 1 || mps >= coverage) {
             clusters.push_back(current_cluster);
             mps_values.push_back(mps);
             r2_values.push_back(current_r2s);
+        } else {
         }
     }
 
@@ -172,7 +171,7 @@ List get_sc(const NumericMatrix& X,
     NumericVector r_mps(n_clusters);
     IntegerVector cluster_sizes(n_clusters);
     List r2_stats(n_clusters);
-    
+
     for(int i = 0; i < n_clusters; i++) {
         CharacterVector cluster_names(clusters[i].size());
         for(size_t j = 0; j < clusters[i].size(); j++) {
@@ -192,7 +191,7 @@ List get_sc(const NumericMatrix& X,
             Named("median_r2") = median(r2s)
         );
     }
-    
+
     return List::create(
         Named("clusters") = r_clusters,
         Named("spip") = r_mps,

@@ -13,7 +13,6 @@ List get_sc(const NumericMatrix& X, const NumericMatrix& mat, const NumericMatri
 //'
 //' @param X Genotype matrix
 //' @param y Phenotype vector
-//' @param L Number of causal variants
 //' @param matrix Proposal density matrix from SuSiE
 //' @param threshold Threshold for proposal density
 //' @param prior_weights Vector of prior probabilities
@@ -33,7 +32,6 @@ List get_sc(const NumericMatrix& X, const NumericMatrix& mat, const NumericMatri
 // [[Rcpp::export]]
 List dap_main(NumericMatrix X, 
               NumericVector y,
-              int L,
               NumericMatrix matrix,
               double threshold,
               NumericVector prior_weights,

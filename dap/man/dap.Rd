@@ -15,7 +15,8 @@ dap(
   phi2 = 0.36,
   phi2_vec = NULL,
   r2_threshold = 0.25,
-  coverage = NULL
+  coverage = NULL,
+  option = 1
 )
 }
 \arguments{
@@ -40,6 +41,8 @@ dap(
 \item{r2_threshold}{Genotype R2 threshold for LD}
 
 \item{coverage}{Coverage of credible sets. When not set, it will output signal clusters; otherwise, it outputs credible sets at the specified coverage level}
+
+\item{option}{Option for DAP. 1: default SuSiE; 2: SuSiE with residual variance estimation; 3: SuSiE with prior variance estimation}
 }
 \value{
 Fine mapping results

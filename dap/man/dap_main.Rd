@@ -7,7 +7,6 @@
 dap_main(
   X,
   y,
-  L,
   matrix,
   threshold,
   prior_weights,
@@ -20,8 +19,6 @@ dap_main(
 \item{X}{Genotype matrix}
 
 \item{y}{Phenotype vector}
-
-\item{L}{Number of causal variants}
 
 \item{matrix}{Proposal density matrix from SuSiE}
 

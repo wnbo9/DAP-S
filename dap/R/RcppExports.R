@@ -28,7 +28,6 @@ compute_log10_posterior <- function(X, y, cmfg_matrix, pi_vec, phi2_vec) {
 #'
 #' @param X Genotype matrix
 #' @param y Phenotype vector
-#' @param L Number of causal variants
 #' @param matrix Proposal density matrix from SuSiE
 #' @param threshold Threshold for proposal density
 #' @param prior_weights Vector of prior probabilities
@@ -45,8 +44,8 @@ compute_log10_posterior <- function(X, y, cmfg_matrix, pi_vec, phi2_vec) {
 #'   \item pip - Posterior inclusion probabilities
 #' }
 #' @export
-dap_main <- function(X, y, L, matrix, threshold, prior_weights, phi2_vec, r2_threshold, coverage) {
-    .Call(`_dap_dap_main`, X, y, L, matrix, threshold, prior_weights, phi2_vec, r2_threshold, coverage)
+dap_main <- function(X, y, matrix, threshold, prior_weights, phi2_vec, r2_threshold, coverage) {
+    .Call(`_dap_dap_main`, X, y, matrix, threshold, prior_weights, phi2_vec, r2_threshold, coverage)
 }
 
 #' Find all model combinations that have a proposal density greater than or equal to a threshold

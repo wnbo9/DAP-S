@@ -10,6 +10,7 @@
 #' @param phi2_vec Scaled prior effect size variance vector
 #' @param r2_threshold Genotype R2 threshold for LD
 #' @param coverage Coverage of credible sets. When not set, it will output signal clusters; otherwise, it outputs credible sets at the specified coverage level
+#' @param option Option for DAP. 1: default SuSiE; 2: SuSiE with residual variance estimation; 3: SuSiE with prior variance estimation
 #'
 #' @import Rfast
 #' @importFrom susieR susie
@@ -26,7 +27,8 @@ dap <- function(X, y,
                 phi2 = 0.36,
                 phi2_vec = NULL,
                 r2_threshold = 0.25,
-                coverage = NULL) {
+                coverage = NULL,
+                option = 1) {
 
   # Process inputs
   cat("Processing inputs...\n")
@@ -45,14 +47,19 @@ dap <- function(X, y,
   if (is.null(coverage)) coverage <- 10
 
   # Run SuSiE
-  susie_fit <- susie(X, y, L, max_iter = 1000, coverage = 0.95, standardize = FALSE,
+  if (option == 1){
+      susie_fit <- susie(X, y, L, max_iter = 1000, coverage = 0.95, standardize = FALSE,
+               null_weight = null_weight, prior_weights = prior_weights)
+  } else {
+      susie_fit <- susie(X, y, L, max_iter = 1000, coverage = 0.95, standardize = FALSE,
                null_weight = null_weight, prior_weights = prior_weights,
                estimate_residual_variance = FALSE, residual_variance = 1/residual_tau,
                estimate_prior_variance = FALSE, scaled_prior_variance = phi2)
+  }
   matrix <- t(susie_fit$alpha)
 
   # Run PIR
-  results <- dap_main(X, y, L, matrix, threshold, prior_weights, phi2_vec, r2_threshold, coverage)
+  results <- dap_main(X, y, matrix, threshold, prior_weights, phi2_vec, r2_threshold, coverage)
 
 
   # Create results dataframe

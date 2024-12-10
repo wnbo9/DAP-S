@@ -127,21 +127,13 @@ We conduct several simulation studies to show the accuracy and efficiency of the
 \end{figure}
 
 
+
 \begin{figure}[H]
     \centering
-    \begin{minipage}{\textwidth}
-        \centering
-        \includegraphics[width=\textwidth,trim={0cm 2cm 0cm 2cm}, clip]{files/plot_pip_dap.png}
-        \vspace{-1cm} % Adjust spacing between images
-    \end{minipage}
-    \begin{minipage}{\textwidth}
-        \centering
-        \includegraphics[width=\textwidth, trim={0cm 2cm 0cm 2cm}, clip]{files/plot_pip_susie.png}
-    \end{minipage}
+    \includegraphics[width=1\textwidth]{files/plot_pip_comparison.png}
     \caption{Comparison of variant PIP across all simulations for varying causal variant number $S$ and PVE = 0.2.}
-    \label{fig:power}
+    \label{fig:gtex_comparison}
 \end{figure}
-
 
 
 
@@ -153,14 +145,20 @@ We conduct several simulation studies to show the accuracy and efficiency of the
 \end{figure}
 
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{files/plot_size.pdf}
+    \caption{Comparison of (a) median size of credible sets, defined as the median number of variants in these 95\% credible sets, across all simulations; (b) average squared correlation of these credible sets, defined as the average value of pairwise genotype $R^2$ correlation of variants in the credible set.}
+    \label{fig:size}
+\end{figure}
 
 
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=1\textwidth]{files/plot_size.pdf}
-    \caption{Comparison of (a) median credible set size, defined as the number of variants in the 95\% credible set, across all simulations; (b) mean purity of the credible set, defined as the minimum pairwise absolute correlation of variants in the credible set in DAP-PIR and SuSiE; (c) mean $R^2$ correlation between the variants in the credible set in DAP-PIR and DAP-G.}
-    \label{fig:size}
+    \includegraphics[width=1\textwidth]{files/plot_ratio.pdf}
+    \caption{Comparison of (a) median number of explored models in DAP-G and DAP-PIR; (b) mean ratio of normalizing constant estimated by DAP-PIR over DAP-G (DAP-PIR obtains a normalizing constant at least 10\% larger than DAP-G in 74.66\% simulations).}
+    \label{fig:ratio}
 \end{figure}
 
 
