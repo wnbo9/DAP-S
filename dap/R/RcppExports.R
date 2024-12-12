@@ -81,7 +81,7 @@ NULL
 #' @param X NumericMatrix containing the raw data
 #' @param mat NumericMatrix containing the alpha matrix
 #' @param cmfg_mat NumericMatrix containing the CMFG matrix
-#' @param posterior_probs NumericVector of posterior probabilities
+#' @param posterior_prob NumericVector of posterior probabilities
 #' @param col_names CharacterVector of column names
 #' @param r2_threshold Double specifying the R-squared threshold for correlation
 #' @param coverage Double specifying the coverage threshold
@@ -92,7 +92,7 @@ NULL
 #'   \item{r2_threshold}{Double containing the R-squared threshold used}
 #'   \item{coverage}{Double containing the coverage threshold used}
 #' @export
-get_sc <- function(X, mat, cmfg_mat, posterior_probs, col_names, r2_threshold, coverage) {
-    .Call(`_dap_get_sc`, X, mat, cmfg_mat, posterior_probs, col_names, r2_threshold, coverage)
+get_sc <- function(X, mat, cmfg_mat, posterior_prob, col_names, r2_threshold, coverage) {
+    .Call(`_dap_get_sc`, X, mat, cmfg_mat, posterior_prob, col_names, r2_threshold, coverage)
 }
 

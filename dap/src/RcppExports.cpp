@@ -23,7 +23,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // compute_log10_posterior
-NumericVector compute_log10_posterior(NumericMatrix X, NumericVector y, NumericMatrix cmfg_matrix, NumericVector pi_vec, NumericVector phi2_vec);
+List compute_log10_posterior(NumericMatrix X, NumericVector y, NumericMatrix cmfg_matrix, NumericVector pi_vec, NumericVector phi2_vec);
 RcppExport SEXP _dap_compute_log10_posterior(SEXP XSEXP, SEXP ySEXP, SEXP cmfg_matrixSEXP, SEXP pi_vecSEXP, SEXP phi2_vecSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -68,19 +68,19 @@ BEGIN_RCPP
 END_RCPP
 }
 // get_sc
-List get_sc(const NumericMatrix& X, const NumericMatrix& mat, const NumericMatrix& cmfg_mat, const NumericVector& posterior_probs, const CharacterVector& col_names, double r2_threshold, double coverage);
-RcppExport SEXP _dap_get_sc(SEXP XSEXP, SEXP matSEXP, SEXP cmfg_matSEXP, SEXP posterior_probsSEXP, SEXP col_namesSEXP, SEXP r2_thresholdSEXP, SEXP coverageSEXP) {
+List get_sc(const NumericMatrix& X, const NumericMatrix& mat, const NumericMatrix& cmfg_mat, const NumericVector& posterior_prob, const CharacterVector& col_names, double r2_threshold, double coverage);
+RcppExport SEXP _dap_get_sc(SEXP XSEXP, SEXP matSEXP, SEXP cmfg_matSEXP, SEXP posterior_probSEXP, SEXP col_namesSEXP, SEXP r2_thresholdSEXP, SEXP coverageSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const NumericMatrix& >::type X(XSEXP);
     Rcpp::traits::input_parameter< const NumericMatrix& >::type mat(matSEXP);
     Rcpp::traits::input_parameter< const NumericMatrix& >::type cmfg_mat(cmfg_matSEXP);
-    Rcpp::traits::input_parameter< const NumericVector& >::type posterior_probs(posterior_probsSEXP);
+    Rcpp::traits::input_parameter< const NumericVector& >::type posterior_prob(posterior_probSEXP);
     Rcpp::traits::input_parameter< const CharacterVector& >::type col_names(col_namesSEXP);
     Rcpp::traits::input_parameter< double >::type r2_threshold(r2_thresholdSEXP);
     Rcpp::traits::input_parameter< double >::type coverage(coverageSEXP);
-    rcpp_result_gen = Rcpp::wrap(get_sc(X, mat, cmfg_mat, posterior_probs, col_names, r2_threshold, coverage));
+    rcpp_result_gen = Rcpp::wrap(get_sc(X, mat, cmfg_mat, posterior_prob, col_names, r2_threshold, coverage));
     return rcpp_result_gen;
 END_RCPP
 }

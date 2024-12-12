@@ -175,7 +175,7 @@ double MLR::log10_weighted_sum(const vector<double> &vec, const vector<double> &
 //' @return An m-vector of log10 posterior scores
 //' @export
 // [[Rcpp::export]]
- NumericVector compute_log10_posterior(NumericMatrix X, NumericVector y,
+ List compute_log10_posterior(NumericMatrix X, NumericVector y,
                                       NumericMatrix cmfg_matrix,
                                       NumericVector pi_vec, NumericVector phi2_vec) {
    int n = X.nrow();
@@ -209,8 +209,10 @@ double MLR::log10_weighted_sum(const vector<double> &vec, const vector<double> &
    mlr.init(yty, GtG, Gty, n);
    mlr.set_effect_vec(as<vector<double>>(phi2_vec));
 
-   // Compute log10 posterior scores for each model configuration
-   NumericVector log10_posterior_scores(m);
+   // Store log10BF, log10Prior, and log10_posterior_score
+   NumericVector log10_BF(m);
+   NumericVector log10_prior(m);
+   NumericVector log10_posterior_score(m);
    for (int i = 0; i < m; i++) {
      vector<int> indicator;
      NumericVector row = cmfg_matrix(i, _);
@@ -219,10 +221,9 @@ double MLR::log10_weighted_sum(const vector<double> &vec, const vector<double> &
      }
      IntegerVector cmfg(indicator.begin(), indicator.end());
 
-     double log10BF = mlr.compute_log10_BF(indicator);
-     double log10_prior = compute_log10_prior(cmfg, pi_vec);
-
-     log10_posterior_scores[i] = log10BF + log10_prior;
+     log10_BF[i] = mlr.compute_log10_BF(indicator);
+     log10_prior[i] = compute_log10_prior(cmfg, pi_vec);
+     log10_posterior_score[i] = log10_BF[i] + log10_prior[i];
    }
 
    // Free allocated memory
@@ -231,5 +232,9 @@ double MLR::log10_weighted_sum(const vector<double> &vec, const vector<double> &
    gsl_matrix_free(GtG);
    gsl_matrix_free(Gty);
 
-   return log10_posterior_scores;
+   return List::create(
+       Named("log10_BF") = log10_BF,
+       Named("log10_prior") = log10_prior,
+       Named("log10_posterior_score") = log10_posterior_score
+   );
  }

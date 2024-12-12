@@ -4,7 +4,7 @@
 \alias{get_sc}
 \title{Get signal clusters or credible sets at given coverage level}
 \usage{
-get_sc(X, mat, cmfg_mat, posterior_probs, col_names, r2_threshold, coverage)
+get_sc(X, mat, cmfg_mat, posterior_prob, col_names, r2_threshold, coverage)
 }
 \arguments{
 \item{X}{NumericMatrix containing the raw data}
@@ -13,7 +13,7 @@ get_sc(X, mat, cmfg_mat, posterior_probs, col_names, r2_threshold, coverage)
 
 \item{cmfg_mat}{NumericMatrix containing the CMFG matrix}
 
-\item{posterior_probs}{NumericVector of posterior probabilities}
+\item{posterior_prob}{NumericVector of posterior probabilities}
 
 \item{col_names}{CharacterVector of column names}
 

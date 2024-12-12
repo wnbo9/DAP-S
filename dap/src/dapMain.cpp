@@ -4,8 +4,8 @@ using namespace Rcpp;
 using namespace std;
 
 NumericMatrix pir(NumericMatrix mat, double threshold);
-NumericVector compute_log10_posterior(NumericMatrix X, NumericVector y, NumericMatrix binaryCombinations, NumericVector pi_vec, NumericVector phi2_vec);
-List get_sc(const NumericMatrix& X, const NumericMatrix& mat, const NumericMatrix& cmfg_mat, const NumericVector& posterior_probs, const CharacterVector& col_names, double r2_threshold, double coverage);
+List compute_log10_posterior(NumericMatrix X, NumericVector y, NumericMatrix binaryCombinations, NumericVector pi_vec, NumericVector phi2_vec);
+List get_sc(const NumericMatrix& X, const NumericMatrix& mat, const NumericMatrix& cmfg_mat, const NumericVector& posterior_prob, const CharacterVector& col_names, double r2_threshold, double coverage);
 
 //' Implementation of DAP-PIR algorithm in C++
 //' 
@@ -51,20 +51,23 @@ List dap_main(NumericMatrix X,
 
     // Compute log10 posterior
     Rcpp::Rcout << "Calculating posterior of " << m_size << " model configurations...\n";
-    NumericVector log10_posterior = compute_log10_posterior(X, y, cmfg_mat, prior_weights, phi2_vec);
+    List scores = compute_log10_posterior(X, y, cmfg_mat, prior_weights, phi2_vec);
+    NumericVector log10_BF = scores["log10_BF"];
+    NumericVector log10_prior = scores["log10_prior"];
+    NumericVector log10_posterior_score = scores["log10_posterior_score"];
 
     // Calculate normalizing constant
-    double max_log_posterior = *std::max_element(log10_posterior.begin(), log10_posterior.end());
+    double max_log_posterior = *std::max_element(log10_posterior_score.begin(), log10_posterior_score.end());
     double sum_exp = 0.0;
-    NumericVector posterior_probs(m_size);
+    NumericVector posterior_prob(m_size);
     for(int i = 0; i < m_size; i++) {
-        sum_exp += pow(10.0, log10_posterior[i] - max_log_posterior);
+        sum_exp += pow(10.0, log10_posterior_score[i] - max_log_posterior);
     }
     double log_nc = max_log_posterior + log10(sum_exp);
 
     // Model posterior probabilities
     for(int i = 0; i < m_size; i++) {
-        posterior_probs[i] = pow(10.0, log10_posterior[i] - log_nc);
+        posterior_prob[i] = pow(10.0, log10_posterior_score[i] - log_nc);
     }
 
     // Calculate PIP
@@ -72,14 +75,23 @@ List dap_main(NumericMatrix X,
     for(int i = 0; i < m_size; i++) {
         for(int j = 0; j < p; j++) {
             if(cmfg_mat(i, j) == 1) {
-                pip[j] += posterior_probs[i];
+                pip[j] += posterior_prob[i];
             }
+        }
+    }
+    // Ensure PIPs are bounded between 0 and 1
+    for(int j = 0; j < p; j++) {
+        if(pip[j] > 1.0) {
+            pip[j] = 1.0;
+        } else if(pip[j] < 0.0) {
+            pip[j] = 0.0;
         }
     }
     pip.names() = col_names;
 
+
     // Print model configurations
-    CharacterVector model_configs(m_size);
+    CharacterVector model_config(m_size);
     for(int i = 0; i < m_size; i++) {
         string config = "";
         bool first = true;
@@ -96,22 +108,23 @@ List dap_main(NumericMatrix X,
             }
         }
         if(all_zero) {
-            model_configs[i] = "NULL";
+            model_config[i] = "NULL";
         } else {
-            model_configs[i] = config;
+            model_config[i] = config;
         }
     }
     
 
     // Construct signal clusters
-    List sc_results = get_sc(X, matrix, cmfg_mat, posterior_probs, col_names, r2_threshold, coverage);
-
+    List sc_results = get_sc(X, matrix, cmfg_mat, posterior_prob, col_names, r2_threshold, coverage);
 
     // Return simplified results
     return List::create(
-        Named("model_config") = model_configs,
-        Named("posterior_prob") = posterior_probs,
-        Named("log10_posterior_score") = log10_posterior,
+        Named("model_config") = model_config,
+        Named("posterior_prob") = posterior_prob,
+        Named("log10_posterior_score") = log10_posterior_score,
+        Named("log10_BF") = log10_BF,
+        Named("log10_prior") = log10_prior,
         Named("log10_nc") = log_nc,
         Named("pip") = pip,
         Named("signal_cluster") = sc_results
