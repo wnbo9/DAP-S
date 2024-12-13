@@ -5,7 +5,7 @@ using namespace std;
 
 NumericMatrix pir(NumericMatrix mat, double threshold);
 List compute_log10_posterior(NumericMatrix X, NumericVector y, NumericMatrix binaryCombinations, NumericVector pi_vec, NumericVector phi2_vec);
-List get_sc(const NumericMatrix& X, const NumericMatrix& mat, const NumericMatrix& cmfg_mat, const NumericVector& posterior_prob, const CharacterVector& col_names, double r2_threshold, double coverage);
+List get_sc(const NumericMatrix& X, const NumericMatrix& mat, const NumericMatrix& cmfg_mat, const NumericVector& posterior_prob, const CharacterVector& col_names, double threshold, double r2_threshold, double coverage);
 
 //' Implementation of DAP-PIR algorithm in C++
 //' 
@@ -116,7 +116,7 @@ List dap_main(NumericMatrix X,
     
 
     // Construct signal clusters
-    List sc_results = get_sc(X, matrix, cmfg_mat, posterior_prob, col_names, r2_threshold, coverage);
+    List sc_results = get_sc(X, matrix, cmfg_mat, posterior_prob, col_names, threshold, r2_threshold, coverage);
 
     // Return simplified results
     return List::create(

@@ -9,7 +9,7 @@
 #' @param phi2 Scaled prior effect size variance
 #' @param phi2_vec Scaled prior effect size variance vector
 #' @param r2_threshold Genotype R2 threshold for LD
-#' @param coverage Coverage of credible sets. When not set, it will output signal clusters; otherwise, it outputs credible sets at the specified coverage level
+#' @param coverage Coverage of credible sets. When not set, it outputs signal clusters; otherwise, it outputs credible sets at the specified coverage level
 #'
 #' @import Rfast
 #' @importFrom susieR susie
@@ -50,9 +50,13 @@ dap <- function(X, y,
                estimate_residual_variance = FALSE, residual_variance = 1/residual_tau,
                estimate_prior_variance = FALSE, scaled_prior_variance = phi2)
   matrix <- t(susie_fit$alpha)
+  for (col in 1:L) {
+    if (matrix[p+1, col] == max(matrix[, col])) break # We only keep at most one column with null as top
+  }
+  mat <- as.matrix(matrix[,1:col])
 
-  # Run PIR
-  results <- dap_main(X, y, matrix, threshold, prior_weights, phi2_vec, r2_threshold, coverage)
+  # Run DAP-PIR
+  results <- dap_main(X, y, mat, threshold, prior_weights, phi2_vec, r2_threshold, coverage)
 
 
   # Create model results
@@ -62,55 +66,51 @@ dap <- function(X, y,
     Log10_Posterior_Score = results$log10_posterior_score,
     Log10_BF = results$log10_BF,
     Log10_Prior = results$log10_prior,
-    stringsAsFactors = FALSE
-  ) %>% arrange(desc(Log10_Posterior_Score))
+    stringsAsFactors = FALSE) %>% arrange(desc(Log10_Posterior_Score))
   params <- list(
-        log10_nc = results$log10_nc,
-        threshold = threshold,
-        r2_threshold = r2_threshold,
-        phi2 = phi2,
-        phi2_vec = phi2_vec,
-        prior_weights = prior_weights,
-        null_weight = null_weight,
-        residual_tau = residual_tau
-  )
+    log10_nc = results$log10_nc,
+    threshold = threshold,
+    r2_threshold = r2_threshold,
+    phi2 = phi2,
+    phi2_vec = phi2_vec,
+    prior_weights = prior_weights,
+    null_weight = null_weight,
+    residual_tau = residual_tau)
   snp <- data.frame(
-      SNP = colnames(X),
-      PIP = results$pip,
-      cluster_index = -1,
-      in_cluster_order = Inf,
-      stringsAsFactors = FALSE
-  )
+    SNP = colnames(X),
+    PIP = results$pip,
+    cluster_index = -1,
+    in_cluster_order = Inf,
+    stringsAsFactors = FALSE)
+
+  # Make sure each SNP is included in the cluster where it has higher order
   if (!is.null(results$signal_cluster)) {
     for (i in seq_along(results$signal_cluster$clusters)) {
-        for (order in seq_along(results$signal_cluster$clusters[[i]])) {
-            snp_name <- results$signal_cluster$clusters[[i]][order]
-            idx <- which(snp$SNP == snp_name)
-            
-            if (snp$cluster_index[idx] != -1) {
-                # Only reassign if new order is better than current order
-                if (order < snp$in_cluster_order[idx]) {
-                    message(sprintf("SNP %s reassigned from cluster %d to cluster %d (order improved from %d to %d)", snp_name, snp$cluster_index[idx], i, snp$cluster_order[idx], order))
-                    snp$cluster_index[idx] <- i
-                    snp$in_cluster_order[idx] <- order
-                }
-            } else {
-                # First assignment
-                snp$cluster_index[idx] <- i
-                snp$in_cluster_order[idx] <- order
-            }
-        }
-    }
-   }
+      for (order in seq_along(results$signal_cluster$clusters[[i]])) {
+        snp_name <- results$signal_cluster$clusters[[i]][order]
+        idx <- which(snp$SNP == snp_name)
 
+        if (snp$cluster_index[idx] != -1) {
+          # Only reassign if new order is better than current order
+          if (order < snp$in_cluster_order[idx]) {
+            message(sprintf("SNP %s reassigned from cluster %d to cluster %d (order improved from %d to %d)", snp_name, snp$cluster_index[idx], i, snp$cluster_order[idx], order))
+            snp$cluster_index[idx] <- i
+            snp$in_cluster_order[idx] <- order
+          }
+        } else {
+          # First assignment
+          snp$cluster_index[idx] <- i
+          snp$in_cluster_order[idx] <- order
+        }
+      }
+    }
+  }
 
   # Return results
   cat("Done!\n")
-  return(list(
-        alpha = matrix,
-        variants = snp %>% arrange(desc(PIP)),
-        models = result_df,
-        sets = results$signal_cluster,
-        params = params
-  ))
+  return(list(alpha = matrix,
+              variants = snp %>% arrange(desc(PIP)),
+              models = result_df,
+              sets = results$signal_cluster,
+              params = params))
 }

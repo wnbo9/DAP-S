@@ -4,7 +4,16 @@
 \alias{get_sc}
 \title{Get signal clusters or credible sets at given coverage level}
 \usage{
-get_sc(X, mat, cmfg_mat, posterior_prob, col_names, r2_threshold, coverage)
+get_sc(
+  X,
+  mat,
+  cmfg_mat,
+  posterior_prob,
+  col_names,
+  threshold,
+  r2_threshold,
+  coverage
+)
 }
 \arguments{
 \item{X}{NumericMatrix containing the raw data}
@@ -16,6 +25,8 @@ get_sc(X, mat, cmfg_mat, posterior_prob, col_names, r2_threshold, coverage)
 \item{posterior_prob}{NumericVector of posterior probabilities}
 
 \item{col_names}{CharacterVector of column names}
+
+\item{threshold}{Double specifying the threshold for model proposal density}
 
 \item{r2_threshold}{Double specifying the R-squared threshold for correlation}
 

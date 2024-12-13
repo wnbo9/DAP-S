@@ -49,6 +49,7 @@ double median(vector<double>& v) {
 //' @param cmfg_mat NumericMatrix containing the CMFG matrix
 //' @param posterior_prob NumericVector of posterior probabilities
 //' @param col_names CharacterVector of column names
+//' @param threshold Double specifying the threshold for model proposal density
 //' @param r2_threshold Double specifying the R-squared threshold for correlation
 //' @param coverage Double specifying the coverage threshold
 //' @return List containing:
@@ -64,6 +65,7 @@ List get_sc(const NumericMatrix& X,
             const NumericMatrix& cmfg_mat,
             const NumericVector& posterior_prob,
             const CharacterVector& col_names,
+            double threshold,
             double r2_threshold,
             double coverage) {
     
@@ -79,18 +81,25 @@ List get_sc(const NumericMatrix& X,
         vector<vector<pair<double, int>>> sortedMat(L);
         for (int i = 0; i < L; i++) {
             for (int j = 0; j < p; j++) {
-                sortedMat[i].emplace_back(mat(j, i), j);
+                if (mat(j, i) >= threshold) {
+                    sortedMat[i].emplace_back(mat(j, i), j); // Only include SNPs above threshold
+                }
             }
             sort(sortedMat[i].begin(), sortedMat[i].end(), greater<pair<double, int>>());
         }
 
         // For each column in alpha matrix
         for (int col = 0; col < L; col++) {
-            if (sortedMat[col].empty()) continue;
-            
-            // Skip if the null SNP is top in the column
-            int top_snp = sortedMat[col][0].second;
-            if(top_snp == p - 1 || top_snp < 0) continue;
+            int starting_idx = 0;
+
+            // If this is the last column and the null SNP is top, start from the second SNP
+            if (col == L-1 && sortedMat[col][0].second == p - 1) {
+                if (sortedMat[col].size() < 2) continue;
+                starting_idx = 1;
+            }
+
+            int top_snp = sortedMat[col][starting_idx].second;
+            if (top_snp < 0) continue;
 
             // Start with the top SNP
             std::vector<int> current_cluster = {top_snp};
@@ -113,7 +122,7 @@ List get_sc(const NumericMatrix& X,
                 cluster_done = true;
             } else {
                 // Add more SNPs if needed
-                for (size_t j = 1; j < p && j < sortedMat[col].size(); j++){
+                for (size_t j = starting_idx + 1; j < sortedMat[col].size(); j++){
                     int next_snp = sortedMat[col][j].second;
                     if (next_snp == p - 1 || next_snp < 0) continue;
 

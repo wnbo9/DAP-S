@@ -68,8 +68,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // get_sc
-List get_sc(const NumericMatrix& X, const NumericMatrix& mat, const NumericMatrix& cmfg_mat, const NumericVector& posterior_prob, const CharacterVector& col_names, double r2_threshold, double coverage);
-RcppExport SEXP _dap_get_sc(SEXP XSEXP, SEXP matSEXP, SEXP cmfg_matSEXP, SEXP posterior_probSEXP, SEXP col_namesSEXP, SEXP r2_thresholdSEXP, SEXP coverageSEXP) {
+List get_sc(const NumericMatrix& X, const NumericMatrix& mat, const NumericMatrix& cmfg_mat, const NumericVector& posterior_prob, const CharacterVector& col_names, double threshold, double r2_threshold, double coverage);
+RcppExport SEXP _dap_get_sc(SEXP XSEXP, SEXP matSEXP, SEXP cmfg_matSEXP, SEXP posterior_probSEXP, SEXP col_namesSEXP, SEXP thresholdSEXP, SEXP r2_thresholdSEXP, SEXP coverageSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -78,9 +78,10 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const NumericMatrix& >::type cmfg_mat(cmfg_matSEXP);
     Rcpp::traits::input_parameter< const NumericVector& >::type posterior_prob(posterior_probSEXP);
     Rcpp::traits::input_parameter< const CharacterVector& >::type col_names(col_namesSEXP);
+    Rcpp::traits::input_parameter< double >::type threshold(thresholdSEXP);
     Rcpp::traits::input_parameter< double >::type r2_threshold(r2_thresholdSEXP);
     Rcpp::traits::input_parameter< double >::type coverage(coverageSEXP);
-    rcpp_result_gen = Rcpp::wrap(get_sc(X, mat, cmfg_mat, posterior_prob, col_names, r2_threshold, coverage));
+    rcpp_result_gen = Rcpp::wrap(get_sc(X, mat, cmfg_mat, posterior_prob, col_names, threshold, r2_threshold, coverage));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -90,7 +91,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_dap_compute_log10_posterior", (DL_FUNC) &_dap_compute_log10_posterior, 5},
     {"_dap_dap_main", (DL_FUNC) &_dap_dap_main, 8},
     {"_dap_pir", (DL_FUNC) &_dap_pir, 2},
-    {"_dap_get_sc", (DL_FUNC) &_dap_get_sc, 7},
+    {"_dap_get_sc", (DL_FUNC) &_dap_get_sc, 8},
     {NULL, NULL, 0}
 };
 

@@ -39,7 +39,7 @@ dap(
 
 \item{r2_threshold}{Genotype R2 threshold for LD}
 
-\item{coverage}{Coverage of credible sets. When not set, it will output signal clusters; otherwise, it outputs credible sets at the specified coverage level}
+\item{coverage}{Coverage of credible sets. When not set, it outputs signal clusters; otherwise, it outputs credible sets at the specified coverage level}
 }
 \value{
 Fine mapping results
