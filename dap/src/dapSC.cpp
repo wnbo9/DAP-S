@@ -145,20 +145,14 @@ List get_sc(const NumericMatrix& X,
                         // Update MPS
                         for (size_t idx = 0; idx < models_without_snps.size();) {
                             int model_idx = models_without_snps[idx];
-                            if (cmfg_mat(model_idx, next_snp) == 1) {
-                                if (idx < models_without_snps.size() - 1) {
-                                    sum_prob_without -= posterior_prob[model_idx];
-                                    models_without_snps[idx] = models_without_snps.back();
-                                    models_without_snps.pop_back();
-                                } else {
-                                    sum_prob_without -= posterior_prob[model_idx];
-                                    models_without_snps.pop_back();
-                                }
+                            if (cmfg_mat(model_idx, next_snp) == 1) { // if the model contains the next SNP, remove it from models_without_snps
+                                sum_prob_without -= posterior_prob[model_idx];
+                                models_without_snps[idx] = models_without_snps.back();
+                                models_without_snps.pop_back();
                             } else {
-                                idx++;
+                                idx++; // go to the next model
                             }
                         }
-                        
                         mps = 1.0 - sum_prob_without;
 
                         if (coverage <= 1 && mps >= coverage) {
@@ -216,7 +210,7 @@ List get_sc(const NumericMatrix& X,
             Named("size") = cluster_sizes,
             Named("cluster_r2") = r2_stats,
             Named("r2_threshold") = r2_threshold,
-            Named("coverage") = coverage
+            Named("coverage") = String(coverage > 1 ? "signal cluster" : std::to_string(static_cast<int>(coverage * 100)) + "% credible set")
         );
         
     } catch (std::exception& e) {

@@ -51,10 +51,10 @@ y <- scale(y, scale = FALSE)
 # run susie
 rst1 <- susie(X, y, L = 10, max_iter = 1000, coverage = 0.95, null_weight = (1-1/p)^p)
 # run dap
-rst2 <- dap(X, y, L = 10, threshold = 1e-6, phi2 = 0.36, phi2_vec = c(0.36))
+rst2 <- dap(X, y)
 
 # comparison
-data_all <- data.frame(SuSiE = rst1$pip, DAP = rst2$pip)
+data_all <- data.frame(SuSiE = rst1$pip, DAP = rst2$variants$PIP[order(as.numeric(gsub("SNP_", "", rst2$variants$SNP)))])
 ggplot(data_all, aes(x = DAP, y = SuSiE)) +
   geom_abline(intercept = 0, slope = 1, color = "red", size = 0.5) +
   geom_point(size = 1) +

@@ -3,7 +3,7 @@
 using namespace Rcpp;
 using namespace std;
 
-NumericMatrix pir(NumericMatrix mat, double threshold);
+List pir(NumericMatrix mat, double threshold);
 List compute_log10_posterior(NumericMatrix X, NumericVector y, NumericMatrix binaryCombinations, NumericVector pi_vec, NumericVector phi2_vec);
 List get_sc(const NumericMatrix& X, const NumericMatrix& mat, const NumericMatrix& cmfg_mat, const NumericVector& posterior_prob, const CharacterVector& col_names, double threshold, double r2_threshold, double coverage);
 
@@ -46,7 +46,10 @@ List dap_main(NumericMatrix X,
 
     // PIR
     Rcpp::Rcout << "Pseudo Importance Resamping...\n";
-    NumericMatrix cmfg_mat = pir(matrix, threshold);
+    List results = pir(matrix, threshold);
+    List positionList = results["position_elements"];
+    NumericMatrix cmfg_mat = results["combinations"];
+
     int m_size = cmfg_mat.nrow();
 
     // Compute log10 posterior
@@ -79,7 +82,7 @@ List dap_main(NumericMatrix X,
             }
         }
     }
-    // Ensure PIPs are bounded between 0 and 1
+    // Ensure PIPs are bounded between 0 and 1 (numerical stability)
     for(int j = 0; j < p; j++) {
         if(pip[j] > 1.0) {
             pip[j] = 1.0;
@@ -127,6 +130,7 @@ List dap_main(NumericMatrix X,
         Named("log10_prior") = log10_prior,
         Named("log10_nc") = log_nc,
         Named("pip") = pip,
-        Named("signal_cluster") = sc_results
+        Named("signal_cluster") = sc_results,
+        Named("element_cluster") = positionList
     );
 }

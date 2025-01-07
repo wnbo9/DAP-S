@@ -12,7 +12,7 @@ using namespace std;
 //' @return A NumericMatrix containing the unique combinations
 //' @export
 // [[Rcpp::export]]
-NumericMatrix pir(NumericMatrix mat, double threshold) {
+List pir(NumericMatrix mat, double threshold) {
   int p = mat.nrow();
   int L = mat.ncol();
   double logThreshold = log10(threshold);
@@ -117,12 +117,33 @@ NumericMatrix pir(NumericMatrix mat, double threshold) {
     }
   }
 
+std::vector<std::set<int>> positionElements(L);
+  for (const auto &combination : Combinations) {
+    for (int col = 0; col < L; col++) {
+      if (combination[col] != -1) {
+        positionElements[col].insert(combination[col]);
+      }
+    }
+  }
+   List positionList(L);
+  for (int pos = 0; pos < L; pos++) {
+    IntegerVector colElements;
+    for (auto val : positionElements[pos]) {
+      colElements.push_back(val);
+    }
+    positionList[pos] = colElements;
+  }
+
 
   // Add null row and single entry rows
   for (int i = 0; i < (hasNull ? p-1 : p); i++) {
     vector<int> singleEntryRow(L, i);
     Combinations.insert(singleEntryRow);
   }
+
+
+  
+
 
   // Convert Combinations to resultMatrix with unique rows
   set<vector<int>> binaryCombinations;
@@ -145,5 +166,10 @@ NumericMatrix pir(NumericMatrix mat, double threshold) {
     }
     i++;
   }
-  return result; // m*p binary matrix of model configurations
+  
+  //return result; // m*p binary matrix of model configurations
+  return List::create(
+    Named("combinations") = result,
+    Named("position_elements") = positionList
+  );
 }

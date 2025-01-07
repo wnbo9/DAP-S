@@ -34,7 +34,7 @@ dap <- function(X, y,
   y <- scale(y, scale = FALSE)
   n <- length(y)
   p <- ncol(X)
-  if (is.null(colnames(X))) colnames(X) <- paste0("SNP_",1:p)
+  if (is.null(colnames(X))) colnames(X) <- paste0("SNP_", 1:p)
 
 
   ## Initialize parameters
@@ -112,5 +112,6 @@ dap <- function(X, y,
               variants = snp %>% arrange(desc(PIP)),
               models = result_df,
               sets = results$signal_cluster,
+              elements = results$element_cluster,
               params = params))
 }

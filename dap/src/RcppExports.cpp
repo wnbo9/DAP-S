@@ -56,7 +56,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // pir
-NumericMatrix pir(NumericMatrix mat, double threshold);
+List pir(NumericMatrix mat, double threshold);
 RcppExport SEXP _dap_pir(SEXP matSEXP, SEXP thresholdSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
