@@ -85,6 +85,26 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// dap_susie_main
+List dap_susie_main(NumericMatrix X, NumericVector y, NumericMatrix matrix, NumericVector prior_weights, double r2_threshold, double coverage, bool use_susie_variance_estimate, NumericVector phi2_vec, bool greedy, double pir_threshold);
+RcppExport SEXP _dap_dap_susie_main(SEXP XSEXP, SEXP ySEXP, SEXP matrixSEXP, SEXP prior_weightsSEXP, SEXP r2_thresholdSEXP, SEXP coverageSEXP, SEXP use_susie_variance_estimateSEXP, SEXP phi2_vecSEXP, SEXP greedySEXP, SEXP pir_thresholdSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type X(XSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type y(ySEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type matrix(matrixSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type prior_weights(prior_weightsSEXP);
+    Rcpp::traits::input_parameter< double >::type r2_threshold(r2_thresholdSEXP);
+    Rcpp::traits::input_parameter< double >::type coverage(coverageSEXP);
+    Rcpp::traits::input_parameter< bool >::type use_susie_variance_estimate(use_susie_variance_estimateSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type phi2_vec(phi2_vecSEXP);
+    Rcpp::traits::input_parameter< bool >::type greedy(greedySEXP);
+    Rcpp::traits::input_parameter< double >::type pir_threshold(pir_thresholdSEXP);
+    rcpp_result_gen = Rcpp::wrap(dap_susie_main(X, y, matrix, prior_weights, r2_threshold, coverage, use_susie_variance_estimate, phi2_vec, greedy, pir_threshold));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_dap_compute_log10_prior", (DL_FUNC) &_dap_compute_log10_prior, 2},
@@ -92,6 +112,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_dap_dap_main", (DL_FUNC) &_dap_dap_main, 8},
     {"_dap_pir", (DL_FUNC) &_dap_pir, 2},
     {"_dap_get_sc", (DL_FUNC) &_dap_get_sc, 8},
+    {"_dap_dap_susie_main", (DL_FUNC) &_dap_dap_susie_main, 10},
     {NULL, NULL, 0}
 };
 

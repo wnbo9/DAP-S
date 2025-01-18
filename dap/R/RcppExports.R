@@ -49,7 +49,7 @@ dap_main <- function(X, y, matrix, threshold, prior_weights, phi2_vec, r2_thresh
 }
 
 #' Find all model combinations that have a proposal density greater than or equal to a threshold
-#' @param mat A p x L matrix of proposal densities from SuSiE
+#' @param mat A processed p x l matrix of proposal densities from SuSiE
 #' @param threshold The threshold value of the proposal density
 #' @return A NumericMatrix containing the unique combinations
 #' @export
@@ -95,5 +95,33 @@ NULL
 #' @export
 get_sc <- function(X, mat, cmfg_mat, posterior_prob, col_names, threshold, r2_threshold, coverage) {
     .Call(`_dap_get_sc`, X, mat, cmfg_mat, posterior_prob, col_names, threshold, r2_threshold, coverage)
+}
+
+#' Implementation of DAP-S algorithm in C++ with default SuSiE settings
+#' 
+#' Performs fine mapping using DAP-S algorithm
+#'
+#' @param X Genotype matrix
+#' @param y Phenotype vector
+#' @param matrix Proposal density matrix from SuSiE
+#' @param prior_weights Vector of prior probabilities
+#' @param r2_threshold Threshold for LD
+#' @param coverage Coverage for credible set
+#' @param use_susie_variance_estimate Use SuSiE variance estimate
+#' @param phi2_vec Vector of scaled prior effect size variances
+#' @param greedy Use greedy algorithm
+#' @param pir_threshold Threshold for PIR
+#'
+#' @return A list containing:
+#' \itemize{
+#'   \item model_config - Model configurations
+#'   \item posterior_prob - Posterior probabilities
+#'   \item log10_posterior_score - Log10 posterior scores
+#'   \item log10_nc - Log10 normalizing constant
+#'   \item pip - Posterior inclusion probabilities
+#' }
+#' @export
+dap_susie_main <- function(X, y, matrix, prior_weights, r2_threshold, coverage, use_susie_variance_estimate, phi2_vec, greedy, pir_threshold) {
+    .Call(`_dap_dap_susie_main`, X, y, matrix, prior_weights, r2_threshold, coverage, use_susie_variance_estimate, phi2_vec, greedy, pir_threshold)
 }
 

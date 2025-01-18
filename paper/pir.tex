@@ -35,7 +35,7 @@
 
 \begin{document}
 
-\title[Article Title]{DAP-PIR: Efficient Genetic Association Analysis through Pseudo Importance Resampling}
+\title[Article Title]{DAP-S: An Improved Variable Selection Approach for Probabilistic Fine-mapping Analysis}
 
 \author[1]{\fnm{Bo} \sur{Wang}}\email{wnbo@umich.edu}
 
@@ -43,10 +43,10 @@
 
 \affil[1]{\orgdiv{Department of Biostatistics}, \orgname{University of Michigan}, \orgaddress{\city{Ann Arbor}, \state{MI} \postcode{48109}, \country{USA}}}
 
-\abstract{In genome-wide association studies (GWAS), identifying causal variants from numerous genetic variants remains a fundamental challenge due to linkage disequilibrium between variants. Current genetic fine-mapping methods face multiple limitations: computational inefficiency, poor calibration of posterior probabilities, and inability to effectively incorporate functional genomic annotations. To address these challenges, we introduce DAP-PIR, a novel method that combines Deterministic Approximation of Posteriors (DAP) with Pseudo-Importance Resampling (PIR). DAP-PIR leverages variational approximation to efficiently identify a subset of high-probability causal variant combinations, while maintaining posterior estimation accuracy and substantially reducing computational costs. Through extensive simulations across diverse genetic architectures, we demonstrate that DAP-PIR achieves superior posterior probability estimation and better calibrated results compared to existing methods, including SuSiE and traditional MCMC-based fine-mapping approaches. Application to real GWAS datasets also demonstrates that DAP-PIR effectively identifies candidate causal variants while maintaining computational tractability in large-scale analyses. Key advantages of DAP-PIR include its computational efficiency, ability to dynamically update functional genomic annotations, and seamless integration with colocalization analyses. The method is implemented as an open-source R package, facilitating its adoption in genetic studies. Our results establish DAP-PIR as a robust and efficient tool for fine-mapping genetic associations, particularly valuable for modern genomic studies requiring both computational efficiency and statistical rigor.}
+\abstract{Probabilistic multi-SNP fine-mapping has become ubiquitous in genetic association studies. However, accurately identifying causal genetic variants in the presence of complex linkage disequilibrium (LD) remains a significant challenge. Existing computational methods, such as FINEMAP, DAP, and SuSiE, face limitations in computational efficiency, posterior probability calibration, and the ability to incorporate rapidly evolving functional genomic annotations. To address these challenges, we introduce \textbf{DAP-S}, a novel Bayesian probabilistic approach that performs a deterministic approximation of posteriors using pseudo-importance resampling of SuSiE regression results. DAP-S combines the computational efficiency of the SuSiE algorithm with several unique advantages: (1) \textbf{Interpretability}: It operates under the traditional Bayesian variable selection (BVS) model, which is more convenient to interpret than the SuSiE model. (2) \textbf{Model-level insights}: In addition to variant-level posterior inclusion probabilities (PIPs), DAP-S provides probabilistic assessments for noteworthy association models (i.e., combinations of causal SNPs), which are critical for downstream applications such as transcriptome-wide association studies (TWAS) or haplotype analysis. (3) \textbf{Flexible credible sets}: By extending the concept of signal clusters, DAP-S identifies association signals of varying strengths, enabling the construction of credible sets with arbitrary coverage probabilities. (4) \textbf{Dynamic priors}: The implementation of DAP-S allows for efficient updates of PIPs based on updated variant-level priors without requiring a complete re-run of the fine-mapping analysis. Through extensive simulations across diverse genetic architectures, we demonstrate that DAP-S produces more accurate and calibrated PIPs compared to existing methods. We also apply DAP-S to fine-map GTEx eQTL data across 48 tissues, showcasing its computational efficiency in large-scale analyses. Furthermore, we demonstrate that DAP-S outputs can be seamlessly integrated into and improve downstream TWAS and colocalization analyses.}
 
 
-\keywords{Genetic fine mapping, variable selection, importance sampling, variational inference}
+\keywords{Genetic fine-mapping, variable selection, variational inference, importance sampling}
 
 \maketitle
 
@@ -57,36 +57,36 @@ Genome-wide association studies (GWAS) have successfully uncovered thousands of 
 
 To address this challenge, Bayesian variable selection regression (BVSR) methods are widely employed to account for the uncertainty in identifying candidate causal variants. Traditional methods like CAVIAR rely on exhaustive searches \cite{hormozdiari2014identifying}, while DAP-G employs a boosting approach to prioritize variants, which, although effective, can sometimes be slow in practice \cite{wen2016efficient, lee2018bayesian}. Alternatively, the SuSiE method offers an efficient, variational approach to prioritize SNPs based on posterior inclusion probabilities (PIP) \cite{wang2020simple}. However, SuSiE can occasionally experience accuracy issues with PIP, particularly in complex LD structures.
 
-Here, we propose DAP-PIR, which combines the strengths of both DAP and SuSiE to achieve efficient and accurate deterministic approximation of posteriors. By leveraging SuSiE's variational approximation results, DAP-PIR efficiently prioritizes models for deterministic posterior estimation. This approach ensures computational efficiency while providing a robust solution to fine mapping challenges in GWAS. Through both simulations and real data applications, we demonstrate DAP-PIR’s advantages over existing methods in terms of both speed and accuracy, making it an effective tool for fine mapping causal variants in GWAS.
+Here, we propose DAP-S, which combines the strengths of both DAP and SuSiE to achieve efficient and accurate deterministic approximation of posteriors. By leveraging SuSiE's variational approximation results, DAP-S efficiently prioritizes models for deterministic posterior estimation. This approach ensures computational efficiency while providing a robust solution to fine mapping challenges in GWAS. Through both simulations and real data applications, we demonstrate DAP-S’s advantages over existing methods in terms of both speed and accuracy, making it an effective tool for fine mapping causal variants in GWAS.
 
 
 
 \section{Results}\label{sec2}
-\subsection{Overview of the DAP-PIR algorithm}\label{subsec1}
-The DAP-PIR algorithm uses two steps to efficiently approximate the posteiror distributions both at the variant-level and cluster-level. In the first step, the algorithm utilizes the variational approximation of the posterior distribution in a lower dimensional space as the proposal distribution in the importance sampling. Then, the algorithm employs the pseudo importance resampling (PIR) to further reduce the sample space and avoiding the need to draw random samples, instead focus on the high-probability regions. In the second step, the algorithm conduct the deterministic approximation of posteriors (DAP) by calculating the posterior inclusion probabilities (PIPs) for each high-probability model obtained in the first step by marginalizing over the priror. The DAP-PIR algorithm outputs the PIP of each variant by marginalizing the posterior model probability, and also provides level-$\rho$ credible sets, which is a subset of variants that has a specific probability of containing at least one causal variants.
+\subsection{Overview of the DAP-S algorithm}\label{subsec1}
+The DAP-S algorithm uses two steps to efficiently approximate the posteiror distributions both at the variant-level and cluster-level. In the first step, the algorithm utilizes the variational approximation of the posterior distribution in a lower dimensional space as the proposal distribution in the importance sampling. Then, the algorithm employs the pseudo importance resampling (PIR) to further reduce the sample space and avoiding the need to draw random samples, instead focus on the high-probability regions. In the second step, the algorithm conduct the deterministic approximation of posteriors (DAP) by calculating the posterior inclusion probabilities (PIPs) for each high-probability model obtained in the first step by marginalizing over the priror. The DAP-S algorithm outputs the PIP of each variant by marginalizing the posterior model probability, and also provides level-$\rho$ credible sets, which is a subset of variants that has a specific probability of containing at least one causal variants.
 
 
 
 
 
 \subsection{Simulation studies}\label{subsec3}
-\subsubsection*{Accuracy of the DAP-PIR algorithm}
-To demonstrate the accuracy and efficiency of the DAP-PIR algorithm, we compare its posterior approxmiations to those obtained through exact calculations. We focus on a scenario with $p=10$ \textit{cis}-SNPs to reduce the computational burden of exact posterior calculations. We simulate genotypes from a standard normal distribution, and randomly select one to five variants as causal variants. Phenotypes are simulated by adding random noise to the genetic effects. For each configuration of causal variants, we simulate 1,000 times. Using these 5,000 generated datasets, we evaluate the performance of the DAP-PIR algorithm alongside exact posterior calculations and results from the DAP-G algorithm, employing the same prior specifications for all methods. The SuSiE algorithm is also included to assess its posterior approximations. For the DAP-PIR algorithm, we use a threshold value $\lambda=10^{-6}$.
+\subsubsection*{Accuracy of the DAP-S algorithm}
+To demonstrate the accuracy and efficiency of the DAP-S algorithm, we compare its posterior approxmiations to those obtained through exact calculations. We focus on a scenario with $p=10$ \textit{cis}-SNPs to reduce the computational burden of exact posterior calculations. We simulate genotypes from a standard normal distribution, and randomly select one to five variants as causal variants. Phenotypes are simulated by adding random noise to the genetic effects. For each configuration of causal variants, we simulate 1,000 times. Using these 5,000 generated datasets, we evaluate the performance of the DAP-S algorithm alongside exact posterior calculations and results from the DAP-G algorithm, employing the same prior specifications for all methods. The SuSiE algorithm is also included to assess its posterior approximations. For the DAP-S algorithm, we use a threshold value $\lambda=10^{-6}$.
 
-We begin by exmaining the ratio of the estimated normalizing constant $C^*$ (calculated by DAP-PIR and DAP-G) to the true normalizing constant $C$ derived from exact calculations. A ratio $C^*/C$ close to 1 indicates better exploration of the model space. As shown in Table \ref{tab:comparison}, the DAP-PIR algorithm consistently achieves a high $C^*/C$ ratio across varying numbers of causal variants. This highlights its ability to efficiently identify high-probability regions of the model space and provide a more accurate estimate of the normalizing constant compared to DAP-G.
+We begin by exmaining the ratio of the estimated normalizing constant $C^*$ (calculated by DAP-S and DAP-G) to the true normalizing constant $C$ derived from exact calculations. A ratio $C^*/C$ close to 1 indicates better exploration of the model space. As shown in Table \ref{tab:comparison}, the DAP-S algorithm consistently achieves a high $C^*/C$ ratio across varying numbers of causal variants. This highlights its ability to efficiently identify high-probability regions of the model space and provide a more accurate estimate of the normalizing constant compared to DAP-G.
 
-A key factor contributing to DAP-PIR's performance is its ability to explore more models than DAP-G, whcih naturally results in a higher $C^*/C$ ratio. Importantly, the small Root Mean Squared Error (RMSE) of DAP-PIR's PIPs confirms that it focuses effectively on the high-probability regions of the model space when including more models than DAP-G. Notably, although exploring more models than DAP-G, DAP-PIR still investigates far fewer models than the total $2^{10}=1,024$ models required for exact calculations. This demonstrates that by focusing on high-probability regions, the DAP-PIR algorithm achieves accurate posterior approximations while remaining computationally efficient, particularly as $p$ increases.
+A key factor contributing to DAP-S's performance is its ability to explore more models than DAP-G, whcih naturally results in a higher $C^*/C$ ratio. Importantly, the small Root Mean Squared Error (RMSE) of DAP-S's PIPs confirms that it focuses effectively on the high-probability regions of the model space when including more models than DAP-G. Notably, although exploring more models than DAP-G, DAP-S still investigates far fewer models than the total $2^{10}=1,024$ models required for exact calculations. This demonstrates that by focusing on high-probability regions, the DAP-S algorithm achieves accurate posterior approximations while remaining computationally efficient, particularly as $p$ increases.
 
-Additionally, the RMSE of the PIPs from the DAP-PIR algorithm is smaller than that of both the DAP-G and SuSiE algorithms, demonstrating better posterior approxiamtion. The PIP comparison plot (Figure \ref{fig:comparison}) further confirms that the DAP-PIR algorithm yields more accurate variant PIP estimates than the other methods.
+Additionally, the RMSE of the PIPs from the DAP-S algorithm is smaller than that of both the DAP-G and SuSiE algorithms, demonstrating better posterior approxiamtion. The PIP comparison plot (Figure \ref{fig:comparison}) further confirms that the DAP-S algorithm yields more accurate variant PIP estimates than the other methods.
 
 
 \begin{table}[h]
-    \caption{Comparison of the performance metrics for DAP-PIR, DAP-G, and SuSiE across varying number of causal variants ($S$). Metrics include the mean ratio of the estiamted normalizing constant ($C^*$) to the true constant ($C$), the median number of models explored, and the RMSE of the PIPs. A higher $C^*/C$ ratio and lower RMSE indicate better performance.}\label{tab:comparison}
+    \caption{Comparison of the performance metrics for DAP-S, DAP-G, and SuSiE across varying number of causal variants ($S$). Metrics include the mean ratio of the estiamted normalizing constant ($C^*$) to the true constant ($C$), the median number of models explored, and the RMSE of the PIPs. A higher $C^*/C$ ratio and lower RMSE indicate better performance.}\label{tab:comparison}
     \begin{tabular*}{\textwidth}{@{\extracolsep\fill}c*{7}{c}}
     \toprule
     & \multicolumn{2}{@{}c@{}}{Mean of $C^*/C$} & \multicolumn{2}{@{}c@{}}{Median Model Numbers} & \multicolumn{3}{@{}c@{}}{RMSE of approximate PIP} \\
     \cmidrule(r){2-3} \cmidrule(r){4-5} \cmidrule(r){6-8}
-    $S$ & DAP-G & DAP-PIR & DAP-G & DAP-PIR & DAP-G & DAP-PIR & SuSiE \\
+    $S$ & DAP-G & DAP-S & DAP-G & DAP-S & DAP-G & DAP-S & SuSiE \\
     \midrule
     1 & $0.922$ & $0.999$ & 13 & 114 & $8.05 \times 10^{-3}$ & $3.93 \times 10^{-5}$ & $1.42 \times 10^{-1}$ \\
     2 & $0.913$ & $0.999$ & 14 & 101 & $9.01 \times 10^{-3}$ & $4.44 \times 10^{-5}$ & $1.12 \times 10^{-1}$ \\
@@ -101,20 +101,20 @@ Additionally, the RMSE of the PIPs from the DAP-PIR algorithm is smaller than th
 \begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{files/plot_pip_normal.pdf}
-    \caption{Comparison of PIPs obtained using DAP-PIR, DAP-G, SuSiE against exact calculations for scenarios with one to five causal variants. The plots illustrate the accuracy of each method in estimating the PIP of each variant, while exact calculations are considered the ground truth.}
+    \caption{Comparison of PIPs obtained using DAP-S, DAP-G, SuSiE against exact calculations for scenarios with one to five causal variants. The plots illustrate the accuracy of each method in estimating the PIP of each variant, while exact calculations are considered the ground truth.}
     \label{fig:comparison}
 \end{figure}
 
 
 
 \subsubsection*{Power comparions of fine mapping algorithms}
-We conduct several simulation studies to show the accuracy and efficiency of the DAP-PIR algorithm. Comparing the (1) power; (2) coverage; (3) PIP calibration; (4) computational efficiency among fine mapping methods.
+We conduct several simulation studies to show the accuracy and efficiency of the DAP-S algorithm. Comparing the (1) power; (2) coverage; (3) PIP calibration; (4) computational efficiency among fine mapping methods.
 
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.8\textwidth]{files/plot_power.pdf}
-    \caption{Power versus FDR curves of results from the DAP-PIR, DAP-G, and SuSiE algorithms across all simulations. The plot is obtained by varying the PIP threshold, where the circle represents the threshold of 0.95. FDR is calculated as FP/(FP+TP), where FP and TP represent the number of false positives and true positives. The power is defined as TP/(TP+FN), where FN denotes the number of false negatives.}
+    \caption{Power versus FDR curves of results from the DAP-S, DAP-G, and SuSiE algorithms across all simulations. The plot is obtained by varying the PIP threshold, where the circle represents the threshold of 0.95. FDR is calculated as FP/(FP+TP), where FP and TP represent the number of false positives and true positives. The power is defined as TP/(TP+FN), where FN denotes the number of false negatives.}
     \label{fig:power}
 \end{figure}
 
@@ -157,7 +157,7 @@ We conduct several simulation studies to show the accuracy and efficiency of the
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\textwidth]{files/plot_ratio.pdf}
-    \caption{Comparison of (a) median number of explored models in DAP-G and DAP-PIR; (b) mean ratio of normalizing constant estimated by DAP-PIR over DAP-G (DAP-PIR obtains a normalizing constant at least 10\% larger than DAP-G in 74.66\% simulations).}
+    \caption{Comparison of (a) median number of explored models in DAP-G and DAP-S; (b) mean ratio of normalizing constant estimated by DAP-S over DAP-G (DAP-S obtains a normalizing constant at least 10\% larger than DAP-G in 74.66\% simulations).}
     \label{fig:ratio}
 \end{figure}
 
@@ -279,20 +279,35 @@ Under the $D_2$ prior, the prior distribution for $\tau$ is given by:
 $$\tau \sim \Gamma\left(\kappa/2, \lambda/2\right),$$
 where the limiting form of the prior is obtained as $\kappa,\lambda \rightarrow 0$. And we assign a spike-and-slab prior for the effect size $\beta_j$:
 $$\beta_j \mid \gamma_j \sim (1-\gamma_j)\delta_0 + \gamma_j N\left(0, \phi^2/\tau\right),$$
+$$\boldsymbol{\beta} \sim N(0, \phi^2/\tau I),$$
 where $\delta_0$ refers to Dirac's delta function, and $\phi^2$ is the prior variance of the effect size of the causal variant. In the computation of the Bayes factor, we use $\phi^2=0.6^2$. For a specific value of $\phi^2$ and a model configuration $\boldsymbol{\gamma}=\left(\gamma_1,\cdots,\gamma_{p}\right)$, the limiting of the Bayes factor is calculated by:
-\begin{equation}
-    \lim _{\substack{\kappa \rightarrow 0 \\ \lambda \rightarrow 0}} \operatorname{BF}(\boldsymbol{\gamma})= \frac{1}{|\phi^{-2}I + \mathbf{X}^T\mathbf{X}|^{1 / 2}}  \frac{1}{\phi} \left[\frac{\mathbf{y}^T\left(I-\mathbf{X}\left(\phi^{-2}I+\mathbf{X}^T \mathbf{X}\right)^{-1} \mathbf{X}^T\right) \mathbf{y}}{\mathbf{y}^T \mathbf{y}}\right]^{-n / 2},
-\end{equation}
+\begin{align}
+    \lim _{\substack{\kappa \rightarrow 0 \\ \lambda \rightarrow 0}} \operatorname{BF}(\boldsymbol{\gamma}) &= \frac{n^{1/2}}{|\phi^{-2}I + \mathbf{X}^T\mathbf{X}|^{1 / 2}}  \frac{1}{\phi^{|\boldsymbol{\gamma}|}} \left[\frac{\mathbf{y}^T\left(I-\mathbf{X}\left(\phi^{-2}I+\mathbf{X}^T \mathbf{X}\right)^{-1} \mathbf{X}^T\right) \mathbf{y}}{\mathbf{y}^T \mathbf{y}}\right]^{-n / 2} \\
+    &=  \frac{n^{1/2}}{|I + \phi^2\mathbf{X}^T\mathbf{X}|^{1 / 2}}   \left[1- \frac{\mathbf{y}^T\mathbf{X}\left(\phi^{-2}I+\mathbf{X}^T \mathbf{X}\right)^{-1} \mathbf{X}^T \mathbf{y}}{\mathbf{y}^T \mathbf{y}}\right]^{-n / 2},
+\end{align}
 where $\mathbf{X}$ represents genotypes indicated by non-zero entry in $\boldsymbol{\gamma}$. We can also use a grid of values for the prior variance of the effect size to capture a spectrum of effect sizes, which is particularly useful when the true effect size is unknown, and the Bayes factor can be calculated by averaging over the grid of values.
 
 
+We can also calculate the Bayes factor using a varying prior variance for $\boldsymbol{\beta}$: $$\boldsymbol{\beta} \sim N(0, \mathbf{V}/\tau), \mathbf{V} = \operatorname{diag}(\phi^2_1,...,\phi^2_q).$$
+Then we have:
+\begin{align}
+    \lim _{\substack{\kappa \rightarrow 0 \\ \lambda \rightarrow 0}} \operatorname{BF}(\boldsymbol{\gamma}) &= \frac{n^{1/2}}{|\mathbf{V}^{-1} + \mathbf{X}^T\mathbf{X}|^{1 / 2}} \frac{1}{\phi_1*\cdots*\phi_q} \left[\frac{\mathbf{y}^T\left(I-\mathbf{X}\left(\mathbf{V}^{-1}+\mathbf{X}^T \mathbf{X}\right)^{-1} \mathbf{X}^T\right) \mathbf{y}}{\mathbf{y}^T \mathbf{y}}\right]^{-n / 2} \\
+    &=  \frac{n^{1/2}}{|I + \mathbf{V}\mathbf{X}^T\mathbf{X}|^{1 / 2}}   \left[1- \frac{\mathbf{y}^T\mathbf{X}\left(\mathbf{V}^{-1}+\mathbf{X}^T \mathbf{X}\right)^{-1} \mathbf{X}^T \mathbf{y}}{\mathbf{y}^T \mathbf{y}}\right]^{-n / 2}.
+\end{align}
 
-\subsection{Posterior inference of the DAP-PIR algorithm}
+
+
+
+
+\subsection{Posterior inference of the DAP-S algorithm}
 \subsubsection{Calculation of variant-level PIPs}
 The posterior inclusion probability (PIP) for each variant is then calculated by marginalizing the posterior probabilities across all model configurations:
 \begin{equation}
     \operatorname{PIP}_j:=\operatorname{Pr}\left(\gamma_j=1 \mid \mathbf{G},\mathbf{y}\right)=\sum_{\boldsymbol{\gamma}':\gamma_j=1} p(\boldsymbol{\gamma}=\boldsymbol{\gamma}' \mid \mathbf{G},\mathbf{y}).
 \end{equation}
+
+
+
 
 \subsubsection{Procedure to constuct signal clusters}
 We propose a procedure to construct signal clusters from multiple single-effects detected by SuSiE and calculate signal-level PIPs, as detailed in Algorithm \ref{signal_clusters}. This procedure requires genotype data $\mathbf{X}$, a genotype $R^2$ threshold $\tau$, and SuSiE results as input. Alternatively, genotype data can be replaced with the LD information $\mathbf{R}$. From the SuSiE results, we use only the vector of posterior probabilities $\boldsymbol{\alpha}_l$. Additionally, we define a function $\operatorname{get\_r2}\left(s,\mathcal{Q}\right)$ to compute the pairwise genotype $R^2$ between a variant $s$ and all elements in the set $\mathcal{Q}$.
@@ -343,11 +358,27 @@ To put it more explicitly, for current subset $\Omega_0$, we can divide all mode
 
 The signal-level PIP is also the maximum of the posterior probabilities of the level-$\rho$ credible sets: we can only recover at most the level-$\rho$ credible set with $\rho \leq \operatorname{SPIP}_{C}$ from the signal cluster $C$.
 
+\subsubsection{DAP-S with summary statistics}
+The following cases are under the situation where the $\mathbf{G}, \mathbf{y}$ are only centered and not standardized:
+
+(1) DAP-S: individual-level data: $\mathbf{G}, \mathbf{y}$, we can directly run DAP-S to do the fine-mapping.
+
+(2) DAP-S\_suff\_stat: sufficient statistics: $\mathbf{G}^T\mathbf{G}, \mathbf{G}^T\mathbf{y}, \mathbf{y}^T\mathbf{y}, n$ to get the same results;
+
+(3) DAP-S\_rss: summary statistics: $\hat{b}, \hat{s}, \mathbf{R}, \mathbf{y}^T\mathbf{y}, n$ or $\hat{z}, \mathbf{R}, \mathbf{y}^T\mathbf{y}, n$, where $\mathbf{R}$ is the in-sample LD matrix, $\hat{b}$ is the effect size estimate, and $\hat{s}$ is the standard error of the effect size estimate. These data can be used to first compute $\mathbf{G^TG}, \mathbf{G^Ty}$, and then recover those sufficient statistics $\mathbf{G^TG}, \mathbf{G^Ty}, \mathbf{y^Ty}, n$. $\operatorname{var}(\mathbf{y})$ can replace $\mathbf{y}^T\mathbf{y}$ because $\operatorname{var}(\mathbf{y}) = \mathbf{y}^T\mathbf{y}/(n-1)$.
+
+(4) DAP-S\_rss: when in-sample LD matrix is not available, we have $\hat{b}, \hat{s}, \hat{\mathbf{R}}, \mathbf{y}^T\mathbf{y}, n$, or $\hat{z}, \hat{\mathbf{R}}, \mathbf{y}^T\mathbf{y}, n$. These data can be used to first estimate $\mathbf{G^TG}$ and compute $\mathbf{G^Ty}$, and then recover those sufficient statistics $\mathbf{G^TG}, \mathbf{G^Ty}, \mathbf{y^Ty}, n$. If $yty$ is not provided, we work on the standardized data.
+
+
+
+
+
+
 
 
 \subsection{Simulations}\label{subsec2}
 \subsubsection{Simulation with normal distribution}
-To evaluate the performance of DAP-PIR, we conduct a simulation study with a normal distribution for the genotype data. Specifically, we consider a scenario with $n=500$ individuals and $p=10$ SNPs to relive the computational burden of exact computation of the posterior. Each SNP $g_{ij}$ is generated independently from a standard normal distribution. We randomly select one to five variants and specify them as causal variants with the setting:
+To evaluate the performance of DAP-S, we conduct a simulation study with a normal distribution for the genotype data. Specifically, we consider a scenario with $n=500$ individuals and $p=10$ SNPs to relive the computational burden of exact computation of the posterior. Each SNP $g_{ij}$ is generated independently from a standard normal distribution. We randomly select one to five variants and specify them as causal variants with the setting:
 \begin{align}
     g_{ij} &\sim \operatorname{N}\left(0,1\right),\\
     y_i &= \sum_{j=1}^{10} \beta_j g_{ij}  + \epsilon_i,\\

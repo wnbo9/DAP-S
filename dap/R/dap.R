@@ -1,4 +1,4 @@
-#' DAP fine mapping
+#' DAP-S fine-mapping with individual-level data. The parameters are specified by user.
 #' @param X Genotype data
 #' @param y Phenotype data
 #' @param L Number of causal variants
@@ -24,7 +24,7 @@ dap <- function(X, y,
                 residual_tau = NULL,
                 threshold = 1e-6,
                 phi2 = 0.36,
-                phi2_vec = NULL,
+                phi2_vec = c(0.04, 0.16, 0.64),
                 r2_threshold = 0.25,
                 coverage = NULL) {
 
@@ -40,7 +40,6 @@ dap <- function(X, y,
   ## Initialize parameters
   if (is.null(null_weight)) null_weight <- (1-1/p)^p
   if (is.null(prior_weights)) prior_weights <- rep(1/p, p)
-  if (is.null(phi2_vec)) phi2_vec <- c(0.04, 0.16, 0.64)
   if (is.null(residual_tau)) residual_tau <- 1/var(y)
   if (is.null(coverage)) coverage <- 10
 

@@ -7,7 +7,7 @@
 pir(mat, threshold)
 }
 \arguments{
-\item{mat}{A p x L matrix of proposal densities from SuSiE}
+\item{mat}{A processed p x l matrix of proposal densities from SuSiE}
 
 \item{threshold}{The threshold value of the proposal density}
 }

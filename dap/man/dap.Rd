@@ -2,7 +2,7 @@
 % Please edit documentation in R/dap.R
 \name{dap}
 \alias{dap}
-\title{DAP fine mapping}
+\title{DAP-S fine-mapping with individual-level data. The parameters are specified by user.}
 \usage{
 dap(
   X,
@@ -13,7 +13,7 @@ dap(
   residual_tau = NULL,
   threshold = 1e-06,
   phi2 = 0.36,
-  phi2_vec = NULL,
+  phi2_vec = c(0.04, 0.16, 0.64),
   r2_threshold = 0.25,
   coverage = NULL
 )
@@ -45,5 +45,5 @@ dap(
 Fine mapping results
 }
 \description{
-DAP fine mapping
+DAP-S fine-mapping with individual-level data. The parameters are specified by user.
 }

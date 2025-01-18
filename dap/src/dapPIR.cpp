@@ -7,7 +7,7 @@ using namespace Rcpp;
 using namespace std;
 
 //' Find all model combinations that have a proposal density greater than or equal to a threshold
-//' @param mat A p x L matrix of proposal densities from SuSiE
+//' @param mat A processed p x l matrix of proposal densities from SuSiE
 //' @param threshold The threshold value of the proposal density
 //' @return A NumericMatrix containing the unique combinations
 //' @export
@@ -18,11 +18,15 @@ List pir(NumericMatrix mat, double threshold) {
   double logThreshold = log10(threshold);
 
   // open output file
-  // Take log10 of the matrix, and add a row of -9999 to avoid out of bound error
+  // Take log10 of the matrix, replace 0 with 10^-999 and add a row of -9999 to avoid out of bound error
   NumericMatrix logMat(p+1, L);
   for (int i = 0; i < p; i++) {
     for (int j = 0; j < L; j++) {
-      logMat(i, j) = log10(mat(i, j));
+      if (mat(i, j) == 0) {
+        logMat(i, j) = -999;
+      } else {
+        logMat(i, j) = log10(mat(i, j));
+      }
     }
   }
   for (int j = 0; j < L; j++) {

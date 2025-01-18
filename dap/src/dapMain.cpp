@@ -40,7 +40,6 @@ List dap_main(NumericMatrix X,
               double coverage) {
 
     // Get the number of rows and columns
-    int n = X.nrow();
     int p = X.ncol();
     CharacterVector col_names = colnames(X);
 
