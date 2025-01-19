@@ -133,5 +133,6 @@ dap_susie <- function(X, y, L = min(10, ncol(X)),
 process_matrix <- function(mat) {
   ranks <- Rfast::colRanks(mat, descending = TRUE)   # returns matrix with ranks by columns
   mask <- ranks == Rfast::rowMins(ranks, value = TRUE)
+  mask <- col(mask) == apply(mask, 1, which.max)
   return(mat * mask)
 }
