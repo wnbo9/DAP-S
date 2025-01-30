@@ -6,8 +6,8 @@
 \usage{
 get_sc(
   X,
-  mat,
-  cmfg_mat,
+  combo,
+  single,
   posterior_prob,
   col_names,
   threshold,
@@ -18,9 +18,9 @@ get_sc(
 \arguments{
 \item{X}{NumericMatrix containing the raw data}
 
-\item{mat}{NumericMatrix containing the alpha matrix}
+\item{combo}{NumericMatrix containing the model configurations}
 
-\item{cmfg_mat}{NumericMatrix containing the CMFG matrix}
+\item{single}{NumericMatrix containing the single SNP models}
 
 \item{posterior_prob}{NumericVector of posterior probabilities}
 

@@ -2,17 +2,18 @@
 % Please edit documentation in R/RcppExports.R
 \name{dap_main}
 \alias{dap_main}
-\title{Implementation of DAP-PIR algorithm in C++}
+\title{Implementation of DAP-S algorithm in C++ with default SuSiE settings}
 \usage{
 dap_main(
   X,
   y,
   matrix,
-  threshold,
   prior_weights,
-  phi2_vec,
   r2_threshold,
-  coverage
+  coverage,
+  phi2_mat,
+  exclusive,
+  pir_threshold
 )
 }
 \arguments{
@@ -22,15 +23,17 @@ dap_main(
 
 \item{matrix}{Proposal density matrix from SuSiE}
 
-\item{threshold}{Threshold for proposal density}
-
 \item{prior_weights}{Vector of prior probabilities}
-
-\item{phi2_vec}{Vector of scaled prior effect size variances}
 
 \item{r2_threshold}{Threshold for LD}
 
 \item{coverage}{Coverage for credible set}
+
+\item{phi2_mat}{Matrix of scaled prior effect size variances}
+
+\item{exclusive}{If TRUE. enforce mutually exclusive clusters}
+
+\item{pir_threshold}{Threshold for PIR}
 }
 \value{
 A list containing:
@@ -40,8 +43,9 @@ A list containing:
   \item log10_posterior_score - Log10 posterior scores
   \item log10_nc - Log10 normalizing constant
   \item pip - Posterior inclusion probabilities
+  \item signal_cluster - Signal clusters
 }
 }
 \description{
-Performs fine mapping using DAP-PIR algorithm
+Performs fine mapping using DAP-S algorithm
 }

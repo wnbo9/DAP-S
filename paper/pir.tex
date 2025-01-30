@@ -1,5 +1,3 @@
-%%\documentclass[pdflatex,sn-nature]{sn-jnl}% Style for submissions to Nature Portfolio journals
-%%\documentclass[pdflatex,sn-basic]{sn-jnl}% Basic Springer Nature Reference Style/Chemistry Reference Style
 \documentclass[pdflatex,sn-mathphys-num]{sn-jnl}% Math and Physical Sciences Numbered Reference Style 
 %%\documentclass[pdflatex,sn-mathphys-ay]{sn-jnl}% Math and Physical Sciences Author Year Reference Style
 %%\documentclass[pdflatex,sn-aps]{sn-jnl}% American Physical Society (APS) Reference Style
@@ -358,6 +356,12 @@ To put it more explicitly, for current subset $\Omega_0$, we can divide all mode
 
 The signal-level PIP is also the maximum of the posterior probabilities of the level-$\rho$ credible sets: we can only recover at most the level-$\rho$ credible set with $\rho \leq \operatorname{SPIP}_{C}$ from the signal cluster $C$.
 
+
+\subsubsection{DAP-S signal cluster construction}
+The steps of sampling models: (1) from the alpha matrix from SuSiE, we conduct PIR to obtain models, (2) we obtain null models and single-SNP models if not sampled yet. For (1), if we set exclusive, one SNP can only appear in one column. for (2) the new added single-SNP models use the average of the estiamted prior variance to compute BF.
+
+Then we compute the BF and posterior probability for each model. We compute the marginal PIP of each SNP by summing up the posterior probabilities of models containing the SNP. And we also compute the PIP of the SNP in each column for model set (1): if we have A+Null; A+C; A+B; B+Null; B+C, then we compute PIP(A in L1), PIP(A in L2); PIP(B in L1), PIP(B in L2)\dots, then for L1, we rank the PIP (s in L1), and keep adding eligible SNPs to the L1 by the rank of PIP(s in L1) until the SPIP(A,B) first goes over the coverage.
+
 \subsubsection{DAP-S with summary statistics}
 The following cases are under the situation where the $\mathbf{G}, \mathbf{y}$ are only centered and not standardized:
 
@@ -367,7 +371,7 @@ The following cases are under the situation where the $\mathbf{G}, \mathbf{y}$ a
 
 (3) DAP-S\_rss: summary statistics: $\hat{b}, \hat{s}, \mathbf{R}, \mathbf{y}^T\mathbf{y}, n$ or $\hat{z}, \mathbf{R}, \mathbf{y}^T\mathbf{y}, n$, where $\mathbf{R}$ is the in-sample LD matrix, $\hat{b}$ is the effect size estimate, and $\hat{s}$ is the standard error of the effect size estimate. These data can be used to first compute $\mathbf{G^TG}, \mathbf{G^Ty}$, and then recover those sufficient statistics $\mathbf{G^TG}, \mathbf{G^Ty}, \mathbf{y^Ty}, n$. $\operatorname{var}(\mathbf{y})$ can replace $\mathbf{y}^T\mathbf{y}$ because $\operatorname{var}(\mathbf{y}) = \mathbf{y}^T\mathbf{y}/(n-1)$.
 
-(4) DAP-S\_rss: when in-sample LD matrix is not available, we have $\hat{b}, \hat{s}, \hat{\mathbf{R}}, \mathbf{y}^T\mathbf{y}, n$, or $\hat{z}, \hat{\mathbf{R}}, \mathbf{y}^T\mathbf{y}, n$. These data can be used to first estimate $\mathbf{G^TG}$ and compute $\mathbf{G^Ty}$, and then recover those sufficient statistics $\mathbf{G^TG}, \mathbf{G^Ty}, \mathbf{y^Ty}, n$. If $yty$ is not provided, we work on the standardized data.
+(4) DAP-S\_rss: when in-sample LD matrix is not available, we have $\hat{b}, \hat{s}, \hat{\mathbf{R}}, \mathbf{y}^T\mathbf{y}, n$, or $\hat{z}, \hat{\mathbf{R}}, \mathbf{y}^T\mathbf{y}, n$. These data can be used to first estimate $\mathbf{G^TG}$ and compute $\mathbf{G^Ty}$, and then recover those sufficient statistics $\mathbf{G^TG}, \mathbf{G^Ty}, \mathbf{y^Ty}, n$. If $yty$ is not provided, we work on the standardized data, and $\sigma^2 = 1$.
 
 
 

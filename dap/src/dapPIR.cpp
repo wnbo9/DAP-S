@@ -13,8 +13,8 @@ using namespace std;
 //' @export
 // [[Rcpp::export]]
 List pir(NumericMatrix mat, double threshold) {
-  int p = mat.nrow();
-  int L = mat.ncol();
+  int p = mat.nrow(); // 5001
+  int L = mat.ncol(); // 3
   double logThreshold = log10(threshold);
 
   // open output file
@@ -45,11 +45,10 @@ List pir(NumericMatrix mat, double threshold) {
   vector<int> indices(L, 0);
   set<vector<int>> Combinations;
   bool done = false;
-  bool hasNull = false;
 
   while (!done) {
     double currentSum = 0.0;
-    vector<int> combination(L, -1); // keep track of model name
+    vector<int> combination(L, p-1); // keep track of model name
     int pos = -1;
 
     // Generate the current combination
@@ -67,16 +66,6 @@ List pir(NumericMatrix mat, double threshold) {
     
     // If the sum is greater than the threshold, save the combination
     if (currentSum >= logThreshold) {
-      bool isNull = true;
-      for (int i = 0; i < L; i++) {
-        if (combination[i] != -1){
-          isNull = false;
-          break;
-        }
-      }
-      if (isNull){
-        hasNull = true;
-      }
       Combinations.insert(combination);
     }
 
@@ -121,59 +110,76 @@ List pir(NumericMatrix mat, double threshold) {
     }
   }
 
-std::vector<std::set<int>> positionElements(L);
-  for (const auto &combination : Combinations) {
+  // Check for duplicates and track single-SNP/NULL models simultaneously
+  vector<vector<int>> updatedCombinations;
+  std::set<int> existingSingleSNPs;
+  bool hasNullModel = false;
+
+  for (const auto& row : Combinations) {
+    // Check for duplicates
+    bool isValid = true;
+    unordered_set<int> seen;
+    int nonNullCount = 0;
+    int singleSNP = -1;
+
+    // Process each value in the row
+    for (int val : row) {
+      // Check for duplicates excluding p-1=5000
+      if (val != p - 1 && seen.count(val)) {
+        isValid = false;
+        break;
+      }
+      seen.insert(val);
+
+      // Count non-NULL SNPs and track single SNP
+      if (val != p - 1) {
+        nonNullCount++;
+        singleSNP = val;
+      }
+    }
+
+    // If row is valid (no duplicates), add it and track single-SNP models
+    if (isValid) {
+      updatedCombinations.push_back(row);
+
+      // Track single-SNP models and NULL model
+      if (nonNullCount == 1) {
+        existingSingleSNPs.insert(singleSNP);
+      } else if (nonNullCount == 0) {
+        hasNullModel = true;
+      }
+    }
+  }
+  
+  // Convert Combinations to NumericMatrix
+  NumericMatrix combo(updatedCombinations.size(), L);
+  for (int i = 0; i < updatedCombinations.size(); i++) {
     for (int col = 0; col < L; col++) {
-      if (combination[col] != -1) {
-        positionElements[col].insert(combination[col]);
-      }
+      combo(i, col) = updatedCombinations[i][col];
     }
   }
-   List positionList(L);
-  for (int pos = 0; pos < L; pos++) {
-    IntegerVector colElements;
-    for (auto val : positionElements[pos]) {
-      colElements.push_back(val);
+
+  // Create missing 1-SNP models and NULL model
+  vector<int> missingModels;
+  if (!hasNullModel) {
+    missingModels.push_back(p - 1);
+  }
+  for (int snp = 0; snp < p - 1; snp++) {
+    if (!existingSingleSNPs.count(snp)) {
+      missingModels.push_back(snp);
     }
-    positionList[pos] = colElements;
   }
-
-
-  // Add null row and single entry rows
-  for (int i = 0; i < (hasNull ? p-1 : p); i++) {
-    vector<int> singleEntryRow(L, i);
-    Combinations.insert(singleEntryRow);
-  }
-
-
-  
-
-
-  // Convert Combinations to resultMatrix with unique rows
-  set<vector<int>> binaryCombinations;
-  for (const auto& combination : Combinations) {
-    vector<int> binaryVector(p, 0);
-    for (int name : combination) {
-      if (name >= 0){
-        binaryVector[name] = 1; // Convert the name to a binary entry
-      }
+  NumericMatrix missingModelMatrix(0, 1);
+  if (!missingModels.empty()) {
+    missingModelMatrix = NumericMatrix(missingModels.size(), 1);
+    for (int i = 0; i < missingModels.size(); i++) {
+      missingModelMatrix(i, 0) = missingModels[i];
     }
-    binaryCombinations.insert(binaryVector);
   }
-  
-  // Convert binaryCombinations to NumericMatrix
-  NumericMatrix result(binaryCombinations.size(), p-1); // Exclude the null row
-  size_t i = 0; // Index for rows of the result matrix
-  for (const auto& binaryVector : binaryCombinations) {
-    for (size_t j = 0; j < p-1; j++) {
-        result(i, j) = binaryVector[j];
-    }
-    i++;
-  }
-  
+
   //return result; // m*p binary matrix of model configurations
   return List::create(
-    Named("combinations") = result,
-    Named("position_elements") = positionList
+    Named("combo") = combo,
+    Named("single") = missingModelMatrix
   );
 }

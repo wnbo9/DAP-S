@@ -9,13 +9,6 @@ using namespace std;
 
 // [[Rcpp::depends(gsl)]]
 
-//' Compute R-squared between two vectors
-//' 
-//' @param X NumericMatrix containing the vectors
-//' @param i Index of first vector
-//' @param j Index of second vector
-//' @return Double containing R-squared value
-//' @noRd
 double compute_r2(const NumericMatrix& X, int i, int j) {
     double r2;
     int n = X.nrow();
@@ -26,11 +19,6 @@ double compute_r2(const NumericMatrix& X, int i, int j) {
     return r2;
 }
 
-//' Compute median of a sorted vector
-//' @name median
-//' @param v Vector of sorted values
-//' @return Median value
-//' @noRd
 double median(vector<double>& v) {
     size_t n = v.size();
     if(n % 2 == 0) {
@@ -39,14 +27,56 @@ double median(vector<double>& v) {
     return v[n/2];
 }
 
+
+double calculate_mps(const std::vector<int>& cluster, 
+                    const NumericMatrix& combo,
+                    const NumericMatrix& single,
+                    const NumericVector& posterior_prob) {
+    double mps = 0.0;
+    int m1 = combo.nrow();
+    int m2 = single.nrow();
+    int L = combo.ncol();
+    
+    // Check combo models
+    for (int i = 0; i < m1; i++) {
+        bool includes_cluster_snp = false;
+        for (int col = 0; col < L; col++) {
+            int model_snp = combo(i, col);
+            for (int cluster_snp : cluster) {
+                if (model_snp == cluster_snp) {
+                    includes_cluster_snp = true;
+                    break;
+                }
+            }
+            if (includes_cluster_snp) break;
+        }
+        if (includes_cluster_snp) {
+            mps += posterior_prob[i];
+        }
+    }
+    
+    // Check single SNP models
+    for (int i = 0; i < m2; i++) {
+        int model_snp = single(i, 0);
+        for (int cluster_snp : cluster) {
+            if (model_snp == cluster_snp) {
+                mps += posterior_prob[m1 + i];
+                break;
+            }
+        }
+    }
+    
+    return mps;
+}
+
 //' Get signal clusters or credible sets at given coverage level
 //' 
 //' This function identifies clusters of correlated signals based on R-squared values
 //' and model posterior probabilities.
 //' 
 //' @param X NumericMatrix containing the raw data
-//' @param mat NumericMatrix containing the alpha matrix
-//' @param cmfg_mat NumericMatrix containing the CMFG matrix
+//' @param combo NumericMatrix containing the model configurations
+//' @param single NumericMatrix containing the single SNP models
 //' @param posterior_prob NumericVector of posterior probabilities
 //' @param col_names CharacterVector of column names
 //' @param threshold Double specifying the threshold for model proposal density
@@ -61,8 +91,8 @@ double median(vector<double>& v) {
 //' @export
 // [[Rcpp::export]]
 List get_sc(const NumericMatrix& X,
-            const NumericMatrix& mat,
-            const NumericMatrix& cmfg_mat,
+            const NumericMatrix& combo,
+            const NumericMatrix& single,
             const NumericVector& posterior_prob,
             const CharacterVector& col_names,
             double threshold,
@@ -70,62 +100,52 @@ List get_sc(const NumericMatrix& X,
             double coverage) {
     
     try {
-        int p = mat.nrow();
-        int L = mat.ncol();
-        int m = cmfg_mat.nrow();
+        int p = X.ncol(); // 5000
+        int L = combo.ncol(); // 3
+        int m1 = combo.nrow();
+
+        // Create PIP matrix for each column (L+1 columns: L columns)
+        NumericMatrix pip_matrix(p, L);
         std::vector<std::vector<int>> clusters;
         std::vector<double> mps_values;
         std::vector<std::vector<double>> r2_values;
-
-        // Sort each column in descending order
-        vector<vector<pair<double, int>>> sortedMat(L);
-        for (int i = 0; i < L; i++) {
-            for (int j = 0; j < p; j++) {
-                if (mat(j, i) >= threshold) {
-                    sortedMat[i].emplace_back(mat(j, i), j); // Only include SNPs above threshold
-                }
-            }
-            sort(sortedMat[i].begin(), sortedMat[i].end(), greater<pair<double, int>>());
-        }
+        std::vector<std::vector<double>> snp_pips;
 
         // For each column in alpha matrix
         for (int col = 0; col < L; col++) {
-            int starting_idx = 0;
-
-            // If this is the last column and the null SNP is top, start from the second SNP
-            if (col == L-1 && sortedMat[col][0].second == p - 1) {
-                if (sortedMat[col].size() < 2) continue;
-                starting_idx = 1;
+            
+            vector<pair<double, int>> snp_probs;
+            for (int snp = 0; snp < p; snp++) {
+                double snp_prob = 0.0;
+                // Check combo models for this column
+                for (int model = 0; model < m1; model++) {
+                    if (combo(model, col) == snp) {
+                        snp_prob += posterior_prob[model];
+                    }
+                }
+                pip_matrix(snp, col) = snp_prob;
+                if (snp_prob>0) snp_probs.emplace_back(snp_prob, snp);
             }
 
-            int top_snp = sortedMat[col][starting_idx].second;
-            if (top_snp < 0) continue;
+            // Sort SNPs by their probabilities
+            sort(snp_probs.begin(), snp_probs.end(), greater<pair<double, int>>());
+            if (snp_probs.empty()) continue;
 
             // Start with the top SNP
+            int top_snp = snp_probs[0].second;
             std::vector<int> current_cluster = {top_snp};
             std::vector<double> current_r2s;
 
-            // Check posterior probabilities
-            double sum_prob_without = 0.0;
-            std::vector<int> models_without_snps;
-            
-            for(int i = 0; i < m; i++) {
-                if (cmfg_mat(i, top_snp) == 0) {
-                    models_without_snps.push_back(i);
-                    sum_prob_without += posterior_prob[i];
-                }
-            }
-            double mps = 1.0 - sum_prob_without;
+            // Calculate initial MPS
+            double mps = calculate_mps(current_cluster, combo, single, posterior_prob);
 
             bool cluster_done = false;
             if (coverage <= 1 && mps >= coverage) {
                 cluster_done = true;
             } else {
-                // Add more SNPs if needed
-                for (size_t j = starting_idx + 1; j < sortedMat[col].size(); j++){
-                    int next_snp = sortedMat[col][j].second;
-                    if (next_snp == p - 1 || next_snp < 0) continue;
-
+                // Process remaining SNPs in the rank order
+                for (size_t j = 1; j < snp_probs.size(); j++){
+                    int next_snp = snp_probs[j].second;
                     bool add_to_cluster = true;
                     double r2;
 
@@ -141,19 +161,7 @@ List get_sc(const NumericMatrix& X,
 
                     if (add_to_cluster) {
                         current_cluster.push_back(next_snp);
-
-                        // Update MPS
-                        for (size_t idx = 0; idx < models_without_snps.size();) {
-                            int model_idx = models_without_snps[idx];
-                            if (cmfg_mat(model_idx, next_snp) == 1) { // if the model contains the next SNP, remove it from models_without_snps
-                                sum_prob_without -= posterior_prob[model_idx];
-                                models_without_snps[idx] = models_without_snps.back();
-                                models_without_snps.pop_back();
-                            } else {
-                                idx++; // go to the next model
-                            }
-                        }
-                        mps = 1.0 - sum_prob_without;
+                        mps = calculate_mps(current_cluster, combo, single, posterior_prob);
 
                         if (coverage <= 1 && mps >= coverage) {
                             cluster_done = true;
@@ -179,6 +187,7 @@ List get_sc(const NumericMatrix& X,
 
         for(int i = 0; i < n_clusters; i++) {
             CharacterVector cluster_names(clusters[i].size());
+
             for(size_t j = 0; j < clusters[i].size(); j++) {
                 cluster_names[j] = col_names[clusters[i][j]];
             }
@@ -204,11 +213,18 @@ List get_sc(const NumericMatrix& X,
             }
         }
 
+        std::vector<std::vector<int>> snp_index = clusters;
+        for(auto& cluster : snp_index) {
+            std::transform(cluster.begin(), cluster.end(), cluster.begin(), [](int x) { return x + 1; });
+        }
+
         return List::create(
             Named("clusters") = r_clusters,
+            Named("snp_index") = snp_index,
             Named("spip") = r_mps,
             Named("size") = cluster_sizes,
             Named("cluster_r2") = r2_stats,
+            Named("pip_matrix") = pip_matrix,
             Named("r2_threshold") = r2_threshold,
             Named("coverage") = String(coverage > 1 ? "signal cluster" : std::to_string(static_cast<int>(coverage * 100)) + "% credible set")
         );
