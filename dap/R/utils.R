@@ -20,7 +20,7 @@ get_mat <- function(susie_fit, exclusive) {
   matrix <- t(susie_fit$alpha)
   # We only keep at most one column with null as top among all non-zero effects.
   # Note SuSiE can output two columns with similar ranks, we keep the first.
-  mat <- as.matrix(matrix[, 1:sum(susie_fit$V != 0)])
+  mat <- as.matrix(matrix[, which(susie_fit$V != 0)])
   max_indices <- apply(mat, 2, which.max)
   # Keep first occurrence of each maximum position
   keep_cols <- !duplicated(max_indices)
