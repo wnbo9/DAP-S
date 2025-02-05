@@ -12,13 +12,14 @@ process_matrix <- function(mat) {
 }
 
 #' Initialize parameters for fine mapping from SuSiE fit
+#' @param y Phenotype vector
 #' @param fit SuSiE fit
 #' @param exclusive Whether to create mutually exclusive signal clusters
 #' @param use_susie_variance_estimate Use SuSiE-estimated prior variance
 #' @param grid Grid of prior variances
 #' @return List of parameters: matrix and scaled prior variance matrix
 #' @noRd
-param_setup <- function(fit, exclusive, use_susie_variance_estimate, grid) {
+param_setup <- function(y, fit, exclusive, use_susie_variance_estimate, grid) {
   # Extract the non-zero columns
   matrix <- t(fit$alpha)
   cols <- which(fit$V != 0)

@@ -29,7 +29,7 @@ dap <- function(X, y, L = min(10, ncol(X)),
                 susie_params = list(),
                 prior_weights = NULL,
                 standardize = TRUE,
-                use_susie_variance_estimate = TRUE,
+                use_susie_variance_estimate = FALSE,
                 grid = c(0.04, 0.16, 0.64),
                 exclusive = TRUE,
                 pir_threshold = 1e-6,
@@ -68,7 +68,7 @@ dap <- function(X, y, L = min(10, ncol(X)),
                      standardize = standardize,
                      estimate_residual_variance = susie_params$estimate_residual_variance,
                      estimate_prior_variance = susie_params$estimate_prior_variance)
-  info <- param_setup(susie_fit, exclusive, use_susie_variance_estimate, grid)
+  info <- param_setup(y, susie_fit, exclusive, use_susie_variance_estimate, grid)
 
   cat("Running DAP-S fine-mapping...\n")
   results <- dap_main(X, y, info$mat, pir_threshold,

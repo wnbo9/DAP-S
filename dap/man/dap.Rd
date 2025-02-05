@@ -11,7 +11,7 @@ dap(
   susie_params = list(),
   prior_weights = NULL,
   standardize = TRUE,
-  use_susie_variance_estimate = TRUE,
+  use_susie_variance_estimate = FALSE,
   grid = c(0.04, 0.16, 0.64),
   exclusive = TRUE,
   pir_threshold = 1e-06,
