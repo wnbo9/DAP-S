@@ -44,7 +44,7 @@ param_setup <- function(y, fit, exclusive, use_susie_variance_estimate, grid) {
     #if (max(V) > 2) { # shift the upper bound of the grid
     #  grid[length(grid)] <- 1.28
     #}
-    phi2_mat <- matrix(grid, ncol = ncol(mat), byrow = TRUE)
+    phi2_mat <- matrix(rep(grid, ncol(mat)), ncol = ncol(mat), byrow = FALSE)
   }
 
   list(mat = mat, phi2_mat = phi2_mat)
