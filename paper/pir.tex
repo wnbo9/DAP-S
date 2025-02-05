@@ -280,8 +280,8 @@ $$\beta_j \mid \gamma_j \sim (1-\gamma_j)\delta_0 + \gamma_j N\left(0, \phi^2/\t
 $$\boldsymbol{\beta} \sim N(0, \phi^2/\tau I),$$
 where $\delta_0$ refers to Dirac's delta function, and $\phi^2$ is the prior variance of the effect size of the causal variant. In the computation of the Bayes factor, we use $\phi^2=0.6^2$. For a specific value of $\phi^2$ and a model configuration $\boldsymbol{\gamma}=\left(\gamma_1,\cdots,\gamma_{p}\right)$, the limiting of the Bayes factor is calculated by:
 \begin{align}
-    \lim _{\substack{\kappa \rightarrow 0 \\ \lambda \rightarrow 0}} \operatorname{BF}(\boldsymbol{\gamma}) &= \frac{n^{1/2}}{|\phi^{-2}I + \mathbf{X}^T\mathbf{X}|^{1 / 2}}  \frac{1}{\phi^{|\boldsymbol{\gamma}|}} \left[\frac{\mathbf{y}^T\left(I-\mathbf{X}\left(\phi^{-2}I+\mathbf{X}^T \mathbf{X}\right)^{-1} \mathbf{X}^T\right) \mathbf{y}}{\mathbf{y}^T \mathbf{y}}\right]^{-n / 2} \\
-    &=  \frac{n^{1/2}}{|I + \phi^2\mathbf{X}^T\mathbf{X}|^{1 / 2}}   \left[1- \frac{\mathbf{y}^T\mathbf{X}\left(\phi^{-2}I+\mathbf{X}^T \mathbf{X}\right)^{-1} \mathbf{X}^T \mathbf{y}}{\mathbf{y}^T \mathbf{y}}\right]^{-n / 2},
+    \lim _{\substack{\kappa \rightarrow 0 \\ \lambda \rightarrow 0}} \operatorname{BF}(\boldsymbol{\gamma}) &= \frac{1}{|\phi^{-2}I + \mathbf{X}^T\mathbf{X}|^{1 / 2}}  \frac{1}{\phi^{|\boldsymbol{\gamma}|}} \left[\frac{\mathbf{y}^T\left(I-\mathbf{X}\left(\phi^{-2}I+\mathbf{X}^T \mathbf{X}\right)^{-1} \mathbf{X}^T\right) \mathbf{y}}{\mathbf{y}^T \mathbf{y}}\right]^{-n / 2} \\
+    &=  \frac{1}{|I + \phi^2\mathbf{X}^T\mathbf{X}|^{1 / 2}}   \left[1- \frac{\mathbf{y}^T\mathbf{X}\left(\phi^{-2}I+\mathbf{X}^T \mathbf{X}\right)^{-1} \mathbf{X}^T \mathbf{y}}{\mathbf{y}^T \mathbf{y}}\right]^{-n / 2},
 \end{align}
 where $\mathbf{X}$ represents genotypes indicated by non-zero entry in $\boldsymbol{\gamma}$. We can also use a grid of values for the prior variance of the effect size to capture a spectrum of effect sizes, which is particularly useful when the true effect size is unknown, and the Bayes factor can be calculated by averaging over the grid of values.
 
@@ -289,8 +289,8 @@ where $\mathbf{X}$ represents genotypes indicated by non-zero entry in $\boldsym
 We can also calculate the Bayes factor using a varying prior variance for $\boldsymbol{\beta}$: $$\boldsymbol{\beta} \sim N(0, \mathbf{V}/\tau), \mathbf{V} = \operatorname{diag}(\phi^2_1,...,\phi^2_q).$$
 Then we have:
 \begin{align}
-    \lim _{\substack{\kappa \rightarrow 0 \\ \lambda \rightarrow 0}} \operatorname{BF}(\boldsymbol{\gamma}) &= \frac{n^{1/2}}{|\mathbf{V}^{-1} + \mathbf{X}^T\mathbf{X}|^{1 / 2}} \frac{1}{\phi_1*\cdots*\phi_q} \left[\frac{\mathbf{y}^T\left(I-\mathbf{X}\left(\mathbf{V}^{-1}+\mathbf{X}^T \mathbf{X}\right)^{-1} \mathbf{X}^T\right) \mathbf{y}}{\mathbf{y}^T \mathbf{y}}\right]^{-n / 2} \\
-    &=  \frac{n^{1/2}}{|I + \mathbf{V}\mathbf{X}^T\mathbf{X}|^{1 / 2}}   \left[1- \frac{\mathbf{y}^T\mathbf{X}\left(\mathbf{V}^{-1}+\mathbf{X}^T \mathbf{X}\right)^{-1} \mathbf{X}^T \mathbf{y}}{\mathbf{y}^T \mathbf{y}}\right]^{-n / 2}.
+    \lim _{\substack{\kappa \rightarrow 0 \\ \lambda \rightarrow 0}} \operatorname{BF}(\boldsymbol{\gamma}) &= \frac{1}{|\mathbf{V}^{-1} + \mathbf{X}^T\mathbf{X}|^{1 / 2}} \frac{1}{\phi_1*\cdots*\phi_q} \left[\frac{\mathbf{y}^T\left(I-\mathbf{X}\left(\mathbf{V}^{-1}+\mathbf{X}^T \mathbf{X}\right)^{-1} \mathbf{X}^T\right) \mathbf{y}}{\mathbf{y}^T \mathbf{y}}\right]^{-n / 2} \\
+    &=  \frac{1}{|I + \mathbf{V}\mathbf{X}^T\mathbf{X}|^{1 / 2}}   \left[1- \frac{\mathbf{y}^T\mathbf{X}\left(\mathbf{V}^{-1}+\mathbf{X}^T \mathbf{X}\right)^{-1} \mathbf{X}^T \mathbf{y}}{\mathbf{y}^T \mathbf{y}}\right]^{-n / 2}.
 \end{align}
 
 

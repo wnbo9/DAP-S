@@ -4,7 +4,7 @@
 \alias{compute_log10_posterior}
 \title{Compute log10 posterior scores for multiple model configurations}
 \usage{
-compute_log10_posterior(X, y, cmfg_matrix, single_matrix, pi_vec, phi2_mat)
+compute_log10_posterior(X, y, cmfg_matrix, pi_vec, phi2_mat)
 }
 \arguments{
 \item{X}{An n*p matrix of genotype data}

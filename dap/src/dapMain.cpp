@@ -1,11 +1,17 @@
 #include <Rcpp.h>
+#include <iostream>     // for cerr, endl
+#include <fstream>      // for ofstream
+#include <vector>       // for vector
+#include <string>       // for string
+#include <utility>      // for
+#include <vector>
 
 using namespace Rcpp;
 using namespace std;
 
-List pir(NumericMatrix mat, double pir_threshold);
-List compute_log10_posterior(NumericMatrix X, NumericVector y, NumericMatrix matrixCombinations, NumericMatrix matrixSingle, NumericVector pi_vec, NumericMatrix phi2_mat);
-List get_sc(const NumericMatrix& X, const NumericMatrix& combo, const NumericMatrix& single, const NumericVector& posterior_prob, const CharacterVector& col_names, double threshold, double r2_threshold, double coverage);
+vector<vector<int>> pir(const vector<vector<double>>& mat, double pir_threshold);
+List compute_log10_posterior(const NumericMatrix& X, const NumericVector& y, const std::vector<std::vector<int>>& cmfg_matrix, const NumericVector& pi_vec, const NumericMatrix& phi2_mat);
+List get_sc(const NumericMatrix& X, const NumericMatrix& effect_pip, const CharacterVector& snp_names, double r2_threshold, double coverage);
 
 //' Implementation of DAP-S algorithm in C++ with default SuSiE settings
 //' 
@@ -14,12 +20,13 @@ List get_sc(const NumericMatrix& X, const NumericMatrix& combo, const NumericMat
 //' @param X Genotype matrix
 //' @param y Phenotype vector
 //' @param matrix Proposal density matrix from SuSiE
+//' @param pir_threshold Threshold for PIR
 //' @param prior_weights Vector of prior probabilities
+//' @param phi2_mat Matrix of scaled prior effect size variances
 //' @param r2_threshold Threshold for LD
 //' @param coverage Coverage for credible set
-//' @param phi2_mat Matrix of scaled prior effect size variances
 //' @param exclusive If TRUE. enforce mutually exclusive clusters
-//' @param pir_threshold Threshold for PIR
+//' @param snp_names SNP names
 //'
 //' @return A list containing:
 //' \itemize{
@@ -35,49 +42,45 @@ List get_sc(const NumericMatrix& X, const NumericMatrix& combo, const NumericMat
 List dap_main(NumericMatrix X, 
               NumericVector y,
               NumericMatrix matrix,
+              double pir_threshold,
               NumericVector prior_weights,
+              NumericMatrix phi2_mat,
               double r2_threshold,
               double coverage,
-              NumericMatrix phi2_mat,
               bool exclusive,
-              double pir_threshold) {
+              CharacterVector snp_names) {
     
-    Rcout << "---PIR threshold: " << pir_threshold << std::endl;
-
-    // Get the number of rows and columns
     int p = X.ncol(); // 5000
-    CharacterVector col_names = colnames(X);
+    int L = matrix.ncol(); // 3
+
+    vector<vector<double>> mat(p+1, vector<double>(L));
+    for (int i = 0; i < p+1; i++) {
+        for (int j = 0; j < L; j++) {
+            mat[i][j] = matrix(i, j);
+        }
+    }
 
     // PIR
-    Rcpp::Rcout << "---Pseudo Importance Resamping...\n";
-    List results = pir(matrix, pir_threshold);
-    NumericMatrix combo = results["combo"];
-    NumericMatrix single = results["single"];
+    Rcout << "---Pseudo Importance Resampling...\n";
+    Rcout << "---PIR threshold: " << pir_threshold << endl;
 
-    int L = combo.ncol();
-    int m1_size = combo.nrow();
-    int m2_size = single.nrow();
-    int m_size = m1_size + m2_size;
-    Rcout << "---Number of combo configurations: " << m1_size << std::endl;
-    Rcout << "---Number of single configurations: " << m2_size << std::endl;
-
+    vector<vector<int>> combo_matrix = pir(mat, pir_threshold);
+    int m_size = combo_matrix.size();
+    NumericMatrix combo(m_size, L);
+    for(int i = 0; i < m_size; i++) {
+        for(size_t j = 0; j < L; j++) {
+            combo(i, j) = combo_matrix[i][j];
+        }
+    }
 
     // Compute log10 posterior
     Rcpp::Rcout << "---Calculating posterior of " << m_size << " model configurations...\n";
-    List scores = compute_log10_posterior(X, y, combo, single, prior_weights, phi2_mat);
+    List scores = compute_log10_posterior(X, y, combo_matrix, prior_weights, phi2_mat);
     NumericVector log10_BF = scores["log10_BF"];
     NumericVector log10_prior = scores["log10_prior"];
     NumericVector log10_posterior_score = scores["log10_posterior_score"];
-    
 
-    if (log10_BF.length() != m_size || log10_prior.length() != m_size || log10_posterior_score.length() != m_size) {
-    stop("Mismatch in vector sizes. Expected size: %d, Got: %d, %d, %d", 
-         m_size, log10_BF.length(), log10_prior.length(), log10_posterior_score.length());
-    }
-
-
-    // Calculate normalizing constant
-    double max_log_posterior = *std::max_element(log10_posterior_score.begin(), log10_posterior_score.end());
+    double max_log_posterior = *max_element(log10_posterior_score.begin(), log10_posterior_score.end());
     double sum_exp = 0.0;
     NumericVector posterior_prob(m_size);
     for(int i = 0; i < m_size; i++) {
@@ -89,25 +92,21 @@ List dap_main(NumericMatrix X,
     for(int i = 0; i < m_size; i++) {
         posterior_prob[i] = pow(10.0, log10_posterior_score[i] - log_nc);
     }
+
     // Print model configurations
     CharacterVector model_config(m_size);
     for (int i = 0; i < m_size; i++) {
-        NumericVector row;
-        if (i < m1_size) {
-            row = combo(i, _);
-        } else {
-            row = single(i - m1_size, _);
-        }
-        std::string config = "";
+        vector<int>& row = combo_matrix[i];
+        string config = "";
         bool all_p = true;
     
-        for (int j = 0; j < row.size(); j++) {
+        for (int j = 0; j < L; j++) {
             if (row[j] != p) {
                 all_p = false;
                 if (config != "") {
                     config += "+";
                 }
-                config += std::string(col_names[row[j]]);
+                config += string(snp_names[row[j]]);
             }
         }
     
@@ -118,32 +117,33 @@ List dap_main(NumericMatrix X,
         }
     }
 
-    // Calculate marginal PIP
+    // Calculate effect PIP and marginal PIP
+    NumericMatrix effect_pip(p, L);
     NumericVector marginal_pip(p);
-    for(int i = 0; i < m1_size; i++) { // For each combination
+    for(int i = 0; i < m_size; i++) { // For each combination
         for(int j = 0; j < L; j++) {
-            if(combo(i, j) < p) marginal_pip[combo(i, j)] += posterior_prob[i];
+            if(combo_matrix[i][j] < p) {
+                effect_pip(combo_matrix[i][j], j) += posterior_prob[i];
+                marginal_pip[combo_matrix[i][j]] += posterior_prob[i];
+            }
         }
     }
-    for(int i = 0; i < m2_size; i++) { // For each single SNP
-        if (single(i, 0) < p) marginal_pip[single(i, 0)] += posterior_prob[m1_size + i];
-    }
-    // Ensure PIPs are bounded between 0 and 1 (numerical stability)
-    for(int j = 0; j < p; j++) {
-        if(marginal_pip[j] > 1.0) {
-            marginal_pip[j] = 1.0;
-        } else if(marginal_pip[j] < 0.0) {
-            marginal_pip[j] = 0.0;
+    // Clamp values between 0 and 1
+    for(int i = 0; i < p; i++) {
+        for (int j = 0; j < L; j++) {
+            effect_pip(i, j) = max(0.0, min(1.0, effect_pip(i, j)));
         }
+        marginal_pip[i] = max(0.0, min(1.0, marginal_pip[i]));
     }
-    marginal_pip.names() = col_names;
+    rownames(effect_pip) = snp_names;
+    marginal_pip.names() = snp_names;
 
 
     // Construct signal clusters
     Rcout << "---Constructing " << (exclusive ? "mutually exclusive " : "") 
-          << (coverage > 1 ? "signal clusters" : (coverage > 0 ? std::to_string(int(coverage * 100)) + "% credible sets" : "? credible sets")) 
-          << std::endl;
-    List sc_results = get_sc(X, combo, single, posterior_prob, col_names, pir_threshold, r2_threshold, coverage);
+          << (coverage > 1 ? "signal clusters" : (coverage > 0 ? to_string(int(coverage * 100)) + "% credible sets" : "? credible sets")) 
+          << endl;
+    List sc_results = get_sc(X, effect_pip, snp_names, r2_threshold, coverage);
 
     // Return simplified results
     return List::create(
@@ -154,8 +154,7 @@ List dap_main(NumericMatrix X,
         Named("log10_prior") = log10_prior,
         Named("log10_nc") = log_nc,
         Named("pip") = marginal_pip,
-        Named("signal_cluster") = sc_results,
-        Named("combo") = combo,
-        Named("single") = single
+        Named("effect_pip") = effect_pip,
+        Named("signal_cluster") = sc_results
     );
 }

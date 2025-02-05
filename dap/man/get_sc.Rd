@@ -4,29 +4,14 @@
 \alias{get_sc}
 \title{Get signal clusters or credible sets at given coverage level}
 \usage{
-get_sc(
-  X,
-  combo,
-  single,
-  posterior_prob,
-  col_names,
-  threshold,
-  r2_threshold,
-  coverage
-)
+get_sc(X, effect_pip, snp_names, r2_threshold, coverage)
 }
 \arguments{
 \item{X}{NumericMatrix containing the raw data}
 
-\item{combo}{NumericMatrix containing the model configurations}
+\item{effect_pip}{NumericMatrix containing the effect posterior inclusion probabilities}
 
-\item{single}{NumericMatrix containing the single SNP models}
-
-\item{posterior_prob}{NumericVector of posterior probabilities}
-
-\item{col_names}{CharacterVector of column names}
-
-\item{threshold}{Double specifying the threshold for model proposal density}
+\item{snp_names}{CharacterVector of SNP names}
 
 \item{r2_threshold}{Double specifying the R-squared threshold for correlation}
 

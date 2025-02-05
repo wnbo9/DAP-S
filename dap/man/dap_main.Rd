@@ -8,12 +8,13 @@ dap_main(
   X,
   y,
   matrix,
+  pir_threshold,
   prior_weights,
+  phi2_mat,
   r2_threshold,
   coverage,
-  phi2_mat,
   exclusive,
-  pir_threshold
+  snp_names
 )
 }
 \arguments{
@@ -23,17 +24,19 @@ dap_main(
 
 \item{matrix}{Proposal density matrix from SuSiE}
 
+\item{pir_threshold}{Threshold for PIR}
+
 \item{prior_weights}{Vector of prior probabilities}
+
+\item{phi2_mat}{Matrix of scaled prior effect size variances}
 
 \item{r2_threshold}{Threshold for LD}
 
 \item{coverage}{Coverage for credible set}
 
-\item{phi2_mat}{Matrix of scaled prior effect size variances}
-
 \item{exclusive}{If TRUE. enforce mutually exclusive clusters}
 
-\item{pir_threshold}{Threshold for PIR}
+\item{snp_names}{SNP names}
 }
 \value{
 A list containing:

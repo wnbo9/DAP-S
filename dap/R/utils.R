@@ -8,48 +8,64 @@ process_matrix <- function(mat) {
   # returns matrix with ranks by columns
   mask <- ranks == Rfast::rowMins(ranks, value = TRUE)
   mask <- col(mask) == apply(mask, 1, which.max)
-  return(mat * mask)
+  mat * mask
 }
 
-#' Extract matrix from SuSiE fit
-#' @param susie_fit SuSiE fit
+#' Initialize parameters for fine mapping from SuSiE fit
+#' @param fit SuSiE fit
 #' @param exclusive Whether to create mutually exclusive signal clusters
-#' @return Matrix of sampling
+#' @param use_susie_variance_estimate Use SuSiE-estimated prior variance
+#' @param grid Grid of prior variances
+#' @return List of parameters: matrix and scaled prior variance matrix
 #' @noRd
-get_mat <- function(susie_fit, exclusive) {
-  matrix <- t(susie_fit$alpha)
-  # We only keep at most one column with null as top among all non-zero effects.
-  # Note SuSiE can output two columns with similar ranks, we keep the first.
-  mat <- as.matrix(matrix[, which(susie_fit$V != 0)])
+param_setup <- function(fit, exclusive, use_susie_variance_estimate, grid) {
+  # Extract the non-zero columns
+  matrix <- t(fit$alpha)
+  cols <- which(fit$V != 0)
+  mat <- as.matrix(matrix[, cols])
+  V <- fit$V[cols]
+
+  # Remove duplicated columns
   max_indices <- apply(mat, 2, which.max)
-  # Keep first occurrence of each maximum position
   keep_cols <- !duplicated(max_indices)
   mat <- mat[, keep_cols, drop = FALSE]
-  # If exclusive, we need to process the mat, so that each SNP only appears
-  # in the effect where it has highest rank; otherwise, we keep all values.
+  V <- V[keep_cols]
+
+  # Process matrix if exclusive
   if (exclusive) {
     mat <- process_matrix(mat)
   }
-  return(mat)
+
+  # Set up scaled prior variance matrix
+  if (use_susie_variance_estimate) {
+    phi2_mat <- matrix(V / as.vector(var(y)), nrow = 1)
+  } else {
+    #if (max(V) > 2) { # shift the upper bound of the grid
+    #  grid[length(grid)] <- 1.28
+    #}
+    phi2_mat <- matrix(grid, ncol = ncol(mat), byrow = TRUE)
+  }
+
+  list(mat = mat, phi2_mat = phi2_mat)
 }
 
 
+
+
 #' Get summarization of fine mapping results
+#' @param susie_params SuSiE parameters
+#' @param info Information from SuSiE fit
 #' @param results Fine mapping results
-#' @param mat Matrix of sampling density
 #' @param pir_threshold Threshold for PIR
 #' @param r2_threshold Threshold for R2
-#' @param scaled_prior_variance Scaled prior variance
-#' @param phi2_mat Vector of prior variances
 #' @param prior_weights Prior weights
-#' @param null_weight Null weight
 #' @param snp_names SNP names
 #' @return Summarized results
 #' @noRd
-get_summarization <- function(results, mat,
+get_summarization <- function(susie_params, info, results,
                               pir_threshold, r2_threshold,
-                              scaled_prior_variance, phi2_mat,
-                              prior_weights, null_weight, snp_names) {
+                              prior_weights, snp_names) {
+
   # Create model results dataframe
   p <- length(snp_names)
 
@@ -68,37 +84,60 @@ get_summarization <- function(results, mat,
     log10_nc = results$log10_nc,
     pir_threshold = pir_threshold,
     r2_threshold = r2_threshold,
-    phi2 = scaled_prior_variance,
-    phi2_mat = phi2_mat,
+    phi2 = susie_params$scaled_prior_variance,
+    phi2_mat = info$phi2_mat,
     prior_weights = prior_weights,
-    null_weight = null_weight
+    null_weight = susie_params$null_weight
   )
 
   # Initialize SNP dataframe
-  snp <- data.frame(
+  snp_df <- data.frame(
     snp = snp_names,
     index = 1:p,
-    pip = results$pip,
-    cluster_index = -1,
-    duplicate = 0,
+    marginal_pip = results$pip,
+    cluster_index = "",
     stringsAsFactors = FALSE
   )
 
   sc <- results$signal_cluster
-  pip_matrix <- sc$pip_matrix
   snp_index <- sc$snp_index
-  for(i in unique(unlist(snp_index))) {
-    snp$cluster_index[i] <- which.max(pip_matrix[i, ])
-    snp$duplicate[i] <- sum(pip_matrix[i, ] > 0) > 1
+  all_snps <- sort(unique(unlist(snp_index)))
+  for (snp in all_snps) {
+    clusters <- which(sapply(snp_index, function(x) snp %in% x))
+    snp_df$cluster_index[snp_df$index == snp] <- paste(clusters, collapse = ",")
   }
-  snp <- cbind(snp, pip_matrix)
-  sc$pip_matrix <- NULL
+  snp_df$cluster_index[snp_df$cluster_index == ""] <- "-1"
+  snp_df$duplicate <- grepl(",", snp_df$cluster_index)
 
+  new_df <- snp_df
+  colnames(new_df)[colnames(new_df) == "marginal_pip"] <- "pip"
+  dup_indices <- which(new_df$cluster_index != "-1")
+  all_new_rows <- list()
+  for (i in dup_indices) {
+    clusters <- as.numeric(strsplit(new_df$cluster_index[i], ",")[[1]])
+    new_rows <- lapply(clusters, function(cluster) {
+      row <- new_df[i, ]
+      row$cluster_index <- cluster
+      effect_value <- results$effect_pip[i, sc$sc_index[cluster]]
+      row$pip <- effect_value
+      return(row)
+    })
+    all_new_rows <- c(all_new_rows, new_rows)
+  }
+
+  new_df <- new_df[-dup_indices, ]
+  if (length(all_new_rows) > 0) {
+    new_rows_df <- do.call(rbind, all_new_rows)
+    new_df <- rbind(new_df, new_rows_df)
+  }
+  new_df$cluster_index <- as.numeric(new_df$cluster_index)
 
   # Return compiled results
   list(
-    alpha = mat,
-    variants = snp,
+    alpha = info$mat,
+    alpha_dap = results$effect_pip,
+    variants = snp_df,
+    variants_coloc = new_df,
     models = result_df,
     sets = sc,
     elements = results$element_cluster,

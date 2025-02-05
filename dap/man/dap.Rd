@@ -8,95 +8,59 @@ dap(
   X,
   y,
   L = min(10, ncol(X)),
-  default_susie_params = list(scaled_prior_variance = 0.2, residual_variance = NULL,
-    prior_weights = NULL, null_weight = NULL, standardize = TRUE,
-    estimate_residual_variance = TRUE, estimate_prior_variance = TRUE),
   susie_params = list(),
-  r2_threshold = 0.25,
-  coverage = NULL,
+  prior_weights = NULL,
+  standardize = TRUE,
   use_susie_variance_estimate = TRUE,
   grid = c(0.04, 0.16, 0.64),
   exclusive = TRUE,
-  pir_threshold = 1e-06
+  pir_threshold = 1e-06,
+  r2_threshold = 0.25,
+  coverage = NULL
 )
 }
 \arguments{
-\item{X}{A matrix of genotype data (\eqn{n} x \eqn{p}), where \eqn{n} is the
-number of subjects and \eqn{p} is the number of variants.}
+\item{X}{Genotype matrix (n x p)}
 
-\item{y}{A numeric vector of phenotypes (length \eqn{n}).}
+\item{y}{Phenotype vector (n)}
 
-\item{L}{The number of potential causal variants (or “effects”) to include in
-the model. Defaults to \code{min(10, ncol(X))}.}
+\item{L}{Number of causal variants}
 
-\item{default_susie_params}{A named list of default SuSiE parameters (e.g.,
-\code{scaled_prior_variance}, \code{residual_variance}, \code{prior_weights},
-\code{null_weight}, \code{standardize}, \code{estimate_residual_variance},
-\code{estimate_prior_variance}). These specify the “factory” SuSiE settings.
-You may modify any of these if you want to change the defaults.}
+\item{susie_params}{Parameters for SuSiE: \code{scaled_prior_variance},
+\code{residual_variance}, \code{null_weight}, \code{standardize},
+\code{estimate_residual_variance}, \code{estimate_prior_variance}.}
 
-\item{susie_params}{A named list of parameters that override elements in
-\code{default_susie_params}. Only those specified here will be changed; the
-rest remain as in \code{default_susie_params}.}
+\item{prior_weights}{Prior weights of each SNP being causal}
 
-\item{r2_threshold}{A genotype \eqn{R^2} threshold for constructing signal
-clusters in linkage disequilibrium (LD). Default is \eqn{0.25}.}
+\item{standardize}{Standardize each column of the genotype matrix}
 
-\item{coverage}{Coverage level for constructing credible sets (e.g., \eqn{0.95}).
-If specified, the function produces credible sets covering the specified
-probability. If not set, it returns signal clusters.}
+\item{use_susie_variance_estimate}{Use SuSiE-estimated prior variance}
 
-\item{use_susie_variance_estimate}{If \code{TRUE}, uses the SuSiE-estimated
-variance to compute the Bayes factor. If \code{FALSE}, a grid of values
-given by \code{grid} is used, and the Bayes factor is averaged across
-that grid.}
+\item{grid}{Grid of prior variances, default is c(0.04, 0.16, 0.64)}
 
-\item{grid}{A numeric vector of scaled prior variances used only if
-\code{use_susie_variance_estimate = FALSE}. Defaults to
-\eqn{c(0.04, 0.16, 0.64)}.}
+\item{exclusive}{Exclusive signal clusters}
 
-\item{exclusive}{If \code{TRUE}, DAP-S enforces mutually exclusive signals
-(each variant can only be allocated to one signal). If \code{FALSE}, the
-same variant may be included in multiple signals (i.e., “splitting”).}
+\item{pir_threshold}{Threshold for PIR}
 
-\item{pir_threshold}{Pseudo-Importance Resampling (PIR) density threshold.
-Models with PIR density above this threshold are considered candidates.
-Defaults to \eqn{10^{-6}}.}
+\item{r2_threshold}{Threshold for R2 when constructing credible sets}
 
-\item{scaled_prior_variance}{SuSiE input: scaled prior effect size variance.
-The prior variance is \code{var(y) * scaled_prior_variance}. Equivalently,
-it corresponds to \eqn{phi^2} in the BVSR with a \eqn{D_2} prior.}
+\item{coverage}{Coverage for credible set}
 
-\item{residual_variance}{SuSiE input: residual variance. If
-\code{estimate_residual_variance = TRUE}, this value is used as the initial
-guess; otherwise, the residual variance is fixed to this value.}
-
-\item{prior_weights}{SuSiE input: optional prior weights on each variant;
-a length-\eqn{p} vector giving the prior probability each variant is causal.}
-
-\item{null_weight}{SuSiE input: a probability between 0 and 1 that no variant
-is causal.}
-
-\item{standardize}{SuSiE input: whether to standardize the genotype matrix.
-If \code{TRUE}, each column of \code{X} is standardized (mean 0, variance 1).}
-
-\item{estimate_residual_variance}{SuSiE input: if \code{TRUE}, the residual
-variance is estimated internally (using \code{residual_variance} as an initial
-value). If \code{FALSE}, it is held fixed.}
-
-\item{estimate_prior_variance}{SuSiE input: if \code{TRUE}, the prior variance
-is estimated (one parameter for all L effects) starting from
-\code{scaled_prior_variance}. If \code{FALSE}, the prior variance is fixed to
+\item{scaled_prior_variance}{Scaled prior variance. That is, the prior
+variance of each non-zero element of b is \code{var(y)} *
 \code{scaled_prior_variance}.}
+
+\item{residual_variance}{Residual variance}
+
+\item{null_weight}{Null weight used in SuSiE}
+
+\item{estimate_residual_variance}{Estimate residual variance in SuSiE}
+
+\item{estimate_prior_variance}{Estimate prior variance in SuSiE}
 }
 \value{
-A list containing the fine-mapping results, including posterior
-  inclusion probabilities, credible sets (if \code{coverage} is specified), or
-  signal clusters (if \code{coverage} is \code{NULL}). Typically, it includes
-  the SuSiE fit object extended with DAP-S features.
+List of fine-mapping results.
 }
 \description{
-The parameters are directly obtained from SuSiE results. Most of the commonly
-used SuSiE parameters (e.g., \code{scaled_prior_variance}, \code{residual_variance},
-etc.) can be controlled via \code{default_susie_params} and \code{susie_params}.
+DAP-S fine-mapping with individual-level data.
 }

@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <set>
 
+
 using namespace Rcpp;
 using namespace std;
 
@@ -10,34 +11,32 @@ using namespace std;
 //' @param mat A processed p x l matrix of proposal densities from SuSiE
 //' @param threshold The threshold value of the proposal density
 //' @return A NumericMatrix containing the unique combinations
-//' @export
-// [[Rcpp::export]]
-List pir(NumericMatrix mat, double threshold) {
-  int p = mat.nrow(); // 5001
-  int L = mat.ncol(); // 3
+vector<vector<int>> pir(const vector<vector<double>>& mat, double threshold) {
+
+  int p = mat.size(); // 5001 including NULL SNP
+  int L = mat[0].size(); // 3
   double logThreshold = log10(threshold);
 
-  // open output file
   // Take log10 of the matrix, replace 0 with 10^-999 and add a row of -9999 to avoid out of bound error
-  NumericMatrix logMat(p+1, L);
+  vector<vector<double>> logMat(p + 1, vector<double>(L));
   for (int i = 0; i < p; i++) {
     for (int j = 0; j < L; j++) {
-      if (mat(i, j) == 0) {
-        logMat(i, j) = -999;
+      if (mat[i][j] == 0) {
+        logMat[i][j] = -999;
       } else {
-        logMat(i, j) = log10(mat(i, j));
+        logMat[i][j] = log10(mat[i][j]);
       }
     }
   }
   for (int j = 0; j < L; j++) {
-    logMat(p, j) = -9999;
+    logMat[p][j] = -9999;
   }
 
   // Sort each column in descending order
   vector<vector<pair<double, int>>> sortedMat(L);
   for (int i = 0; i < L; i++) {
     for (int j = 0; j < p + 1; j++) {
-      sortedMat[i].emplace_back(logMat(j, i), j);
+      sortedMat[i].emplace_back(logMat[j][i], j);
     }
     sort(sortedMat[i].begin(), sortedMat[i].end(), greater<pair<double, int>>());
   }
@@ -112,7 +111,7 @@ List pir(NumericMatrix mat, double threshold) {
 
   // Check for duplicates and track single-SNP/NULL models simultaneously
   vector<vector<int>> updatedCombinations;
-  std::set<int> existingSingleSNPs;
+  set<int> existingSingleSNPs;
   bool hasNullModel = false;
 
   for (const auto& row : Combinations) {
@@ -150,36 +149,20 @@ List pir(NumericMatrix mat, double threshold) {
       }
     }
   }
-  
-  // Convert Combinations to NumericMatrix
-  NumericMatrix combo(updatedCombinations.size(), L);
-  for (int i = 0; i < updatedCombinations.size(); i++) {
-    for (int col = 0; col < L; col++) {
-      combo(i, col) = updatedCombinations[i][col];
-    }
-  }
 
   // Create missing 1-SNP models and NULL model
-  vector<int> missingModels;
   if (!hasNullModel) {
-    missingModels.push_back(p - 1);
+    vector<int> nullModel(L, p - 1);
+    updatedCombinations.push_back(nullModel);
   }
   for (int snp = 0; snp < p - 1; snp++) {
     if (!existingSingleSNPs.count(snp)) {
-      missingModels.push_back(snp);
+      vector<int> singleModel(L, p - 1);
+      singleModel[0] = snp;
+      updatedCombinations.push_back(singleModel);
     }
   }
-  NumericMatrix missingModelMatrix(0, 1);
-  if (!missingModels.empty()) {
-    missingModelMatrix = NumericMatrix(missingModels.size(), 1);
-    for (int i = 0; i < missingModels.size(); i++) {
-      missingModelMatrix(i, 0) = missingModels[i];
-    }
-  }
-
-  //return result; // m*p binary matrix of model configurations
-  return List::create(
-    Named("combo") = combo,
-    Named("single") = missingModelMatrix
-  );
+  
+  // return results; m*p matrix of combinations and m*1 matrix of missing models; index starts from 0.
+  return updatedCombinations;
 }

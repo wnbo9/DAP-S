@@ -5,10 +5,8 @@
 #' @param mcfg A vector of model configuration
 #' @param pi_vec A vector of prior probabilities
 #' @return Result Log 10 prior of model configuration
-#' @export
-compute_log10_prior <- function(mcfg, pi_vec) {
-    .Call(`_dap_compute_log10_prior`, mcfg, pi_vec)
-}
+#' @noRd
+NULL
 
 #' Compute log10 posterior scores for multiple model configurations
 #' @param X An n*p matrix of genotype data
@@ -18,8 +16,8 @@ compute_log10_prior <- function(mcfg, pi_vec) {
 #' @param phi2_vec A vector of phi2 values
 #' @return An m-vector of log10 posterior scores
 #' @export
-compute_log10_posterior <- function(X, y, cmfg_matrix, single_matrix, pi_vec, phi2_mat) {
-    .Call(`_dap_compute_log10_posterior`, X, y, cmfg_matrix, single_matrix, pi_vec, phi2_mat)
+compute_log10_posterior <- function(X, y, cmfg_matrix, pi_vec, phi2_mat) {
+    .Call(`_dap_compute_log10_posterior`, X, y, cmfg_matrix, pi_vec, phi2_mat)
 }
 
 #' Implementation of DAP-S algorithm in C++ with default SuSiE settings
@@ -29,12 +27,13 @@ compute_log10_posterior <- function(X, y, cmfg_matrix, single_matrix, pi_vec, ph
 #' @param X Genotype matrix
 #' @param y Phenotype vector
 #' @param matrix Proposal density matrix from SuSiE
+#' @param pir_threshold Threshold for PIR
 #' @param prior_weights Vector of prior probabilities
+#' @param phi2_mat Matrix of scaled prior effect size variances
 #' @param r2_threshold Threshold for LD
 #' @param coverage Coverage for credible set
-#' @param phi2_mat Matrix of scaled prior effect size variances
 #' @param exclusive If TRUE. enforce mutually exclusive clusters
-#' @param pir_threshold Threshold for PIR
+#' @param snp_names SNP names
 #'
 #' @return A list containing:
 #' \itemize{
@@ -46,17 +45,8 @@ compute_log10_posterior <- function(X, y, cmfg_matrix, single_matrix, pi_vec, ph
 #'   \item signal_cluster - Signal clusters
 #' }
 #' @export
-dap_main <- function(X, y, matrix, prior_weights, r2_threshold, coverage, phi2_mat, exclusive, pir_threshold) {
-    .Call(`_dap_dap_main`, X, y, matrix, prior_weights, r2_threshold, coverage, phi2_mat, exclusive, pir_threshold)
-}
-
-#' Find all model combinations that have a proposal density greater than or equal to a threshold
-#' @param mat A processed p x l matrix of proposal densities from SuSiE
-#' @param threshold The threshold value of the proposal density
-#' @return A NumericMatrix containing the unique combinations
-#' @export
-pir <- function(mat, threshold) {
-    .Call(`_dap_pir`, mat, threshold)
+dap_main <- function(X, y, matrix, pir_threshold, prior_weights, phi2_mat, r2_threshold, coverage, exclusive, snp_names) {
+    .Call(`_dap_dap_main`, X, y, matrix, pir_threshold, prior_weights, phi2_mat, r2_threshold, coverage, exclusive, snp_names)
 }
 
 #' Get signal clusters or credible sets at given coverage level
@@ -65,11 +55,8 @@ pir <- function(mat, threshold) {
 #' and model posterior probabilities.
 #' 
 #' @param X NumericMatrix containing the raw data
-#' @param combo NumericMatrix containing the model configurations
-#' @param single NumericMatrix containing the single SNP models
-#' @param posterior_prob NumericVector of posterior probabilities
-#' @param col_names CharacterVector of column names
-#' @param threshold Double specifying the threshold for model proposal density
+#' @param effect_pip NumericMatrix containing the effect posterior inclusion probabilities
+#' @param snp_names CharacterVector of SNP names
 #' @param r2_threshold Double specifying the R-squared threshold for correlation
 #' @param coverage Double specifying the coverage threshold
 #' @return List containing:
@@ -79,7 +66,7 @@ pir <- function(mat, threshold) {
 #'   \item{r2_threshold}{Double containing the R-squared threshold used}
 #'   \item{coverage}{Double containing the coverage threshold used}
 #' @export
-get_sc <- function(X, combo, single, posterior_prob, col_names, threshold, r2_threshold, coverage) {
-    .Call(`_dap_get_sc`, X, combo, single, posterior_prob, col_names, threshold, r2_threshold, coverage)
+get_sc <- function(X, effect_pip, snp_names, r2_threshold, coverage) {
+    .Call(`_dap_get_sc`, X, effect_pip, snp_names, r2_threshold, coverage)
 }
 
