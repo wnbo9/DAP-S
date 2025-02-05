@@ -23,8 +23,13 @@ param_setup <- function(y, fit, exclusive, use_susie_variance_estimate, grid) {
   # Extract the non-zero columns
   matrix <- t(fit$alpha)
   cols <- which(fit$V != 0)
-  mat <- as.matrix(matrix[, cols])
-  V <- fit$V[cols]
+  if (length(cols) == 0) {
+    mat <- as.matrix(matrix[, 1])
+    V <- 0.2
+  } else {
+    mat <- as.matrix(matrix[, cols])
+    V <- fit$V[cols]
+  }
 
   # Remove duplicated columns
   max_indices <- apply(mat, 2, which.max)
