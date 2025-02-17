@@ -12,8 +12,6 @@
 #' @param prior_weights Prior weights of each SNP being causal
 #' @param null_weight Null weight used in SuSiE
 #' @param standardize Standardize each column of the genotype matrix
-#' @param estimate_residual_variance Estimate residual variance in SuSiE
-#' @param estimate_prior_variance Estimate prior variance in SuSiE
 #' @param use_susie_variance_estimate Use SuSiE-estimated prior variance
 #' @param grid Grid of prior variances, default is c(0.04, 0.16, 0.64)
 #' @param exclusive Exclusive signal clusters
@@ -31,7 +29,7 @@ dap <- function(X, y, L = min(10, ncol(X)),
                 standardize = TRUE,
                 use_susie_variance_estimate = FALSE,
                 grid = c(0.04, 0.16, 0.64),
-                exclusive = TRUE,
+                exclusive = FALSE,
                 pir_threshold = 1e-6,
                 r2_threshold = 0.25,
                 coverage = NULL) {
@@ -53,22 +51,19 @@ dap <- function(X, y, L = min(10, ncol(X)),
   default_susie_params <- list(
     scaled_prior_variance = 0.2,
     residual_variance = NULL,
-    null_weight = prod(1 - prior_weights),
-    estimate_residual_variance = TRUE,
-    estimate_prior_variance = TRUE
+    null_weight = prod(1 - prior_weights)
   )
   susie_params <- modifyList(default_susie_params, susie_params)
 
   cat("Running SuSiE...\n")
-  susie_fit <- susie(X, y, L, max_iter = 1000, coverage = 0.95,
+  susie_fit <- susie(X, y, L,
                      scaled_prior_variance = susie_params$scaled_prior_variance,
                      residual_variance = susie_params$residual_variance,
                      prior_weights = prior_weights,
                      null_weight = susie_params$null_weight,
-                     standardize = standardize,
-                     estimate_residual_variance = susie_params$estimate_residual_variance,
-                     estimate_prior_variance = susie_params$estimate_prior_variance)
-  info <- param_setup(y, susie_fit, exclusive, use_susie_variance_estimate, grid)
+                     standardize = standardize)
+  info <- param_setup(y, susie_fit, exclusive,
+                      use_susie_variance_estimate, grid)
 
   cat("Running DAP-S fine-mapping...\n")
   results <- dap_main(X, y, info$mat, pir_threshold,

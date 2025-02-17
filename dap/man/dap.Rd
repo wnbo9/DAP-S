@@ -13,7 +13,7 @@ dap(
   standardize = TRUE,
   use_susie_variance_estimate = FALSE,
   grid = c(0.04, 0.16, 0.64),
-  exclusive = TRUE,
+  exclusive = FALSE,
   pir_threshold = 1e-06,
   r2_threshold = 0.25,
   coverage = NULL
@@ -53,10 +53,6 @@ variance of each non-zero element of b is \code{var(y)} *
 \item{residual_variance}{Residual variance}
 
 \item{null_weight}{Null weight used in SuSiE}
-
-\item{estimate_residual_variance}{Estimate residual variance in SuSiE}
-
-\item{estimate_prior_variance}{Estimate prior variance in SuSiE}
 }
 \value{
 List of fine-mapping results.

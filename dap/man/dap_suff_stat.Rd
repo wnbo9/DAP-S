@@ -4,7 +4,7 @@
 \alias{dap_suff_stat}
 \title{DAP-S fine-mapping using sufficient statistics data}
 \usage{
-dap_suff_stat(XtX, Xty, yty, n, L = min(10, ncol(X)))
+dap_suff_stat(XtX, Xty, yty, n, L = min(10, ncol(XtX)), standardize = TRUE)
 }
 \arguments{
 \item{XtX}{A p by p matrix \eqn{X'X} in which the columns of X are centered to have mean zero.}
@@ -31,7 +31,8 @@ dap_suff_stat(XtX, Xty, yty, n, L = min(10, ncol(X)))
 
 \item{r2_threshold}{Genotype R2 threshold for LD}
 
-\item{coverage}{Coverage of credible sets. When not set, it outputs signal clusters; otherwise, it outputs credible sets at the specified coverage level}
+\item{coverage}{Coverage of credible sets. When not set, it outputs signal clusters;
+otherwise, it outputs credible sets at the specified coverage level}
 }
 \value{
 Fine mapping results
