@@ -1,6 +1,6 @@
 Package: dap
 Title: Deterministic Approximation of Posteriors though Pseudo Importance Resampling
-Version: 0.1.1
+Version: 0.2.0
 Authors@R: c(
     person("Bo", "Wang", email = "wnbo@umich.edu", role = c("aut", "cre")),
     person("Xiaoquan", "Wen", role = "aut")

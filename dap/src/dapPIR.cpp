@@ -15,22 +15,40 @@ vector<vector<int>> pir(const vector<vector<double>>& mat, double threshold) {
 
   int p = mat.size(); // 5001 including NULL SNP
   int L = mat[0].size(); // 3
+
+  vector<vector<int>> updatedCombinations; // Store the updated combinations
+  set<vector<int>> uniqueModels; // Sort the unique configurations
+
+  // NULL model
+  vector<int> nullModel(1, p - 1);
+  uniqueModels.insert(vector<int>());
+  updatedCombinations.push_back(nullModel); 
+  
+  // 1-SNP models
+  for (int snp = 0; snp < p - 1; snp++) {
+    vector<int> model = {snp};
+    uniqueModels.insert(model);
+    updatedCombinations.push_back(model);
+  }
+
+  // return if L == 1
+  if (L == 1) {
+    return updatedCombinations;
+  }
+
+
+  // L > 1, we do PIR
   double logThreshold = log10(threshold);
 
   // Take log10 of the matrix, replace 0 with 10^-999 and add a row of -9999 to avoid out of bound error
   vector<vector<double>> logMat(p + 1, vector<double>(L));
   for (int i = 0; i < p; i++) {
     for (int j = 0; j < L; j++) {
-      if (mat[i][j] == 0) {
-        logMat[i][j] = -999;
-      } else {
-        logMat[i][j] = log10(mat[i][j]);
-      }
+      logMat[i][j] = (mat[i][j] == 0) ? -999 : log10(mat[i][j]);
     }
   }
-  for (int j = 0; j < L; j++) {
-    logMat[p][j] = -9999;
-  }
+  fill(logMat[p].begin(), logMat[p].end(), -9999);
+
 
   // Sort each column in descending order
   vector<vector<pair<double, int>>> sortedMat(L);
@@ -42,7 +60,6 @@ vector<vector<int>> pir(const vector<vector<double>>& mat, double threshold) {
   }
 
   vector<int> indices(L, 0);
-  set<vector<int>> Combinations;
   bool done = false;
 
   while (!done) {
@@ -65,7 +82,28 @@ vector<vector<int>> pir(const vector<vector<double>>& mat, double threshold) {
     
     // If the sum is greater than the threshold, save the combination
     if (currentSum >= logThreshold) {
-      Combinations.insert(combination);
+        // Extract and sort active SNPs
+        vector<int> activeSNPs;
+        bool has_duplicate = false;
+        set<int> seen;
+
+        for (int val : combination) {
+            if (val != p - 1) {
+              if (!seen.insert(val).second) { // If the model has same SNPs, discard it
+                has_duplicate = true;
+                break;
+              }
+              activeSNPs.push_back(val);
+            }
+        }
+
+        if (!has_duplicate) {
+            // Only add if this set of SNPs is new
+            sort(activeSNPs.begin(), activeSNPs.end());
+            if (uniqueModels.insert(activeSNPs).second) {
+                updatedCombinations.push_back(combination);
+            }
+        }
     }
 
     // Handle stopping condition
@@ -109,60 +147,6 @@ vector<vector<int>> pir(const vector<vector<double>>& mat, double threshold) {
     }
   }
 
-  // Check for duplicates and track single-SNP/NULL models simultaneously
-  vector<vector<int>> updatedCombinations;
-  set<int> existingSingleSNPs;
-  bool hasNullModel = false;
-
-  for (const auto& row : Combinations) {
-    // Check for duplicates
-    bool isValid = true;
-    unordered_set<int> seen;
-    int nonNullCount = 0;
-    int singleSNP = -1;
-
-    // Process each value in the row
-    for (int val : row) {
-      // Check for duplicates excluding p-1=5000
-      if (val != p - 1 && seen.count(val)) {
-        isValid = false;
-        break;
-      }
-      seen.insert(val);
-
-      // Count non-NULL SNPs and track single SNP
-      if (val != p - 1) {
-        nonNullCount++;
-        singleSNP = val;
-      }
-    }
-
-    // If row is valid (no duplicates), add it and track single-SNP models
-    if (isValid) {
-      updatedCombinations.push_back(row);
-
-      // Track single-SNP models and NULL model
-      if (nonNullCount == 1) {
-        existingSingleSNPs.insert(singleSNP);
-      } else if (nonNullCount == 0) {
-        hasNullModel = true;
-      }
-    }
-  }
-
-  // Create missing 1-SNP models and NULL model
-  if (!hasNullModel) {
-    vector<int> nullModel(L, p - 1);
-    updatedCombinations.push_back(nullModel);
-  }
-  for (int snp = 0; snp < p - 1; snp++) {
-    if (!existingSingleSNPs.count(snp)) {
-      vector<int> singleModel(L, p - 1);
-      singleModel[0] = snp;
-      updatedCombinations.push_back(singleModel);
-    }
-  }
-  
   // return results; m*p matrix of combinations and m*1 matrix of missing models; index starts from 0.
   return updatedCombinations;
 }

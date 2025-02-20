@@ -14,12 +14,13 @@ process_matrix <- function(mat) {
 #' Initialize parameters for fine mapping from SuSiE fit
 #' @param y Phenotype vector
 #' @param fit SuSiE fit
-#' @param exclusive Whether to create mutually exclusive signal clusters
+#' @param overlapping Whether to create overlapping signal clusters
 #' @param use_susie_variance_estimate Use SuSiE-estimated prior variance
 #' @param grid Grid of prior variances
 #' @return List of parameters: matrix and scaled prior variance matrix
 #' @noRd
-param_setup <- function(y, fit, exclusive, use_susie_variance_estimate, grid) {
+param_setup <- function(y, fit, overlapping,
+                        use_susie_variance_estimate, grid) {
   # Extract the non-zero columns
   matrix <- t(fit$alpha)
   cols <- which(fit$V != 0)
@@ -31,28 +32,25 @@ param_setup <- function(y, fit, exclusive, use_susie_variance_estimate, grid) {
     V <- fit$V[cols]
   }
 
-  # Remove duplicated columns
+  # Remove duplicated columns caused by model overfitting
   max_indices <- apply(mat, 2, which.max)
   keep_cols <- !duplicated(max_indices)
   mat <- mat[, keep_cols, drop = FALSE]
   V <- V[keep_cols]
 
-  # Process matrix if exclusive
-  if (exclusive) {
+  # Process matrix if not overlapping
+  if (!overlapping) {
     mat <- process_matrix(mat)
   }
 
   # Set up scaled prior variance matrix
-  if (use_susie_variance_estimate) {
-    phi2_mat <- matrix(V / as.vector(var(y)), nrow = 1)
-  } else {
-    #if (max(V) > 2) { # shift the upper bound of the grid
-    #  grid[length(grid)] <- 1.28
-    #}
-    phi2_mat <- matrix(rep(grid, ncol(mat)), ncol = ncol(mat), byrow = FALSE)
+  if (use_susie_variance_estimate && max(V) > 1) {
+    #phi2_mat <- matrix(V / as.vector(var(y)), nrow = 1)
+    grid[length(grid)] <- 1.28 # shift the upper bound of the grid
   }
+  phi2_mat <- matrix(rep(grid, ncol(mat)), ncol = ncol(mat), byrow = FALSE)
 
-  list(mat = mat, phi2_mat = phi2_mat)
+  list(mat = mat, phi2_mat = phi2_mat, overlapping = overlapping)
 }
 
 
@@ -66,24 +64,26 @@ param_setup <- function(y, fit, exclusive, use_susie_variance_estimate, grid) {
 #' @param r2_threshold Threshold for R2
 #' @param prior_weights Prior weights
 #' @param snp_names SNP names
+#' @param coverage Coverage for credible set
+#' @param twas_weight Whether to compute TWAS weights
 #' @return Summarized results
 #' @noRd
 get_summarization <- function(susie_params, info, results,
                               pir_threshold, r2_threshold,
-                              prior_weights, snp_names) {
+                              prior_weights, snp_names,
+                              coverage, twas_weight) {
 
   # Create model results dataframe
   p <- length(snp_names)
 
-  result_df <- data.frame(
+  model_df <- data.frame(
     model_config = results$model_config,
     posterior_prob = results$posterior_prob,
     log10_posterior_score = results$log10_posterior_score,
     log10_BF = results$log10_BF,
     log10_prior = results$log10_prior,
     stringsAsFactors = FALSE
-  ) %>%
-    arrange(desc(log10_posterior_score))
+  )
 
   # Store parameters
   params <- list(
@@ -92,61 +92,50 @@ get_summarization <- function(susie_params, info, results,
     r2_threshold = r2_threshold,
     phi2 = susie_params$scaled_prior_variance,
     phi2_mat = info$phi2_mat,
-    prior_weights = prior_weights,
-    null_weight = susie_params$null_weight
-  )
-
-  # Initialize SNP dataframe
-  snp_df <- data.frame(
-    snp = snp_names,
-    index = 1:p,
-    marginal_pip = results$pip,
-    cluster_index = "",
-    stringsAsFactors = FALSE
+    null_weight = susie_params$null_weight,
+    twas_weight = twas_weight,
+    overlapping = info$overlapping,
+    coverage = coverage
   )
 
   sc <- results$signal_cluster
-  snp_index <- sc$snp_index
-  all_snps <- sort(unique(unlist(snp_index)))
-  for (snp in all_snps) {
-    clusters <- which(sapply(snp_index, function(x) snp %in% x))
-    snp_df$cluster_index[snp_df$index == snp] <- paste(clusters, collapse = ",")
-  }
-  snp_df$cluster_index[snp_df$cluster_index == ""] <- "-1"
-  snp_df$duplicate <- grepl(",", snp_df$cluster_index)
+  cs_id <- list()
+  snp_id <- list()
+  pip_values <- list()
 
-  new_df <- snp_df
-  colnames(new_df)[colnames(new_df) == "marginal_pip"] <- "pip"
-  dup_indices <- which(new_df$cluster_index != "-1")
-  all_new_rows <- list()
-  for (i in dup_indices) {
-    clusters <- as.numeric(strsplit(new_df$cluster_index[i], ",")[[1]])
-    new_rows <- lapply(clusters, function(cluster) {
-      row <- new_df[i, ]
-      row$cluster_index <- cluster
-      effect_value <- results$effect_pip[i, sc$sc_index[cluster]]
-      row$pip <- effect_value
-      return(row)
-    })
-    all_new_rows <- c(all_new_rows, new_rows)
+  # Loop through each cluster
+  for (i in seq_along(sc$snp_index)) {
+    current_cs_id <- sc$sc_index[i]  # Get cluster ID
+    current_snps <- sc$snp_index[[i]]  # Get SNPs in this
+    current_pips <- results$effect_pip[current_snps, current_cs_id]
+    # Add to lists
+    cs_id[[i]] <- rep(current_cs_id, length(current_snps))
+    snp_id[[i]] <- current_snps
+    pip_values[[i]] <- current_pips
   }
 
-  new_df <- new_df[-dup_indices, ]
-  if (length(all_new_rows) > 0) {
-    new_rows_df <- do.call(rbind, all_new_rows)
-    new_df <- rbind(new_df, new_rows_df)
-  }
-  new_df$cluster_index <- as.numeric(new_df$cluster_index)
+  # Combine into dataframe
+  varaint_df <- data.frame(
+    CS_ID = unlist(cs_id),
+    SNP_ID = unlist(snp_id),
+    PIP = unlist(pip_values),
+    SNP_Name = snp_names[unlist(snp_id)],
+    stringsAsFactors = FALSE
+  )
 
   # Return compiled results
   list(
     alpha = info$mat,
     alpha_dap = results$effect_pip,
-    variants = snp_df,
-    variants_coloc = new_df,
-    models = result_df,
+    pip = results$pip,
+    prior = prior_weights,
+    snp_names = snp_names,
+    variants = varaint_df,
+    models = model_df,
+    model_combo = results$model_combo,
     sets = sc,
-    elements = results$element_cluster,
-    params = params
+    params = params,
+    reg_weights = results$reg_weights,
+    twas_weights = results$twas_weights
   )
 }

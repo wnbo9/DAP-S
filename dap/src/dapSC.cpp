@@ -7,7 +7,6 @@
 using namespace Rcpp;
 using namespace std;
 
-// [[Rcpp::depends(gsl)]]
 
 double compute_r2(const NumericMatrix& X, int i, int j) {
     double r2;
@@ -28,10 +27,6 @@ double median(vector<double>& v) {
 }
 
 //' Get signal clusters or credible sets at given coverage level
-//' 
-//' This function identifies clusters of correlated signals based on R-squared values
-//' and model posterior probabilities.
-//' 
 //' @param X NumericMatrix containing the raw data
 //' @param effect_pip NumericMatrix containing the effect posterior inclusion probabilities
 //' @param snp_names CharacterVector of SNP names
@@ -43,8 +38,6 @@ double median(vector<double>& v) {
 //'   \item{sizes}{Integer vector of cluster sizes}
 //'   \item{r2_threshold}{Double containing the R-squared threshold used}
 //'   \item{coverage}{Double containing the coverage threshold used}
-//' @export
-// [[Rcpp::export]]
 List get_sc(const NumericMatrix& X,
             const NumericMatrix& effect_pip,
             const CharacterVector& snp_names,
@@ -153,20 +146,34 @@ List get_sc(const NumericMatrix& X,
             }
         }
 
+        CharacterVector cluster_names_vec(n_clusters);
+        for(int i = 0; i < n_clusters; i++) {
+            cluster_names_vec[i] = "C" + to_string(sc_index[i]);
+        }
         DataFrame r2_stats = DataFrame::create(
             Named("min_r2") = min_r2,
             Named("mean_r2") = mean_r2,
             Named("median_r2") = median_r2
         );
+        r2_stats.attr("row.names") = cluster_names_vec;
 
         vector<vector<int>> snp_index = clusters;
         for(auto& cluster : snp_index) {
             transform(cluster.begin(), cluster.end(), cluster.begin(), [](int x) { return x + 1; });
         }
 
+        List named_clusters;
+        List named_snp_index;
+        for(int i = 0; i < n_clusters; i++) {
+            String cluster_name = as<std::string>(cluster_names_vec[i]);
+            named_clusters[cluster_name] = r_clusters[i];
+            named_snp_index[cluster_name] = snp_index[i];
+        }
+
+        
         return List::create(
-            Named("cluster") = r_clusters,
-            Named("snp_index") = snp_index,
+            Named("cluster") = named_clusters,
+            Named("snp_index") = named_snp_index,
             Named("cpip") = r_mps,
             Named("size") = cluster_sizes,
             Named("cluster_r2") = r2_stats,

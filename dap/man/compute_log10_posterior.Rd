@@ -4,7 +4,14 @@
 \alias{compute_log10_posterior}
 \title{Compute log10 posterior scores for multiple model configurations}
 \usage{
-compute_log10_posterior(X, y, cmfg_matrix, pi_vec, phi2_mat)
+compute_log10_posterior(
+  X,
+  y,
+  cmfg_matrix,
+  pi_vec,
+  phi2_mat,
+  twas_weight = FALSE
+)
 }
 \arguments{
 \item{X}{An n*p matrix of genotype data}
@@ -14,6 +21,8 @@ compute_log10_posterior(X, y, cmfg_matrix, pi_vec, phi2_mat)
 \item{cmfg_matrix}{An m*p matrix of model configurations}
 
 \item{pi_vec}{A vector of prior probabilities}
+
+\item{twas_weight}{A boolean indicating whether to compute TWAS weights}
 
 \item{phi2_vec}{A vector of phi2 values}
 }

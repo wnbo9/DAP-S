@@ -21,7 +21,7 @@ private:
 
 public:
     void init(double yty_, const gsl_matrix *GtG_, const gsl_matrix *Gty_, int n_, const NumericMatrix &phi2_mat_);
-    double compute_log10_BF(const vector<int> &indicator);
+    vector<double> compute_log10_BF(const vector<int> &indicator, bool twas_weight);
     double log10_weighted_sum(const vector<double> &vec, const vector<double> &wts);
 
     ~MLR() {
@@ -44,23 +44,24 @@ void MLR::init(double yty_, const gsl_matrix *GtG_, const gsl_matrix *Gty_, int 
   gsl_matrix_memcpy(Gty, Gty_);
 }
 
-double MLR::compute_log10_BF(const vector<int> &indicator) {
+vector<double> MLR::compute_log10_BF(const vector<int> &indicator, bool twas_weight = true) {
   vector<double> rstv;
   vector<double> wv;
+  vector<double> result(p+1, 0.0);
 
   int ep = 0;
   int count = 0;
   map<int, int> imap;
 
   for (int i = 0; i < indicator.size(); i++) {
-      if (indicator[i] != p) {
-        ep++;
-        imap[i] = count++;
-      }
+    if (indicator[i] != p) {
+      ep++;
+      imap[i] = count++;
+    }
   }
 
   if (ep == 0) {
-      return 0;
+    return result;
   }
 
   gsl_matrix *XtX = gsl_matrix_calloc(ep, ep);
@@ -85,6 +86,7 @@ double MLR::compute_log10_BF(const vector<int> &indicator) {
   gsl_vector *work = gsl_vector_calloc(ep);
   gsl_linalg_SV_decomp(XtX, V, S, work);
 
+  // Calculate log10 BF
   for (int i = 0; i < phi2_mat.nrow(); i++) {
       double det = 1;
 
@@ -124,6 +126,39 @@ double MLR::compute_log10_BF(const vector<int> &indicator) {
       gsl_matrix_free(tt4);
   }
 
+  // Calculate regression weights
+  if (twas_weight) {
+    gsl_matrix *t1 = gsl_matrix_calloc(ep, ep);
+    for (int j = 0; j < ep; j++) {
+        double v = gsl_vector_get(S, j);
+        if (v > 1e-8) {
+          gsl_matrix_set(t1, j, j, 1.0 / v);
+        }
+    }
+    gsl_matrix *t2 = gsl_matrix_calloc(ep,ep);
+    gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1, V, t1, 0, t2);
+
+    gsl_matrix *XtX_inv = gsl_matrix_calloc(ep,ep);
+    gsl_blas_dgemm(CblasNoTrans, CblasTrans, 1, t2, V, 0, XtX_inv);
+
+    // (X'X)^{-1)X'y
+    gsl_matrix *t3 = gsl_matrix_calloc(ep,1);
+    gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1, XtX_inv, Xty, 0, t3);
+
+    for (int j = 0; j < indicator.size(); j++) {
+        if (indicator[j] == p)
+            continue;
+        int pos = indicator[j];
+        result[pos + 1] = gsl_matrix_get(t3, imap[j], 0);
+    }
+
+    gsl_matrix_free(t1);
+    gsl_matrix_free(t2);
+    gsl_matrix_free(XtX_inv);
+    gsl_matrix_free(t3);
+  }
+
+
   gsl_matrix_free(V);
   gsl_vector_free(S);
   gsl_vector_free(work);
@@ -131,12 +166,12 @@ double MLR::compute_log10_BF(const vector<int> &indicator) {
   gsl_matrix_free(XtX);
   gsl_matrix_free(Xty);
 
-  double rst = log10_weighted_sum(rstv, wv);
+  result[0] = log10_weighted_sum(rstv, wv);
   
-  return rst;
+  return result;
 }
 
-  
+
 double MLR::log10_weighted_sum(const vector<double> &vec, const vector<double> &wts) {
     double max = vec[0];
     for (size_t i = 0; i < vec.size(); i++) {
@@ -175,12 +210,14 @@ double compute_log10_prior(const std::vector<int> &mcfg, NumericVector pi_vec) {
 //' @param cmfg_matrix An m*p matrix of model configurations
 //' @param pi_vec A vector of prior probabilities
 //' @param phi2_vec A vector of phi2 values
+//' @param twas_weight A boolean indicating whether to compute TWAS weights
 //' @return An m-vector of log10 posterior scores
 //' @export
 // [[Rcpp::export]]
 List compute_log10_posterior(const NumericMatrix& X, const NumericVector& y, 
                              const std::vector<std::vector<int>>& cmfg_matrix,
-                             const NumericVector& pi_vec, const NumericMatrix& phi2_mat) {
+                             const NumericVector& pi_vec, const NumericMatrix& phi2_mat,
+                             bool twas_weight = false) {
   int n = X.nrow();
   int p = X.ncol();
   int m = cmfg_matrix.size();
@@ -212,12 +249,25 @@ List compute_log10_posterior(const NumericMatrix& X, const NumericVector& y,
   NumericVector log10_BF(m);
   NumericVector log10_prior(m);
   NumericVector log10_posterior_score(m);
+  NumericMatrix reg_weights;
+
+  if (twas_weight) {
+    reg_weights = NumericMatrix(m, p);
+  }
 
   for (int i = 0; i < m; i++) {
     // Extract the row
     vector<int> indicator = cmfg_matrix[i];
 
-    log10_BF[i] = mlr.compute_log10_BF(indicator);
+    vector<double> rst = mlr.compute_log10_BF(indicator, twas_weight);
+    log10_BF[i] = rst[0];
+
+    if (twas_weight) {
+      for (int j = 0; j < p; j++) {
+        reg_weights(i, j) = rst[j + 1];
+      }
+    }
+
     log10_prior[i] = compute_log10_prior(indicator, pi_vec);
     log10_posterior_score[i] = log10_BF[i] + log10_prior[i];
   }
@@ -228,9 +278,8 @@ List compute_log10_posterior(const NumericMatrix& X, const NumericVector& y,
   gsl_matrix_free(GtG);
   gsl_matrix_free(Gty);
 
-  return List::create(
-    Named("log10_BF") = log10_BF,
-    Named("log10_prior") = log10_prior,
-    Named("log10_posterior_score") = log10_posterior_score
-  );
+  return List::create(Named("log10_BF") = log10_BF,
+                      Named("log10_prior") = log10_prior,
+                      Named("log10_posterior_score") = log10_posterior_score,
+                      Named("reg_weights") = reg_weights);
 }

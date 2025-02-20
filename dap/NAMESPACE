@@ -2,9 +2,8 @@
 
 export(compute_log10_posterior)
 export(dap)
-export(dap_main)
 export(dap_suff_stat)
-export(get_sc)
+export(dap_update)
 import(Matrix)
 import(Rfast)
 importFrom(Rcpp,sourceCpp)

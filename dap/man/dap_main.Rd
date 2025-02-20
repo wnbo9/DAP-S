@@ -13,7 +13,8 @@ dap_main(
   phi2_mat,
   r2_threshold,
   coverage,
-  exclusive,
+  overlapping,
+  twas_weight,
   snp_names
 )
 }
@@ -34,7 +35,9 @@ dap_main(
 
 \item{coverage}{Coverage for credible set}
 
-\item{exclusive}{If TRUE. enforce mutually exclusive clusters}
+\item{overlapping}{If TRUE. enforce overlapping clusters}
+
+\item{twas_weight}{If TRUE, return TWAS weights}
 
 \item{snp_names}{SNP names}
 }
@@ -50,5 +53,5 @@ A list containing:
 }
 }
 \description{
-Performs fine mapping using DAP-S algorithm
+Implementation of DAP-S algorithm in C++ with default SuSiE settings
 }

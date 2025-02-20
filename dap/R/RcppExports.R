@@ -7,16 +7,14 @@
 #' @param cmfg_matrix An m*p matrix of model configurations
 #' @param pi_vec A vector of prior probabilities
 #' @param phi2_vec A vector of phi2 values
+#' @param twas_weight A boolean indicating whether to compute TWAS weights
 #' @return An m-vector of log10 posterior scores
 #' @export
-compute_log10_posterior <- function(X, y, cmfg_matrix, pi_vec, phi2_mat) {
-    .Call(`_dap_compute_log10_posterior`, X, y, cmfg_matrix, pi_vec, phi2_mat)
+compute_log10_posterior <- function(X, y, cmfg_matrix, pi_vec, phi2_mat, twas_weight = FALSE) {
+    .Call(`_dap_compute_log10_posterior`, X, y, cmfg_matrix, pi_vec, phi2_mat, twas_weight)
 }
 
 #' Implementation of DAP-S algorithm in C++ with default SuSiE settings
-#' 
-#' Performs fine mapping using DAP-S algorithm
-#'
 #' @param X Genotype matrix
 #' @param y Phenotype vector
 #' @param matrix Proposal density matrix from SuSiE
@@ -25,7 +23,8 @@ compute_log10_posterior <- function(X, y, cmfg_matrix, pi_vec, phi2_mat) {
 #' @param phi2_mat Matrix of scaled prior effect size variances
 #' @param r2_threshold Threshold for LD
 #' @param coverage Coverage for credible set
-#' @param exclusive If TRUE. enforce mutually exclusive clusters
+#' @param overlapping If TRUE. enforce overlapping clusters
+#' @param twas_weight If TRUE, return TWAS weights
 #' @param snp_names SNP names
 #'
 #' @return A list containing:
@@ -37,29 +36,26 @@ compute_log10_posterior <- function(X, y, cmfg_matrix, pi_vec, phi2_mat) {
 #'   \item pip - Posterior inclusion probabilities
 #'   \item signal_cluster - Signal clusters
 #' }
-#' @export
-dap_main <- function(X, y, matrix, pir_threshold, prior_weights, phi2_mat, r2_threshold, coverage, exclusive, snp_names) {
-    .Call(`_dap_dap_main`, X, y, matrix, pir_threshold, prior_weights, phi2_mat, r2_threshold, coverage, exclusive, snp_names)
+dap_main <- function(X, y, matrix, pir_threshold, prior_weights, phi2_mat, r2_threshold, coverage, overlapping, twas_weight, snp_names) {
+    .Call(`_dap_dap_main`, X, y, matrix, pir_threshold, prior_weights, phi2_mat, r2_threshold, coverage, overlapping, twas_weight, snp_names)
 }
 
-#' Get signal clusters or credible sets at given coverage level
-#' 
-#' This function identifies clusters of correlated signals based on R-squared values
-#' and model posterior probabilities.
-#' 
-#' @param X NumericMatrix containing the raw data
-#' @param effect_pip NumericMatrix containing the effect posterior inclusion probabilities
-#' @param snp_names CharacterVector of SNP names
-#' @param r2_threshold Double specifying the R-squared threshold for correlation
-#' @param coverage Double specifying the coverage threshold
-#' @return List containing:
-#'   \item{clusters}{List of character vectors containing cluster memberships}
-#'   \item{spip}{Numeric vector of signal posterior inclusion probabilities}
-#'   \item{sizes}{Integer vector of cluster sizes}
-#'   \item{r2_threshold}{Double containing the R-squared threshold used}
-#'   \item{coverage}{Double containing the coverage threshold used}
-#' @export
-get_sc <- function(X, effect_pip, snp_names, r2_threshold, coverage) {
-    .Call(`_dap_get_sc`, X, effect_pip, snp_names, r2_threshold, coverage)
+#' Update DAP-S results
+#' @param X Genotype matrix
+#' @param dap_result DAP-S results
+#' @param prior_weights Vector of prior probabilities
+#' @param r2_threshold Threshold for LD
+#' @param coverage Coverage for credible set
+#'
+#' @return A list containing:
+#' \itemize{
+#'   \item posterior_prob - Posterior probabilities
+#'   \item log10_posterior_score - Log10 posterior scores
+#'   \item log10_nc - Log10 normalizing constant
+#'   \item pip - Posterior inclusion probabilities
+#'   \item signal_cluster - Signal clusters
+#' }
+dap_update_main <- function(X, dap_result, prior_weights, r2_threshold, coverage) {
+    .Call(`_dap_dap_update_main`, X, dap_result, prior_weights, r2_threshold, coverage)
 }
 

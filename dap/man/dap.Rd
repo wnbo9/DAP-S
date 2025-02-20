@@ -11,12 +11,13 @@ dap(
   susie_params = list(),
   prior_weights = NULL,
   standardize = TRUE,
-  use_susie_variance_estimate = FALSE,
+  use_susie_variance_estimate = TRUE,
   grid = c(0.04, 0.16, 0.64),
-  exclusive = FALSE,
+  overlapping = TRUE,
   pir_threshold = 1e-06,
   r2_threshold = 0.25,
-  coverage = NULL
+  coverage = NULL,
+  twas_weight = FALSE
 )
 }
 \arguments{
@@ -24,39 +25,77 @@ dap(
 
 \item{y}{Phenotype vector (n)}
 
-\item{L}{Number of causal variants}
+\item{L}{Number of causal variants. Default is min(10, p).}
 
 \item{susie_params}{Parameters for SuSiE: \code{scaled_prior_variance},
 \code{residual_variance}, \code{null_weight}, \code{standardize},
 \code{estimate_residual_variance}, \code{estimate_prior_variance}.}
 
-\item{prior_weights}{Prior weights of each SNP being causal}
+\item{prior_weights}{Vector of prior probabilities for each variant being
+causal. Default is uniform priors}
 
-\item{standardize}{Standardize each column of the genotype matrix}
+\item{standardize}{Standardize each column of the genotype matrix. Default is
+TRUE.}
 
-\item{use_susie_variance_estimate}{Use SuSiE-estimated prior variance}
+\item{use_susie_variance_estimate}{Use SuSiE-estimated prior variance to
+guide the grid upper bound. Default is TRUE.}
 
-\item{grid}{Grid of prior variances, default is c(0.04, 0.16, 0.64)}
+\item{grid}{Grid of prior variances, default is c(0.04, 0.16, 0.64). The
+upper bound is shifted to 1.28 if the maximum of SuSiE-estimated prior
+variance is greater than 1.}
 
-\item{exclusive}{Exclusive signal clusters}
+\item{overlapping}{Overlapping signal clusters. Default is TRUE.}
 
-\item{pir_threshold}{Threshold for PIR}
+\item{pir_threshold}{Threshold for PIR. Default is 1e-6.}
 
-\item{r2_threshold}{Threshold for R2 when constructing credible sets}
+\item{r2_threshold}{Threshold for genotype R2 when constructing signal
+clusters. Default is 0.25.}
 
-\item{coverage}{Coverage for credible set}
+\item{coverage}{Coverage for credible set. If NULL, the algorithm will
+construct signal clusters.}
+
+\item{twas_weight}{Compute TWAS weights. Default is FALSE.}
 
 \item{scaled_prior_variance}{Scaled prior variance. That is, the prior
 variance of each non-zero element of b is \code{var(y)} *
-\code{scaled_prior_variance}.}
+\code{scaled_prior_variance}. Default is 0.2.}
 
-\item{residual_variance}{Residual variance}
+\item{residual_variance}{Residual variance. Default is NULL.}
 
-\item{null_weight}{Null weight used in SuSiE}
+\item{null_weight}{Null weight used in SuSiE. Default is calculated as
+\code{prod(1 - prior_weights)}.}
 }
 \value{
 List of fine-mapping results.
 }
 \description{
 DAP-S fine-mapping with individual-level data.
+}
+\examples{
+# DAP-S fine-mapping example
+set.seed(1)
+n = 1000
+p = 1000
+beta = rep(0, p)
+beta[1:4] = 1
+X = matrix(rnorm(n*p), nrow = n, ncol = p)
+X = scale(X,center = TRUE,scale = TRUE)
+y = drop(X \%*\% beta + rnorm(n))
+res = dap(X, y, L = 10)
+
+# Marginal PIP
+res$pip
+# Signal clusters
+res$sets
+# Variants and PIP in signal clusters
+res$variants
+
+# 95\% credible set
+res = dap(X, y, L = 10, coverage = 0.95)
+res$sets
+
+# TWAS weights
+res = dap(X, y, L = 10, twas_weight = TRUE)
+res$twas_weights
+
 }

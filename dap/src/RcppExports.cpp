@@ -11,8 +11,8 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // compute_log10_posterior
-List compute_log10_posterior(const NumericMatrix& X, const NumericVector& y, const std::vector<std::vector<int>>& cmfg_matrix, const NumericVector& pi_vec, const NumericMatrix& phi2_mat);
-RcppExport SEXP _dap_compute_log10_posterior(SEXP XSEXP, SEXP ySEXP, SEXP cmfg_matrixSEXP, SEXP pi_vecSEXP, SEXP phi2_matSEXP) {
+List compute_log10_posterior(const NumericMatrix& X, const NumericVector& y, const std::vector<std::vector<int>>& cmfg_matrix, const NumericVector& pi_vec, const NumericMatrix& phi2_mat, bool twas_weight);
+RcppExport SEXP _dap_compute_log10_posterior(SEXP XSEXP, SEXP ySEXP, SEXP cmfg_matrixSEXP, SEXP pi_vecSEXP, SEXP phi2_matSEXP, SEXP twas_weightSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -21,13 +21,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const std::vector<std::vector<int>>& >::type cmfg_matrix(cmfg_matrixSEXP);
     Rcpp::traits::input_parameter< const NumericVector& >::type pi_vec(pi_vecSEXP);
     Rcpp::traits::input_parameter< const NumericMatrix& >::type phi2_mat(phi2_matSEXP);
-    rcpp_result_gen = Rcpp::wrap(compute_log10_posterior(X, y, cmfg_matrix, pi_vec, phi2_mat));
+    Rcpp::traits::input_parameter< bool >::type twas_weight(twas_weightSEXP);
+    rcpp_result_gen = Rcpp::wrap(compute_log10_posterior(X, y, cmfg_matrix, pi_vec, phi2_mat, twas_weight));
     return rcpp_result_gen;
 END_RCPP
 }
 // dap_main
-List dap_main(NumericMatrix X, NumericVector y, NumericMatrix matrix, double pir_threshold, NumericVector prior_weights, NumericMatrix phi2_mat, double r2_threshold, double coverage, bool exclusive, CharacterVector snp_names);
-RcppExport SEXP _dap_dap_main(SEXP XSEXP, SEXP ySEXP, SEXP matrixSEXP, SEXP pir_thresholdSEXP, SEXP prior_weightsSEXP, SEXP phi2_matSEXP, SEXP r2_thresholdSEXP, SEXP coverageSEXP, SEXP exclusiveSEXP, SEXP snp_namesSEXP) {
+List dap_main(NumericMatrix X, NumericVector y, NumericMatrix matrix, double pir_threshold, NumericVector prior_weights, NumericMatrix phi2_mat, double r2_threshold, double coverage, bool overlapping, bool twas_weight, CharacterVector snp_names);
+RcppExport SEXP _dap_dap_main(SEXP XSEXP, SEXP ySEXP, SEXP matrixSEXP, SEXP pir_thresholdSEXP, SEXP prior_weightsSEXP, SEXP phi2_matSEXP, SEXP r2_thresholdSEXP, SEXP coverageSEXP, SEXP overlappingSEXP, SEXP twas_weightSEXP, SEXP snp_namesSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -39,32 +40,33 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< NumericMatrix >::type phi2_mat(phi2_matSEXP);
     Rcpp::traits::input_parameter< double >::type r2_threshold(r2_thresholdSEXP);
     Rcpp::traits::input_parameter< double >::type coverage(coverageSEXP);
-    Rcpp::traits::input_parameter< bool >::type exclusive(exclusiveSEXP);
+    Rcpp::traits::input_parameter< bool >::type overlapping(overlappingSEXP);
+    Rcpp::traits::input_parameter< bool >::type twas_weight(twas_weightSEXP);
     Rcpp::traits::input_parameter< CharacterVector >::type snp_names(snp_namesSEXP);
-    rcpp_result_gen = Rcpp::wrap(dap_main(X, y, matrix, pir_threshold, prior_weights, phi2_mat, r2_threshold, coverage, exclusive, snp_names));
+    rcpp_result_gen = Rcpp::wrap(dap_main(X, y, matrix, pir_threshold, prior_weights, phi2_mat, r2_threshold, coverage, overlapping, twas_weight, snp_names));
     return rcpp_result_gen;
 END_RCPP
 }
-// get_sc
-List get_sc(const NumericMatrix& X, const NumericMatrix& effect_pip, const CharacterVector& snp_names, double r2_threshold, double coverage);
-RcppExport SEXP _dap_get_sc(SEXP XSEXP, SEXP effect_pipSEXP, SEXP snp_namesSEXP, SEXP r2_thresholdSEXP, SEXP coverageSEXP) {
+// dap_update_main
+List dap_update_main(NumericMatrix X, List dap_result, NumericVector prior_weights, double r2_threshold, double coverage);
+RcppExport SEXP _dap_dap_update_main(SEXP XSEXP, SEXP dap_resultSEXP, SEXP prior_weightsSEXP, SEXP r2_thresholdSEXP, SEXP coverageSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const NumericMatrix& >::type X(XSEXP);
-    Rcpp::traits::input_parameter< const NumericMatrix& >::type effect_pip(effect_pipSEXP);
-    Rcpp::traits::input_parameter< const CharacterVector& >::type snp_names(snp_namesSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type X(XSEXP);
+    Rcpp::traits::input_parameter< List >::type dap_result(dap_resultSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type prior_weights(prior_weightsSEXP);
     Rcpp::traits::input_parameter< double >::type r2_threshold(r2_thresholdSEXP);
     Rcpp::traits::input_parameter< double >::type coverage(coverageSEXP);
-    rcpp_result_gen = Rcpp::wrap(get_sc(X, effect_pip, snp_names, r2_threshold, coverage));
+    rcpp_result_gen = Rcpp::wrap(dap_update_main(X, dap_result, prior_weights, r2_threshold, coverage));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_dap_compute_log10_posterior", (DL_FUNC) &_dap_compute_log10_posterior, 5},
-    {"_dap_dap_main", (DL_FUNC) &_dap_dap_main, 10},
-    {"_dap_get_sc", (DL_FUNC) &_dap_get_sc, 5},
+    {"_dap_compute_log10_posterior", (DL_FUNC) &_dap_compute_log10_posterior, 6},
+    {"_dap_dap_main", (DL_FUNC) &_dap_dap_main, 11},
+    {"_dap_dap_update_main", (DL_FUNC) &_dap_dap_update_main, 5},
     {NULL, NULL, 0}
 };
 
