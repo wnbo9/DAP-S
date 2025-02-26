@@ -14,7 +14,7 @@ install.packages("devtools")
 devtools::install_github("wnbo9/DAP-S/dap")
 
 # or install DAP-S source package
-install.packages("dap_0.1.0.tar.gz", repos = NULL, type="source")
+install.packages("dap_0.2.0.tar.gz", repos = NULL, type="source")
 
 # load the package
 library(dap)
@@ -26,7 +26,7 @@ library(dap)
 library(dap)
 library(susieR)
 library(ggplot2)
-set.seed(2024)
+set.seed(2025)
 n <- 1000
 p <- 5000
 tau <- 1
@@ -51,7 +51,7 @@ y <- scale(y, scale = FALSE)
 # run susie
 rst1 <- susie(X, y, L = 10, max_iter = 1000, coverage = 0.95, null_weight = (1-1/p)^p)
 # run dap
-rst2 <- dap(X, y)
+rst2 <- dap(X, y, L = 10)
 
 # comparison
 data_all <- data.frame(SuSiE = rst1$pip, DAP = rst2$variants$PIP[order(as.numeric(gsub("SNP_", "", rst2$variants$SNP)))])

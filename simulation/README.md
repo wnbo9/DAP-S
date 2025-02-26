@@ -2,14 +2,14 @@
 
 ## Simulation with normal distribution
 
-To evaluate the performance of DAP-PIR, we conduct a simulation study with a normal distribution for the genotype data. Specifically, we consider a scenario with n=500 individuals and p=10 SNPs to relive the computational burden of exact computation of the posterior. Each SNP $g_{ij}$ is generated independently from a standard normal distribution. We randomly select one to five variants and specify them as causal variants with the setting:
+To evaluate the performance of DAP-S, we conduct a simulation study with a normal distribution for the genotype data. Specifically, we consider a scenario with n=500 individuals and p=15 SNPs to relive the computational burden of exact computation of the posterior. Each SNP $g_{ij}$ is generated independently from a standard normal distribution. We randomly select one to five variants and specify them as causal variants with the setting:
 
 $$
 g_{ij} \sim N(0,1),
 $$
 
 $$
-y_i = \sum_{j=1}^{10} \beta_j g_{ij} + \epsilon_i,
+y_i = \sum_{j=1}^{15} \beta_j g_{ij} + \epsilon_i,
 $$
 
 $$
@@ -20,7 +20,7 @@ $$
 \beta_j \sim (1 - \gamma_j)\delta_0 + \gamma_j N\left(0, \sigma^2_0/\tau\right),
 $$
 
-where $\beta_j$ represents the effect size of the $j$-th SNP, $\epsilon_i$ is the residual term with varaince $\tau^{-1}$, and $\sigma_0^2/\tau$ is the prior effect size variance. The effect sizes $\beta_j$ are determined by a binary indicator $\gamma_j$: if $\gamma_j=0$, $\beta_j$ is set to zero and indicates a non-causal SNP; if $\gamma_j=1$, $\beta_j$ is drawn from a normal distribution with mean zero and variance $\sigma^2_0/\tau$, representing a causal SNP. We randomly assign $S$ causal variants, and the indicator vector $\boldsymbol{\gamma} = \left(\gamma_1,\cdots,\gamma_{10}\right)$ is a 10-vector of binary variables such that only $S$ entries are 1 and the other entries are 0. In the simulation, we set $\tau=1$, $\sigma^2_0 = 0.6^2$, and choose $S \in \{1,2,3,4,5\}$. For each setting, we simulate 1,000 times. Then we have simulated 1,000 $\times$ 5 = 5,000 datasets for further investigation.
+where $\beta_j$ represents the effect size of the $j$-th SNP, $\epsilon_i$ is the residual term with varaince $\tau^{-1}$, and $\sigma_0^2/\tau$ is the prior effect size variance. The effect sizes $\beta_j$ are determined by a binary indicator $\gamma_j$: if $\gamma_j=0$, $\beta_j$ is set to zero and indicates a non-causal SNP; if $\gamma_j=1$, $\beta_j$ is drawn from a normal distribution with mean zero and variance $\sigma^2_0/\tau$, representing a causal SNP. We randomly assign $S$ causal variants, and the indicator vector $\boldsymbol{\gamma} = \left(\gamma_1,\cdots,\gamma_{15}\right)$ is a 15-vector of binary variables such that only $S$ entries are 1 and the other entries are 0. In the simulation, we set $\tau=1$, $\sigma^2_0 = 0.6^2$, and choose $S \in \{1,2,3,4,5\}$. For each setting, we simulate 1,000 times. Then we have simulated 1,000 $\times$ 5 = 5,000 datasets for further investigation.
 
 
 
