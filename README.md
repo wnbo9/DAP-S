@@ -26,7 +26,7 @@ library(dap)
 library(dap)
 library(susieR)
 library(ggplot2)
-set.seed(2025)
+set.seed(2024)
 n <- 1000
 p <- 5000
 tau <- 1
@@ -65,5 +65,5 @@ ggplot(data_all, aes(x = DAP, y = SuSiE)) +
   )
 ```
 <div style="text-align: center;">
-  <img src="simulation/plot_usage.png" alt="PIP Comparison Plot" width="577" height="374">
+  <img src="simulation/plot_usage.png" alt="PIP Comparison Plot" width="577" height="350">
 </div>
