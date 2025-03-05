@@ -205,44 +205,99 @@ double compute_log10_prior(const std::vector<int> &mcfg, NumericVector pi_vec) {
 }
 
 //' Compute log10 posterior scores for multiple model configurations
-//' @param X An n*p matrix of genotype data
-//' @param y An n-vector of phenotype data
 //' @param cmfg_matrix An m*p matrix of model configurations
 //' @param pi_vec A vector of prior probabilities
-//' @param phi2_vec A vector of phi2 values
+//' @param phi2_mat A matrix of phi2 values
+//' @param ss Flag indicating use of summary statistics (0 = use X,y; 1 = use summary statistics)
+//' @param X_input An n*p matrix of genotype data (required when ss=0)
+//' @param y_input An n-vector of phenotype data (required when ss=0)
+//' @param XtX_input A p*p matrix of precomputed X'X (required when ss=1)
+//' @param Xty_input A p*1 vector of precomputed X'y (required when ss=1)
+//' @param yty_input A scalar representing y'y (required when ss=1)
+//' @param n_input Sample size (required when ss=1)
 //' @param twas_weight A boolean indicating whether to compute TWAS weights
 //' @return An m-vector of log10 posterior scores
 //' @export
 // [[Rcpp::export]]
-List compute_log10_posterior(const NumericMatrix& X, const NumericVector& y, 
-                             const std::vector<std::vector<int>>& cmfg_matrix,
-                             const NumericVector& pi_vec, const NumericMatrix& phi2_mat,
-                             bool twas_weight = false) {
-  int n = X.nrow();
-  int p = X.ncol();
-  int m = cmfg_matrix.size();
+List compute_log10_posterior(
+  const std::vector<std::vector<int>>& cmfg_matrix, 
+  const NumericVector& pi_vec, 
+  const NumericMatrix& phi2_mat, 
+  int ss = 0, 
+  SEXP X_input = R_NilValue, 
+  SEXP y_input = R_NilValue,
+  SEXP XtX_input = R_NilValue, 
+  SEXP Xty_input = R_NilValue, 
+  SEXP yty_input = R_NilValue, 
+  SEXP n_input = R_NilValue,
+  bool twas_weight = false) {
 
-  // Rest of initialization code...
-  gsl_matrix *Y = gsl_matrix_calloc(n, 1);
-  double yty = 0;
-  for (int i = 0; i < n; i++) {
-    double val = y[i];
-    yty += val * val;
-    gsl_matrix_set(Y, i, 0, val);
-  }
+  int n = 0, p = 0, m = cmfg_matrix.size();
+  double yty = 0.0;
+  gsl_matrix *GtG = NULL, *Gty = NULL;
 
-  gsl_matrix *G = gsl_matrix_calloc(n, p);
-  for (int j = 0; j < p; j++) {
+  if (ss == 0) {
+    // Raw data mode (X and y)
+    if (X_input == R_NilValue || y_input == R_NilValue) {
+      stop("With ss=0, both X and y must be provided");
+    }
+    
+    NumericMatrix X = as<NumericMatrix>(X_input);
+    NumericVector y = as<NumericVector>(y_input);
+    
+    n = X.nrow();
+    p = X.ncol();
+    
+    gsl_matrix *Y = gsl_matrix_calloc(n, 1);
+    yty = 0;
     for (int i = 0; i < n; i++) {
-      gsl_matrix_set(G, i, j, X(i, j));
+      double val = y[i];
+      yty += val * val;
+      gsl_matrix_set(Y, i, 0, val);
+    }
+
+    gsl_matrix *G = gsl_matrix_calloc(n, p);
+    for (int j = 0; j < p; j++) {
+      for (int i = 0; i < n; i++) {
+        gsl_matrix_set(G, i, j, X(i, j));
+      }
+    }
+
+    GtG = gsl_matrix_calloc(p, p);
+    Gty = gsl_matrix_calloc(p, 1);
+    gsl_blas_dgemm(CblasTrans, CblasNoTrans, 1.0, G, G, 0.0, GtG);
+    gsl_blas_dgemm(CblasTrans, CblasNoTrans, 1.0, G, Y, 0.0, Gty);
+
+    gsl_matrix_free(G);
+    gsl_matrix_free(Y);
+
+  } else if (ss == 1) {
+    // Summary statistics mode
+    if (XtX_input == R_NilValue || Xty_input == R_NilValue || 
+      yty_input == R_NilValue || n_input == R_NilValue) {
+      stop("With ss=1, XtX, Xty, yty, and n must be provided");
+    }
+  
+    NumericMatrix XtX = as<NumericMatrix>(XtX_input);
+    NumericVector Xty = as<NumericVector>(Xty_input);
+    yty = as<double>(yty_input);
+    n = as<int>(n_input);
+  
+    p = XtX.ncol();
+  
+    // Convert summary statistics to GSL format
+    GtG = gsl_matrix_calloc(p, p);
+    Gty = gsl_matrix_calloc(p, 1);
+  
+    for (int i = 0; i < p; i++) {
+      gsl_matrix_set(Gty, i, 0, Xty[i]);
+      for (int j = 0; j < p; j++) {
+        gsl_matrix_set(GtG, i, j, XtX(i, j));
+      }
     }
   }
 
-  gsl_matrix *GtG = gsl_matrix_calloc(p, p);
-  gsl_matrix *Gty = gsl_matrix_calloc(p, 1);
-  gsl_blas_dgemm(CblasTrans, CblasNoTrans, 1.0, G, G, 0.0, GtG);
-  gsl_blas_dgemm(CblasTrans, CblasNoTrans, 1.0, G, Y, 0.0, Gty);
-
+  
   MLR mlr;
   mlr.init(yty, GtG, Gty, n, phi2_mat);
   
@@ -273,8 +328,6 @@ List compute_log10_posterior(const NumericMatrix& X, const NumericVector& y,
   }
 
   // Free allocated memory
-  gsl_matrix_free(G);
-  gsl_matrix_free(Y);
   gsl_matrix_free(GtG);
   gsl_matrix_free(Gty);
 

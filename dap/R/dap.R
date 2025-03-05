@@ -60,6 +60,13 @@
 #' res = dap(X, y, L = 10, twas_weight = TRUE)
 #' res$twas_weights
 #'
+#' # Update DAP-S prior
+#' vec = rep(1/p, p)
+#' vec[5] = 10/p
+#' vec = vec/sum(vec)
+#' res2 <- dap_update(X=X, dap_result = res, prior_weights = vec)
+#' res2$pip[1:5]
+
 dap <- function(X, y, L = min(10, ncol(X)),
                 susie_params = list(),
                 prior_weights = NULL,
@@ -89,7 +96,9 @@ dap <- function(X, y, L = min(10, ncol(X)),
   default_susie_params <- list(
     scaled_prior_variance = 0.2,
     residual_variance = NULL,
-    null_weight = prod(1 - prior_weights)
+    null_weight = prod(1 - prior_weights),
+    estimate_residual_variance = TRUE,
+    estimate_prior_variance = TRUE
   )
   susie_params <- modifyList(default_susie_params, susie_params)
 
@@ -99,15 +108,25 @@ dap <- function(X, y, L = min(10, ncol(X)),
                      residual_variance = susie_params$residual_variance,
                      prior_weights = prior_weights,
                      null_weight = susie_params$null_weight,
-                     standardize = standardize)
+                     standardize = standardize,
+                     estimate_residual_variance = susie_params$estimate_residual_variance,
+                     estimate_prior_variance = susie_params$estimate_prior_variance)
   info <- param_setup(y, susie_fit, overlapping,
                       use_susie_variance_estimate, grid)
 
   cat("Running DAP-S fine-mapping...\n")
-  results <- dap_main(X, y, info$mat, pir_threshold,
-                      prior_weights, info$phi2_mat,
-                      r2_threshold, coverage, overlapping,
-                      twas_weight, snp_names)
+  results <- dap_main(matrix = info$mat,
+                      pir_threshold = pir_threshold,
+                      prior_weights = prior_weights,
+                      phi2_mat = info$phi2_mat,
+                      r2_threshold = r2_threshold,
+                      coverage = coverage,
+                      overlapping = overlapping,
+                      twas_weight = twas_weight,
+                      snp_names = snp_names,
+                      ss = 0,
+                      X_input = X,
+                      y_input = y)
 
   cat("Summarizing results...\n")
   output <- get_summarization(susie_params, info, results,

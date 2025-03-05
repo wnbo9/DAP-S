@@ -5,26 +5,41 @@
 \title{Compute log10 posterior scores for multiple model configurations}
 \usage{
 compute_log10_posterior(
-  X,
-  y,
   cmfg_matrix,
   pi_vec,
   phi2_mat,
+  ss = 0L,
+  X_input = NULL,
+  y_input = NULL,
+  XtX_input = NULL,
+  Xty_input = NULL,
+  yty_input = NULL,
+  n_input = NULL,
   twas_weight = FALSE
 )
 }
 \arguments{
-\item{X}{An n*p matrix of genotype data}
-
-\item{y}{An n-vector of phenotype data}
-
 \item{cmfg_matrix}{An m*p matrix of model configurations}
 
 \item{pi_vec}{A vector of prior probabilities}
 
-\item{twas_weight}{A boolean indicating whether to compute TWAS weights}
+\item{phi2_mat}{A matrix of phi2 values}
 
-\item{phi2_vec}{A vector of phi2 values}
+\item{ss}{Flag indicating use of summary statistics (0 = use X,y; 1 = use summary statistics)}
+
+\item{X_input}{An n*p matrix of genotype data (required when ss=0)}
+
+\item{y_input}{An n-vector of phenotype data (required when ss=0)}
+
+\item{XtX_input}{A p*p matrix of precomputed X'X (required when ss=1)}
+
+\item{Xty_input}{A p*1 vector of precomputed X'y (required when ss=1)}
+
+\item{yty_input}{A scalar representing y'y (required when ss=1)}
+
+\item{n_input}{Sample size (required when ss=1)}
+
+\item{twas_weight}{A boolean indicating whether to compute TWAS weights}
 }
 \value{
 An m-vector of log10 posterior scores

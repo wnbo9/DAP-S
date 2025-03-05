@@ -38,7 +38,7 @@ List dap_update_main(NumericMatrix X,
     NumericVector log10_BF = models["log10_BF"];
     vector<vector<int>> combo_matrix = dap_result["model_combo"];
     int m_size = combo_matrix.size();
-    int L = combo_matrix[0].size();
+    int L = combo_matrix[m_size-1].size();
     CharacterVector snp_names = dap_result["snp_names"];
     List params = dap_result["params"];
     int p = snp_names.size();
@@ -54,6 +54,7 @@ List dap_update_main(NumericMatrix X,
 
     double max_log_posterior = *max_element(log10_posterior_score.begin(), log10_posterior_score.end());
     double sum_exp = 0.0;
+
     NumericVector posterior_prob(m_size);
     for(int i = 0; i < m_size; i++) {
         sum_exp += pow(10.0, log10_posterior_score[i] - max_log_posterior);
@@ -68,11 +69,42 @@ List dap_update_main(NumericMatrix X,
     // Calculate effect PIP and marginal PIP
     NumericMatrix effect_pip(p, L);
     NumericVector marginal_pip(p);
+    
+    // First create a vector storing the SNP at each effect position
+    vector<set<int>> effects_snp(L); // initialize with p (null)
+    for (int i = 0; i < m_size; i++) {
+        vector<int>& model = combo_matrix[i];
+        if (model.size() > 1) {  // only look at multi-SNP models
+            for (int pos = 0; pos < model.size(); pos++) {
+                int snp = model[pos];
+                if (snp != p) {
+                    effects_snp[pos].insert(snp);
+                }
+            }
+        }
+    }
+
     for(int i = 0; i < m_size; i++) { // For each combination
-        for(int j = 0; j < L; j++) {
-            if(combo_matrix[i][j] < p) {
-                effect_pip(combo_matrix[i][j], j) += posterior_prob[i];
-                marginal_pip[combo_matrix[i][j]] += posterior_prob[i];
+        vector<int>& model = combo_matrix[i];
+
+        if (model.size() == 1) {
+            // For 1-snp models, add to all columns of effect PIP and update marginal PIP
+            if (model[0] != p) {
+                marginal_pip[model[0]] += posterior_prob[i];
+                for (int l = 0; l < L; l++) {
+                    if (effects_snp[l].find(model[0]) != effects_snp[l].end()) {
+                        effect_pip(model[0], l) += posterior_prob[i];
+                    }
+                }
+            }
+        } else {
+            // For multi-snp models
+            for (int pos = 0; pos < model.size(); pos++) {
+                int snp = model[pos];
+                if (snp != p) {
+                    marginal_pip[snp] += posterior_prob[i];
+                    effect_pip(snp, pos) += posterior_prob[i];
+                }
             }
         }
     }
@@ -84,8 +116,12 @@ List dap_update_main(NumericMatrix X,
         }
         marginal_pip[i] = max(0.0, min(1.0, marginal_pip[i]));
     }
+    if (L == 1) {
+        for (int i = 0; i < p; i++) {
+            effect_pip(i, 0) = marginal_pip[i];
+        }
+    }
     rownames(effect_pip) = snp_names;
-    marginal_pip.names() = snp_names;
 
     // Calculate TWAS weights
     bool twas_weight = params["twas_weight"];
@@ -110,14 +146,14 @@ List dap_update_main(NumericMatrix X,
 
     // Return simplified results
     return List::create(
-        Named("posterior_prob") = posterior_prob, //
-        Named("log10_posterior_score") = log10_posterior_score, //
+        Named("posterior_prob") = posterior_prob,
+        Named("log10_posterior_score") = log10_posterior_score,
         Named("log10_BF") = log10_BF,
-        Named("log10_prior") = log10_prior, //
-        Named("log10_nc") = log_nc, //
-        Named("pip") = marginal_pip, //
-        Named("effect_pip") = effect_pip, //
-        Named("signal_cluster") = sc_results, //
-        Named("twas_weights") = twas_weights //
+        Named("log10_prior") = log10_prior,
+        Named("log10_nc") = log_nc,
+        Named("pip") = marginal_pip,
+        Named("effect_pip") = effect_pip,
+        Named("signal_cluster") = sc_results,
+        Named("twas_weights") = twas_weights
     );
 }

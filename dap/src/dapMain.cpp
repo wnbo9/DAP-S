@@ -10,8 +10,15 @@ using namespace Rcpp;
 using namespace std;
 
 vector<vector<int>> pir(const vector<vector<double>>& mat, double pir_threshold);
-List compute_log10_posterior(const NumericMatrix& X, const NumericVector& y, const std::vector<std::vector<int>>& cmfg_matrix, const NumericVector& pi_vec, const NumericMatrix& phi2_mat, bool twas_weight);
+List compute_log10_posterior(
+    const std::vector<std::vector<int>>& cmfg_matrix, 
+    const NumericVector& pi_vec, 
+    const NumericMatrix& phi2_mat, 
+    int ss = 0, SEXP X_input = R_NilValue, SEXP y_input = R_NilValue,
+    SEXP XtX_input = R_NilValue, SEXP Xty_input = R_NilValue, SEXP yty_input = R_NilValue, SEXP n_input = R_NilValue,
+    bool twas_weight = false);
 List get_sc(const NumericMatrix& X, const NumericMatrix& effect_pip, const CharacterVector& snp_names, double r2_threshold, double coverage);
+List get_sc_ss(const NumericMatrix& XtX, const NumericMatrix& effect_pip, const CharacterVector& snp_names, double r2_threshold, double coverage);
 
 //' Implementation of DAP-S algorithm in C++ with default SuSiE settings
 //' @param X Genotype matrix
@@ -36,20 +43,45 @@ List get_sc(const NumericMatrix& X, const NumericMatrix& effect_pip, const Chara
 //'   \item signal_cluster - Signal clusters
 //' }
 // [[Rcpp::export]]
-List dap_main(NumericMatrix X, 
-              NumericVector y,
-              NumericMatrix matrix,
-              double pir_threshold,
-              NumericVector prior_weights,
-              NumericMatrix phi2_mat,
-              double r2_threshold,
-              double coverage,
-              bool overlapping,
-              bool twas_weight,
-              CharacterVector snp_names) {
+List dap_main(
+    NumericMatrix matrix,
+    double pir_threshold,
+    NumericVector prior_weights,
+    NumericMatrix phi2_mat,
+    double r2_threshold,
+    double coverage,
+    bool overlapping,
+    bool twas_weight,
+    CharacterVector snp_names,
+    int ss = 0,
+    SEXP X_input = R_NilValue,
+    SEXP y_input = R_NilValue,
+    SEXP XtX_input = R_NilValue,
+    SEXP Xty_input = R_NilValue, 
+    SEXP yty_input = R_NilValue,
+    SEXP n_input = R_NilValue) {
     
-    int p = X.ncol(); // 5000
-    int L = matrix.ncol(); // 3
+    int p = 0;
+    NumericMatrix X;
+    NumericMatrix XtX;
+    if (ss == 0) {
+       // Using raw data
+       if (X_input == R_NilValue || y_input == R_NilValue) {
+        stop("With ss=0, both X and y must be provided");
+       }
+       X = as<NumericMatrix>(X_input);
+       p = X.ncol(); 
+    } else if (ss == 1) {
+        // Using summary statistics
+        if (XtX_input == R_NilValue || Xty_input == R_NilValue || 
+            yty_input == R_NilValue || n_input == R_NilValue) {
+            stop("With ss=1, XtX, Xty, yty, and n must be provided");
+        }
+        XtX = as<NumericMatrix>(XtX_input);
+        p = XtX.ncol();
+    }
+
+    int L = matrix.ncol(); // Number of effects
 
     vector<vector<double>> mat(p+1, vector<double>(L));
     for (int i = 0; i < p+1; i++) {
@@ -67,7 +99,15 @@ List dap_main(NumericMatrix X,
 
     // Compute log10 posterior
     Rcpp::Rcout << "---Calculating posterior of " << m_size << " model configurations...\n";
-    List scores = compute_log10_posterior(X, y, combo_matrix, prior_weights, phi2_mat, twas_weight);
+    List scores;
+
+    if (ss == 0) {
+        NumericVector y = as<NumericVector>(y_input);
+        scores = compute_log10_posterior(combo_matrix, prior_weights, phi2_mat, ss, X_input, y_input, R_NilValue, R_NilValue, R_NilValue, R_NilValue, twas_weight);
+    } else {
+        scores = compute_log10_posterior(combo_matrix, prior_weights, phi2_mat, ss, R_NilValue, R_NilValue, XtX_input, Xty_input, yty_input, n_input, twas_weight);
+    }
+
     NumericVector log10_BF = scores["log10_BF"];
     NumericVector log10_prior = scores["log10_prior"];
     NumericVector log10_posterior_score = scores["log10_posterior_score"];
@@ -180,7 +220,12 @@ List dap_main(NumericMatrix X,
           << (coverage > 1 ? "signal clusters" : (coverage > 0 ? to_string(int(coverage * 100)) + "% credible sets" : "? credible sets")) 
           << endl;
     
-    List sc_results = get_sc(X, effect_pip, snp_names, r2_threshold, coverage);
+    List sc_results;
+    if (ss == 0) {
+        sc_results = get_sc(X, effect_pip, snp_names, r2_threshold, coverage);
+    } else {
+        sc_results = get_sc_ss(XtX, effect_pip, snp_names, r2_threshold, coverage);
+    }
 
     // Return simplified results
     return List::create(

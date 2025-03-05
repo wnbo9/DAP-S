@@ -2,6 +2,7 @@
 
 export(compute_log10_posterior)
 export(dap)
+export(dap_rss)
 export(dap_suff_stat)
 export(dap_update)
 import(Matrix)

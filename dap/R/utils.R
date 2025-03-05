@@ -34,7 +34,7 @@ param_setup <- function(y, fit, overlapping,
 
   # Remove duplicated columns caused by model overfitting
   max_indices <- apply(mat, 2, which.max)
-  keep_cols <- !duplicated(max_indices)
+  keep_cols <- !duplicated(max_indices) | max_indices == nrow(mat)
   mat <- mat[, keep_cols, drop = FALSE]
   V <- V[keep_cols]
 
@@ -44,7 +44,7 @@ param_setup <- function(y, fit, overlapping,
   }
 
   # Set up scaled prior variance matrix
-  if (use_susie_variance_estimate && max(V) > 1) {
+  if (use_susie_variance_estimate && max(V / as.vector(var(y))) > 1) {
     #phi2_mat <- matrix(V / as.vector(var(y)), nrow = 1)
     grid[length(grid)] <- 1.28 # shift the upper bound of the grid
   }

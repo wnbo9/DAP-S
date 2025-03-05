@@ -98,4 +98,10 @@ res$sets
 res = dap(X, y, L = 10, twas_weight = TRUE)
 res$twas_weights
 
+# Update DAP-S prior
+vec = rep(1/p, p)
+vec[5] = 10/p
+vec = vec/sum(vec)
+res2 <- dap_update(X=X, dap_result = res, prior_weights = vec)
+res2$pip[1:5]
 }

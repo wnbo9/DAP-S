@@ -5,8 +5,6 @@
 \title{Implementation of DAP-S algorithm in C++ with default SuSiE settings}
 \usage{
 dap_main(
-  X,
-  y,
   matrix,
   pir_threshold,
   prior_weights,
@@ -15,14 +13,17 @@ dap_main(
   coverage,
   overlapping,
   twas_weight,
-  snp_names
+  snp_names,
+  ss = 0L,
+  X_input = NULL,
+  y_input = NULL,
+  XtX_input = NULL,
+  Xty_input = NULL,
+  yty_input = NULL,
+  n_input = NULL
 )
 }
 \arguments{
-\item{X}{Genotype matrix}
-
-\item{y}{Phenotype vector}
-
 \item{matrix}{Proposal density matrix from SuSiE}
 
 \item{pir_threshold}{Threshold for PIR}
@@ -40,6 +41,10 @@ dap_main(
 \item{twas_weight}{If TRUE, return TWAS weights}
 
 \item{snp_names}{SNP names}
+
+\item{X}{Genotype matrix}
+
+\item{y}{Phenotype vector}
 }
 \value{
 A list containing:

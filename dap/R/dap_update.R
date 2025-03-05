@@ -34,7 +34,9 @@ dap_update <- function(X, dap_result,
   susie_params <- list(
     scaled_prior_variance = 0.2,
     residual_variance = NULL,
-    null_weight = prod(1 - prior_weights)
+    null_weight = prod(1 - prior_weights),
+    estimate_residual_variance = TRUE,
+    estimate_prior_variance = TRUE
   )
   p <- length(dap_result$snp_names)
 

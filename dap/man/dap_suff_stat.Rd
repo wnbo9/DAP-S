@@ -4,7 +4,23 @@
 \alias{dap_suff_stat}
 \title{DAP-S fine-mapping using sufficient statistics data}
 \usage{
-dap_suff_stat(XtX, Xty, yty, n, L = min(10, ncol(XtX)), standardize = TRUE)
+dap_suff_stat(
+  XtX,
+  Xty,
+  yty,
+  n,
+  L = min(10, ncol(XtX)),
+  susie_params = list(),
+  prior_weights = NULL,
+  standardize = TRUE,
+  use_susie_variance_estimate = TRUE,
+  grid = c(0.04, 0.16, 0.64),
+  overlapping = TRUE,
+  pir_threshold = 1e-06,
+  r2_threshold = 0.25,
+  coverage = NULL,
+  twas_weight = FALSE
+)
 }
 \arguments{
 \item{XtX}{A p by p matrix \eqn{X'X} in which the columns of X are centered to have mean zero.}
@@ -19,6 +35,11 @@ dap_suff_stat(XtX, Xty, yty, n, L = min(10, ncol(XtX)), standardize = TRUE)
 
 \item{prior_weights}{Prior weights}
 
+\item{r2_threshold}{Genotype R2 threshold for LD}
+
+\item{coverage}{Coverage of credible sets. When not set, it outputs signal clusters;
+otherwise, it outputs credible sets at the specified coverage level}
+
 \item{null_weight}{Null weight}
 
 \item{residual_tau}{Residual variance}
@@ -28,11 +49,6 @@ dap_suff_stat(XtX, Xty, yty, n, L = min(10, ncol(XtX)), standardize = TRUE)
 \item{phi2}{Scaled prior effect size variance}
 
 \item{phi2_vec}{Scaled prior effect size variance vector}
-
-\item{r2_threshold}{Genotype R2 threshold for LD}
-
-\item{coverage}{Coverage of credible sets. When not set, it outputs signal clusters;
-otherwise, it outputs credible sets at the specified coverage level}
 }
 \value{
 Fine mapping results
