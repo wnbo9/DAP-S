@@ -81,7 +81,7 @@ beta[1:4] = 1
 X = matrix(rnorm(n*p), nrow = n, ncol = p)
 X = scale(X,center = TRUE,scale = TRUE)
 y = drop(X \%*\% beta + rnorm(n))
-res = dap(X, y, L = 10)
+res <- dap(X, y, L = 10)
 
 # Marginal PIP
 res$pip
@@ -91,11 +91,23 @@ res$sets
 res$variants
 
 # 95\% credible set
-res = dap(X, y, L = 10, coverage = 0.95)
+res <- dap(X, y, L = 10, coverage = 0.95)
 res$sets
 
+# DAP-S with sufficient statistics
+res2 <- dap_suff_stat(XtX, Xty, yty, n, L=10)
+plot(res$pip, res2$pip)
+abline(a = 0,b = 1,col = "skyblue",lty = "dashed")
+
+# DAP-S with summary statistics
+res3 <- dap_rss(bhat = betahat,shat = sebetahat, R = R, n = n, estimate_residual_variance = TRUE)
+res4 <- dap_rss(zhat, R, n = n, estimate_residual_variance = TRUE)
+res5 <- dap_rss(bhat = betahat,shat = sebetahat, R = R, n = n, var_y = var(y), estimate_residual_variance = TRUE)
+plot(res$pip, res3$pip)
+abline(a = 0,b = 1,col = "skyblue",lty = "dashed")
+
 # TWAS weights
-res = dap(X, y, L = 10, twas_weight = TRUE)
+res <- dap(X, y, L = 10, twas_weight = TRUE)
 res$twas_weights
 
 # Update DAP-S prior
