@@ -13,9 +13,6 @@ The `dap` package implements the algorithm of DAP-S. You can install the develop
 install.packages("devtools")
 devtools::install_github("wnbo9/DAP-S/dap")
 
-# or install DAP-S source package
-install.packages("dap_0.2.0.tar.gz", repos = NULL, type="source")
-
 # load the package
 library(dap)
 ```

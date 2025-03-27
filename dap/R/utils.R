@@ -116,7 +116,7 @@ get_summarization <- function(susie_params, info, results,
 
   # Combine into dataframe
   varaint_df <- data.frame(
-    CS_ID = unlist(cs_id),
+    SC_ID = unlist(cs_id),
     SNP_ID = unlist(snp_id),
     PIP = unlist(pip_values),
     SNP_Name = snp_names[unlist(snp_id)],

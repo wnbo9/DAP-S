@@ -79,10 +79,13 @@ p = 1000
 beta = rep(0, p)
 beta[1:4] = 1
 X = matrix(rnorm(n*p), nrow = n, ncol = p)
-X = scale(X,center = TRUE,scale = TRUE)
-y = drop(X \%*\% beta + rnorm(n))
-res <- dap(X, y, L = 10)
+y = X \%*\% beta + rnorm(n)
+X = scale(X,center = TRUE,scale = FALSE)
+y = scale(y,center = TRUE,scale = FALSE)
+y = as.vector(y)
 
+# run DAP-S
+res <- dap(X, y, L = 10, standardize = FALSE)
 # Marginal PIP
 res$pip
 # Signal clusters
@@ -91,19 +94,33 @@ res$sets
 res$variants
 
 # 95\% credible set
-res <- dap(X, y, L = 10, coverage = 0.95)
+res <- dap(X, y, L = 10, coverage = 0.95, standardize = FALSE)
 res$sets
 
-# DAP-S with sufficient statistics
-res2 <- dap_suff_stat(XtX, Xty, yty, n, L=10)
-plot(res$pip, res2$pip)
+# DAP-S with sufficient statistics (XtX, Xty, yty, n), results identical to original individual-level data
+suff_stat <- susieR::compute_suff_stat(X, y, standardize = FALSE)
+rss <- with(suff_stat, dap_suff_stat(XtX, Xty, yty, n, L=10, standardize = FALSE))
+plot(res$pip, rss$pip)
 abline(a = 0,b = 1,col = "skyblue",lty = "dashed")
 
 # DAP-S with summary statistics
-res3 <- dap_rss(bhat = betahat,shat = sebetahat, R = R, n = n, estimate_residual_variance = TRUE)
-res4 <- dap_rss(zhat, R, n = n, estimate_residual_variance = TRUE)
-res5 <- dap_rss(bhat = betahat,shat = sebetahat, R = R, n = n, var_y = var(y), estimate_residual_variance = TRUE)
-plot(res$pip, res3$pip)
+# (1) summary statistics (bhat, shat, R, var_y, n), results identical to original individual-level data
+stat <- susieR::univariate_regression(X, y)
+R <- cov2cor(suff_stat$XtX)
+rss1 <- dap_rss(bhat = stat$betahat, shat = stat$sebetahat, R = R, n = n, var_y = var(y), estimate_residual_variance = TRUE)
+plot(res$pip, rss1$pip)
+abline(a = 0,b = 1,col = "skyblue",lty = "dashed")
+# (2) summary statistics (zhat, R, n), results identical to standardized individual-level data; similar to original individual-level data
+zhat <- stat$betahat / stat$sebetahat
+rss2 <- dap_rss(zhat, R, n = n, estimate_residual_variance = TRUE)
+plot(res$pip, rss2$pip)
+abline(a = 0,b = 1,col = "skyblue",lty = "dashed")
+res2 <- dap(X, y, L = 10, standardize = TRUE)
+plot(res2$pip, rss2$pip)
+abline(a = 0,b = 1,col = "skyblue",lty = "dashed")
+# (3) summary statistics (bhat, shat, R, n), results identical to standardized individual-level data; similar to original individual-level data
+rss3 <- dap_rss(bhat = stat$betahat, shat = stat$sebetahat, R = R, n = n, estimate_residual_variance = TRUE)
+plot(res2$pip, rss3$pip)
 abline(a = 0,b = 1,col = "skyblue",lty = "dashed")
 
 # TWAS weights
