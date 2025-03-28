@@ -12,14 +12,14 @@ process_matrix <- function(mat) {
 }
 
 #' Initialize parameters for fine mapping from SuSiE fit
-#' @param y Phenotype vector
+#' @param var_y Variance of phenotype vector
 #' @param fit SuSiE fit
 #' @param overlapping Whether to create overlapping signal clusters
 #' @param use_susie_variance_estimate Use SuSiE-estimated prior variance
 #' @param grid Grid of prior variances
 #' @return List of parameters: matrix and scaled prior variance matrix
 #' @noRd
-param_setup <- function(y, fit, overlapping,
+param_setup <- function(var_y, fit, overlapping,
                         use_susie_variance_estimate, grid) {
   # Extract the non-zero columns
   matrix <- t(fit$alpha)
@@ -44,7 +44,7 @@ param_setup <- function(y, fit, overlapping,
   }
 
   # Set up scaled prior variance matrix
-  if (use_susie_variance_estimate && max(V / as.vector(var(y))) > 1) {
+  if (use_susie_variance_estimate && max(V / as.vector(var_y)) > 1) {
     #phi2_mat <- matrix(V / as.vector(var(y)), nrow = 1)
     grid[length(grid)] <- 1.28 # shift the upper bound of the grid
   }

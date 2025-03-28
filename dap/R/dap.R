@@ -140,7 +140,7 @@ dap <- function(X, y, L = min(10, ncol(X)),
                      standardize = standardize,
                      estimate_residual_variance = susie_params$estimate_residual_variance,
                      estimate_prior_variance = susie_params$estimate_prior_variance)
-  info <- param_setup(y, susie_fit, overlapping,
+  info <- param_setup(var(y), susie_fit, overlapping,
                       use_susie_variance_estimate, grid)
 
   cat("Running DAP-S fine-mapping...\n")
