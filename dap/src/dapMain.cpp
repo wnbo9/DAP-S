@@ -20,7 +20,7 @@ List compute_log10_posterior(
 List get_sc(const NumericMatrix& X, const NumericMatrix& effect_pip, const CharacterVector& snp_names, double r2_threshold, double coverage);
 List get_sc_ss(const NumericMatrix& XtX, const NumericMatrix& effect_pip, const CharacterVector& snp_names, double r2_threshold, double coverage);
 
-//' Implementation of DAP-S algorithm in C++ with default SuSiE settings
+//' Implementation of DAP-S algorithm in C++
 //' @param X Genotype matrix
 //' @param y Phenotype vector
 //' @param matrix Proposal density matrix from SuSiE

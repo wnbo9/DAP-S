@@ -2,7 +2,7 @@
 % Please edit documentation in R/dap_rss.R
 \name{dap_rss}
 \alias{dap_rss}
-\title{Description: Compute the residual sum of squares for the DAP model}
+\title{DAP-S fine-mapping using summary statistics data}
 \usage{
 dap_rss(
   z,
@@ -32,5 +32,5 @@ dap_rss(
 The residual sum of squares
 }
 \description{
-Description: Compute the residual sum of squares for the DAP model
+DAP-S fine-mapping using summary statistics data
 }

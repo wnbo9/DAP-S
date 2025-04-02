@@ -2,7 +2,7 @@
 % Please edit documentation in R/RcppExports.R
 \name{dap_update_main}
 \alias{dap_update_main}
-\title{Update DAP-S results}
+\title{Implementation of updating DAP-S results algorithm in C++}
 \usage{
 dap_update_main(X, dap_result, prior_weights, r2_threshold, coverage)
 }
@@ -28,5 +28,5 @@ A list containing:
 }
 }
 \description{
-Update DAP-S results
+Implementation of updating DAP-S results algorithm in C++
 }

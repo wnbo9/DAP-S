@@ -2,7 +2,7 @@
 % Please edit documentation in R/RcppExports.R
 \name{dap_main}
 \alias{dap_main}
-\title{Implementation of DAP-S algorithm in C++ with default SuSiE settings}
+\title{Implementation of DAP-S algorithm in C++}
 \usage{
 dap_main(
   matrix,
@@ -58,5 +58,5 @@ A list containing:
 }
 }
 \description{
-Implementation of DAP-S algorithm in C++ with default SuSiE settings
+Implementation of DAP-S algorithm in C++
 }

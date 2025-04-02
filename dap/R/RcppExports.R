@@ -19,7 +19,7 @@ compute_log10_posterior <- function(cmfg_matrix, pi_vec, phi2_mat, ss = 0L, X_in
     .Call(`_dap_compute_log10_posterior`, cmfg_matrix, pi_vec, phi2_mat, ss, X_input, y_input, XtX_input, Xty_input, yty_input, n_input, twas_weight)
 }
 
-#' Implementation of DAP-S algorithm in C++ with default SuSiE settings
+#' Implementation of DAP-S algorithm in C++
 #' @param X Genotype matrix
 #' @param y Phenotype vector
 #' @param matrix Proposal density matrix from SuSiE
@@ -45,7 +45,7 @@ dap_main <- function(matrix, pir_threshold, prior_weights, phi2_mat, r2_threshol
     .Call(`_dap_dap_main`, matrix, pir_threshold, prior_weights, phi2_mat, r2_threshold, coverage, overlapping, twas_weight, snp_names, ss, X_input, y_input, XtX_input, Xty_input, yty_input, n_input)
 }
 
-#' Update DAP-S results
+#' Implementation of updating DAP-S results algorithm in C++
 #' @param X Genotype matrix
 #' @param dap_result DAP-S results
 #' @param prior_weights Vector of prior probabilities

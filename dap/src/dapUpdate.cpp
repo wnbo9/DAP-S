@@ -12,7 +12,7 @@ using namespace std;
 double compute_log10_prior(const std::vector<int> &mcfg, NumericVector pi_vec);
 List get_sc(const NumericMatrix& X, const NumericMatrix& effect_pip, const CharacterVector& snp_names, double r2_threshold, double coverage);
 
-//' Update DAP-S results
+//' Implementation of updating DAP-S results algorithm in C++
 //' @param X Genotype matrix
 //' @param dap_result DAP-S results
 //' @param prior_weights Vector of prior probabilities

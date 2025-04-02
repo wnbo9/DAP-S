@@ -62,7 +62,6 @@ dap_suff_stat <- function(XtX, Xty, yty, n, L = min(10, ncol(XtX)),
   susie_params <- modifyList(default_susie_params, susie_params)
 
   cat("Running SuSiE...\n")
-  print(isSymmetric(XtX))
   susie_fit <- susie_suff_stat(XtX, Xty, yty, n, L,
                                scaled_prior_variance = 0.2,
                                prior_weights = prior_weights,
