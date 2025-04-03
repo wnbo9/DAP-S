@@ -5,9 +5,9 @@
 \title{SuSiE with random effects}
 \usage{
 susie_inf(
-  z,
   bhat,
   shat,
+  z,
   var_y,
   n,
   L,
@@ -17,7 +17,7 @@ susie_inf(
   est_ssq = TRUE,
   ssq = NULL,
   ssq_range = c(0, 1),
-  prior_weights = NULL,
+  pi = NULL,
   null_weight = 0,
   est_sigmasq = TRUE,
   est_tausq = TRUE,
@@ -34,19 +34,15 @@ susie_inf(
 )
 }
 \arguments{
-\item{z}{Vector of z-scores (equal to X'y/sqrt(n))}
+\item{z}{Vector of z-scores}
 
-\item{bhat}{Beta hat}
-
-\item{shat}{Standard error hat}
-
-\item{var_y}{Variance of y, equal to ||y||^2/(n-1)}
+\item{var_y}{Variance of y}
 
 \item{n}{Sample size}
 
 \item{L}{Number of modeled causal effects}
 
-\item{LD}{LD matrix (equal to X'X/n)}
+\item{LD}{LD matrix}
 
 \item{V}{Precomputed p x p matrix of eigenvectors of X'X}
 
@@ -58,9 +54,7 @@ susie_inf(
 
 \item{ssq_range}{Lower and upper bounds for each s^2, if estimated}
 
-\item{prior_weights}{Length-p vector of prior causal probability for each SNP; must sum to 1}
-
-\item{null_weight}{A value specify the probability of no effect; should be between 0 and 1.}
+\item{pi}{Length-p vector of prior causal probability for each SNP; must sum to 1}
 
 \item{est_sigmasq}{Estimate variance sigma^2}
 
@@ -91,4 +85,60 @@ List with results
 }
 \description{
 SuSiE with random effects
+}
+\examples{
+# Set random seed for reproducibility
+set.seed(2025)
+n <- 5000  # Number of samples
+p <- 500   # Number of SNPs
+MAF <- 0.1  # Minor allele frequency
+Ltrue <- 5  # Number of true causal variants
+ssq <- 0.01  # Effect size variance
+sigmasq <- 1  # Error variance
+
+# Generate genotype matrix X
+X <- matrix(rbinom(n*p, 2, MAF), nrow=n, ncol=p)
+X <- scale(X, center=TRUE, scale=FALSE)
+
+# Generate sparse effects
+b <- rep(0, p)
+inds <- sample(1:p, size=Ltrue, replace=FALSE)
+b[inds] <- rnorm(Ltrue) * sqrt(ssq)
+order_idx <- order(inds)
+cat('True effects:', inds[order_idx], '\n')
+cat('Effect sizes:', b[inds[order_idx]], '\n')
+
+# Generate infinitesimal effects
+tausq <- 1e-3
+infinitesimal <- X \%*\% rnorm(p) * sqrt(tausq)
+effects <- X \%*\% b + infinitesimal
+y <- effects + rnorm(n) * sqrt(sigmasq)
+y <- scale(y, center = TRUE, scale = FALSE)
+cat('Total fraction of variance explained by SNPs:', var(as.vector(effects))/var(y), '\n')
+
+# Generate summary statistics
+res = susieR::univariate_regression(X, y)
+suff_stat <- susieR::compute_suff_stat(X, as.vector(y), standardize = FALSE)
+LD <- cov2cor(suff_stat$XtX)
+z <- res$betahat/res$sebetahat
+
+# Work on original scale without estimating infinitesimal effects
+output <- susie_inf(bhat = res$betahat, shat = res$sebetahat, var_y = var(y), est_tausq = FALSE, n=n, L=5, LD = LD, null_weight = 0.3)
+output$sigmasq
+output$tausq
+
+# Work on original scale
+output2 <- susie_inf(bhat = res$betahat, shat = res$sebetahat, var_y = var(y), n=n, L=5, LD = LD, null_weight = 0.3)
+output2$sigmasq
+output2$tausq
+
+PIP_SuSiE <- 1 - apply(1 - output$PIP, 1, prod)
+PIP_SuSiE_inf <- 1 - apply(1 - output2$PIP, 1, prod)
+plot(PIP_SuSiE_inf, PIP_SuSiE)
+abline(a = 0,b = 1,col = "skyblue",lty = "dashed")
+
+# Work on standardized scale
+output3 <- susie_inf(z = z, n = n, L = 5, LD = LD, null_weight = 0.3)
+output3$sigmasq
+output3$tausq
 }
