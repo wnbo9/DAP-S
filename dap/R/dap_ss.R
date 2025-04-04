@@ -30,7 +30,7 @@ dap_suff_stat <- function(XtX, Xty, yty, n, L = min(10, ncol(XtX)),
                           pir_threshold = 1e-6,
                           r2_threshold = 0.25,
                           coverage = NULL,
-                          twas_weight = FALSE) {
+                          twas_weight = TRUE) {
 
   cat("Processing inputs...\n")
   if (standardize) { # standardize XtX and Xty
@@ -105,7 +105,7 @@ dap_suff_stat <- function(XtX, Xty, yty, n, L = min(10, ncol(XtX)),
 #' @param R The correlation matrix
 #' @param n The sample size
 #' @param bhat The effect size estimates
-#' @param shat
+#' @param shat Standard error of bhat
 #' @param var_y The variance of the phenotype
 #' @param estimate_residual_variance Whether to estimate the residual variance
 #' @return The residual sum of squares

@@ -5,20 +5,38 @@
 #include <string>       // for string
 #include <utility>      // for
 #include <vector>
+#include <gsl/gsl_blas.h>
+#include <gsl/gsl_matrix.h>
+#include <gsl/gsl_vector.h>
+#include <gsl/gsl_linalg.h>
 
 using namespace Rcpp;
 using namespace std;
 
-vector<vector<int>> pir(const vector<vector<double>>& mat, double pir_threshold);
+vector<vector<int>> pir(
+    const vector<vector<double>>& mat,
+    double pir_threshold);
 List compute_log10_posterior(
     const std::vector<std::vector<int>>& cmfg_matrix, 
     const NumericVector& pi_vec, 
     const NumericMatrix& phi2_mat, 
-    int ss = 0, SEXP X_input = R_NilValue, SEXP y_input = R_NilValue,
+    int ss = 0, 
+    SEXP X_input = R_NilValue, SEXP y_input = R_NilValue,
     SEXP XtX_input = R_NilValue, SEXP Xty_input = R_NilValue, SEXP yty_input = R_NilValue, SEXP n_input = R_NilValue,
+    SEXP V_input = R_NilValue, SEXP Dsq_input = R_NilValue, SEXP var_input = R_NilValue, SEXP XtOmegay_input = R_NilValue,
     bool twas_weight = false);
-List get_sc(const NumericMatrix& X, const NumericMatrix& effect_pip, const CharacterVector& snp_names, double r2_threshold, double coverage);
-List get_sc_ss(const NumericMatrix& XtX, const NumericMatrix& effect_pip, const CharacterVector& snp_names, double r2_threshold, double coverage);
+List get_sc(
+    const NumericMatrix& X,
+    const NumericMatrix& effect_pip,
+    const CharacterVector& snp_names,
+    double r2_threshold,
+    double coverage);
+List get_sc_ss(
+    const NumericMatrix& XtX,
+    const NumericMatrix& effect_pip,
+    const CharacterVector& snp_names,
+    double r2_threshold,
+    double coverage);
 
 //' Implementation of DAP-S algorithm in C++
 //' @param X Genotype matrix
@@ -42,6 +60,7 @@ List get_sc_ss(const NumericMatrix& XtX, const NumericMatrix& effect_pip, const 
 //'   \item pip - Posterior inclusion probabilities
 //'   \item signal_cluster - Signal clusters
 //' }
+//' @export
 // [[Rcpp::export]]
 List dap_main(
     NumericMatrix matrix,
@@ -59,18 +78,22 @@ List dap_main(
     SEXP XtX_input = R_NilValue,
     SEXP Xty_input = R_NilValue, 
     SEXP yty_input = R_NilValue,
-    SEXP n_input = R_NilValue) {
+    SEXP n_input = R_NilValue,
+    SEXP V_input = R_NilValue,
+    SEXP Dsq_input = R_NilValue,
+    SEXP var_input = R_NilValue,
+    SEXP XtOmegay_input = R_NilValue) {
     
     int p = 0;
     NumericMatrix X;
     NumericMatrix XtX;
+
     if (ss == 0) {
-       // Using raw data
-       if (X_input == R_NilValue || y_input == R_NilValue) {
-        stop("With ss=0, both X and y must be provided");
-       }
-       X = as<NumericMatrix>(X_input);
-       p = X.ncol(); 
+        // Using raw data
+        if (X_input == R_NilValue || y_input == R_NilValue) {
+            stop("With ss=0, both X and y must be provided");
+        }
+        X = as<NumericMatrix>(X_input);
     } else if (ss == 1) {
         // Using summary statistics
         if (XtX_input == R_NilValue || Xty_input == R_NilValue || 
@@ -78,10 +101,16 @@ List dap_main(
             stop("With ss=1, XtX, Xty, yty, and n must be provided");
         }
         XtX = as<NumericMatrix>(XtX_input);
-        p = XtX.ncol();
+    } else if (ss == 2) {
+        // Using summary statistics with V, Dsq, var for infinitesimal model
+        if (V_input == R_NilValue || Dsq_input == R_NilValue || 
+            var_input == R_NilValue || XtOmegay_input == R_NilValue) {
+            stop("With ss=2, V, Dsq, var, and XtOmegay must be provided");
+        }
     }
 
     int L = matrix.ncol(); // Number of effects
+    p = matrix.nrow() - 1; // Number of SNPs
 
     vector<vector<double>> mat(p+1, vector<double>(L));
     for (int i = 0; i < p+1; i++) {
@@ -103,9 +132,17 @@ List dap_main(
 
     if (ss == 0) {
         NumericVector y = as<NumericVector>(y_input);
-        scores = compute_log10_posterior(combo_matrix, prior_weights, phi2_mat, ss, X_input, y_input, R_NilValue, R_NilValue, R_NilValue, R_NilValue, twas_weight);
-    } else {
-        scores = compute_log10_posterior(combo_matrix, prior_weights, phi2_mat, ss, R_NilValue, R_NilValue, XtX_input, Xty_input, yty_input, n_input, twas_weight);
+        scores = compute_log10_posterior(combo_matrix, prior_weights, phi2_mat, ss, X_input, y_input,
+            R_NilValue, R_NilValue, R_NilValue, R_NilValue,
+            R_NilValue, R_NilValue, R_NilValue, R_NilValue, twas_weight);
+    } else if (ss == 1) {
+        scores = compute_log10_posterior(combo_matrix, prior_weights, phi2_mat, ss, R_NilValue, R_NilValue,
+            XtX_input, Xty_input, yty_input, n_input,
+            R_NilValue, R_NilValue, R_NilValue, R_NilValue, twas_weight);
+    } else if (ss == 2) {
+        scores = compute_log10_posterior(combo_matrix, prior_weights, phi2_mat, ss, R_NilValue, R_NilValue,
+            R_NilValue, R_NilValue, R_NilValue, R_NilValue,
+            V_input, Dsq_input, var_input, XtOmegay_input, twas_weight);
     }
 
     NumericVector log10_BF = scores["log10_BF"];
@@ -223,7 +260,50 @@ List dap_main(
     List sc_results;
     if (ss == 0) {
         sc_results = get_sc(X, effect_pip, snp_names, r2_threshold, coverage);
-    } else {
+    } else if (ss == 1) {
+        sc_results = get_sc_ss(XtX, effect_pip, snp_names, r2_threshold, coverage);
+    } else if (ss == 2) {
+        NumericMatrix V = as<NumericMatrix>(V_input);
+        NumericVector Dsq = as<NumericVector>(Dsq_input);
+    
+        // Allocate memory for XtX matrix
+        XtX = NumericMatrix(p, p);
+    
+        // Create GSL matrices
+        gsl_matrix* V_gsl = gsl_matrix_calloc(p, p);
+        gsl_matrix* D_gsl = gsl_matrix_calloc(p, p);  // Initialized with zeros
+        gsl_matrix* VD_gsl = gsl_matrix_calloc(p, p);
+        gsl_matrix* VDVT_gsl = gsl_matrix_calloc(p, p);
+    
+        // Copy data from R objects to GSL matrices
+        for (int i = 0; i < p; i++) {
+            // Set diagonal elements of D
+            gsl_matrix_set(D_gsl, i, i, Dsq[i]);
+        
+            for (int j = 0; j < p; j++) {
+                gsl_matrix_set(V_gsl, i, j, V(i, j));
+            }
+        }   
+    
+        // Calculate V·D (store result in VD_gsl)
+        gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1.0, V_gsl, D_gsl, 0.0, VD_gsl);
+    
+        // Calculate (V·D)·V^T (store result in VDVT_gsl)
+        gsl_blas_dgemm(CblasNoTrans, CblasTrans, 1.0, VD_gsl, V_gsl, 0.0, VDVT_gsl);
+    
+        // Copy result to R matrix
+        for (int i = 0; i < p; i++) {
+            for (int j = 0; j < p; j++) {
+                XtX(i, j) = gsl_matrix_get(VDVT_gsl, i, j);
+            }
+        }
+    
+        // Free GSL matrices
+        gsl_matrix_free(V_gsl);
+        gsl_matrix_free(D_gsl);
+        gsl_matrix_free(VD_gsl);
+        gsl_matrix_free(VDVT_gsl);
+
         sc_results = get_sc_ss(XtX, effect_pip, snp_names, r2_threshold, coverage);
     }
 

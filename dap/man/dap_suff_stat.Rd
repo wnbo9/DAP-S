@@ -19,7 +19,7 @@ dap_suff_stat(
   pir_threshold = 1e-06,
   r2_threshold = 0.25,
   coverage = NULL,
-  twas_weight = FALSE
+  twas_weight = TRUE
 )
 }
 \arguments{

@@ -15,8 +15,8 @@
 #' @param twas_weight A boolean indicating whether to compute TWAS weights
 #' @return An m-vector of log10 posterior scores
 #' @export
-compute_log10_posterior <- function(cmfg_matrix, pi_vec, phi2_mat, ss = 0L, X_input = NULL, y_input = NULL, XtX_input = NULL, Xty_input = NULL, yty_input = NULL, n_input = NULL, twas_weight = FALSE) {
-    .Call(`_dap_compute_log10_posterior`, cmfg_matrix, pi_vec, phi2_mat, ss, X_input, y_input, XtX_input, Xty_input, yty_input, n_input, twas_weight)
+compute_log10_posterior <- function(cmfg_matrix, pi_vec, phi2_mat, ss = 0L, X_input = NULL, y_input = NULL, XtX_input = NULL, Xty_input = NULL, yty_input = NULL, n_input = NULL, V_input = NULL, Dsq_input = NULL, var_input = NULL, XtOmegay_input = NULL, twas_weight = FALSE) {
+    .Call(`_dap_compute_log10_posterior`, cmfg_matrix, pi_vec, phi2_mat, ss, X_input, y_input, XtX_input, Xty_input, yty_input, n_input, V_input, Dsq_input, var_input, XtOmegay_input, twas_weight)
 }
 
 #' Implementation of DAP-S algorithm in C++
@@ -41,8 +41,9 @@ compute_log10_posterior <- function(cmfg_matrix, pi_vec, phi2_mat, ss = 0L, X_in
 #'   \item pip - Posterior inclusion probabilities
 #'   \item signal_cluster - Signal clusters
 #' }
-dap_main <- function(matrix, pir_threshold, prior_weights, phi2_mat, r2_threshold, coverage, overlapping, twas_weight, snp_names, ss = 0L, X_input = NULL, y_input = NULL, XtX_input = NULL, Xty_input = NULL, yty_input = NULL, n_input = NULL) {
-    .Call(`_dap_dap_main`, matrix, pir_threshold, prior_weights, phi2_mat, r2_threshold, coverage, overlapping, twas_weight, snp_names, ss, X_input, y_input, XtX_input, Xty_input, yty_input, n_input)
+#' @export
+dap_main <- function(matrix, pir_threshold, prior_weights, phi2_mat, r2_threshold, coverage, overlapping, twas_weight, snp_names, ss = 0L, X_input = NULL, y_input = NULL, XtX_input = NULL, Xty_input = NULL, yty_input = NULL, n_input = NULL, V_input = NULL, Dsq_input = NULL, var_input = NULL, XtOmegay_input = NULL) {
+    .Call(`_dap_dap_main`, matrix, pir_threshold, prior_weights, phi2_mat, r2_threshold, coverage, overlapping, twas_weight, snp_names, ss, X_input, y_input, XtX_input, Xty_input, yty_input, n_input, V_input, Dsq_input, var_input, XtOmegay_input)
 }
 
 #' Implementation of updating DAP-S results algorithm in C++

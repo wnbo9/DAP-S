@@ -15,6 +15,10 @@ compute_log10_posterior(
   Xty_input = NULL,
   yty_input = NULL,
   n_input = NULL,
+  V_input = NULL,
+  Dsq_input = NULL,
+  var_input = NULL,
+  XtOmegay_input = NULL,
   twas_weight = FALSE
 )
 }

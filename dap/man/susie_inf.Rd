@@ -5,10 +5,10 @@
 \title{SuSiE with random effects}
 \usage{
 susie_inf(
-  bhat,
-  shat,
-  z,
-  var_y,
+  bhat = NULL,
+  shat = NULL,
+  z = NULL,
+  var_y = NULL,
   n,
   L,
   LD = NULL,
@@ -30,10 +30,14 @@ susie_inf(
   mu = NULL,
   maxiter = 100,
   PIP_tol = 0.001,
-  verbose = TRUE
+  verbose = FALSE
 )
 }
 \arguments{
+\item{bhat}{Vector of effect size estimates}
+
+\item{shat}{Standard error of bhat}
+
 \item{z}{Vector of z-scores}
 
 \item{var_y}{Variance of y}
@@ -127,14 +131,12 @@ output <- susie_inf(bhat = res$betahat, shat = res$sebetahat, var_y = var(y), es
 output$sigmasq
 output$tausq
 
-# Work on original scale
+# Work on original scale with estimating infinitesimal effects
 output2 <- susie_inf(bhat = res$betahat, shat = res$sebetahat, var_y = var(y), n=n, L=5, LD = LD, null_weight = 0.3)
 output2$sigmasq
 output2$tausq
 
-PIP_SuSiE <- 1 - apply(1 - output$PIP, 1, prod)
-PIP_SuSiE_inf <- 1 - apply(1 - output2$PIP, 1, prod)
-plot(PIP_SuSiE_inf, PIP_SuSiE)
+plot(output2$spip, output$spip, xlab = "PIP of SuSiE-inf", ylab = "PIP of SuSiE")
 abline(a = 0,b = 1,col = "skyblue",lty = "dashed")
 
 # Work on standardized scale

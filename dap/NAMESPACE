@@ -3,6 +3,8 @@
 export(compute_log10_posterior)
 export(cred)
 export(dap)
+export(dap_inf)
+export(dap_main)
 export(dap_rss)
 export(dap_suff_stat)
 export(dap_update)

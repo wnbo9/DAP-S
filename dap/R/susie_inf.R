@@ -21,30 +21,30 @@ MoM <- function(PIP, mu, omega, sigmasq, tausq, n, V, Dsq, VtXty, Xty, yty,
   # Get dimensions
   p <- nrow(mu)
   L <- ncol(mu)
-  
+
   # Compute A
   A <- matrix(c(n, sum(Dsq), sum(Dsq), sum(Dsq^2)), nrow = 2)
-  
+
   # Compute diag(V'MV)
   b <- rowSums(mu * PIP)
   Vtb <- t(V) %*% b
   diagVtMV <- Vtb^2
   tmpD <- numeric(p)
-  
+
   for (l in 1:L) {
     bl <- mu[, l] * PIP[, l]
     Vtbl <- t(V) %*% bl
     diagVtMV <- diagVtMV - Vtbl^2
     tmpD <- tmpD + PIP[, l] * (mu[, l]^2 + 1/omega[, l])
   }
-  
+
   diagVtMV <- diagVtMV + colSums(t(V)^2 * tmpD)
-  
+
   # Compute x
   x <- numeric(2)
   x[1] <- yty - 2 * sum(b * Xty) + sum(Dsq * diagVtMV)
   x[2] <- sum(Xty^2) - 2 * sum(Vtb * VtXty * Dsq) + sum(Dsq^2 * diagVtMV)
-  
+
   if (est_tausq) {
     sol <- solve(A, x)
     if (sol[1] > 0 && sol[2] > 0) {
@@ -54,7 +54,7 @@ MoM <- function(PIP, mu, omega, sigmasq, tausq, n, V, Dsq, VtXty, Xty, yty,
       sigmasq <- x[1]/n
       tausq <- 0
     }
-    
+
     if (verbose) {
       cat(sprintf("Update (sigma^2,tau^2) to (%f,%e)\n", sigmasq, tausq))
     }
@@ -64,7 +64,7 @@ MoM <- function(PIP, mu, omega, sigmasq, tausq, n, V, Dsq, VtXty, Xty, yty,
       cat(sprintf("Update sigma^2 to %f\n", sigmasq))
     }
   }
-  
+
   return(list(sigmasq = sigmasq, tausq = tausq))
 }
 
@@ -93,47 +93,47 @@ MLE <- function(PIP, mu, omega, sigmasq, tausq, n, V, Dsq, VtXty, yty,
   # Get dimensions
   p <- nrow(mu)
   L <- ncol(mu)
-  
+
   # Set default ranges if NULL
   if (is.null(sigmasq_range)) sigmasq_range <- c(0.2 * yty/n, 1.2 * yty/n)
   if (is.null(tausq_range)) tausq_range <- c(1e-12, 1.2 * yty/(n * p))
-  
+
   # Compute diag(V'MV)
   b <- rowSums(mu * PIP)
   Vtb <- t(V) %*% b
   diagVtMV <- Vtb^2
   tmpD <- numeric(p)
-  
+
   for (l in 1:L) {
     bl <- mu[, l] * PIP[, l]
     Vtbl <- t(V) %*% bl
     diagVtMV <- diagVtMV - Vtbl^2
     tmpD <- tmpD + PIP[, l] * (mu[, l]^2 + 1/omega[, l])
   }
-  
+
   diagVtMV <- diagVtMV + colSums(t(V)^2 * tmpD)
-  
+
   # Define negative ELBO as function of x = (sigma_e^2, sigma_g^2)
   f <- function(x) {
     sigmasq <- x[1]
     tausq <- x[2]
-    
+
     0.5 * (n - p) * log(sigmasq) + 0.5/sigmasq * yty +
-      sum(0.5 * log(tausq * Dsq + sigmasq) - 
+      sum(0.5 * log(tausq * Dsq + sigmasq) -
             0.5 * tausq/sigmasq * VtXty^2/(tausq * Dsq + sigmasq) -
-            Vtb * VtXty/(tausq * Dsq + sigmasq) + 
+            Vtb * VtXty/(tausq * Dsq + sigmasq) +
             0.5 * Dsq/(tausq * Dsq + sigmasq) * diagVtMV)
   }
-  
+
   if (est_tausq) {
     res <- optim(c(sigmasq, tausq), f, method = "L-BFGS-B",
                  lower = c(sigmasq_range[1], tausq_range[1]),
                  upper = c(sigmasq_range[2], tausq_range[2]))
-    
+
     if (res$convergence == 0) {
       sigmasq <- res$par[1]
       tausq <- res$par[2]
-      
+
       if (verbose) {
         cat(sprintf("Update (sigma^2,tau^2) to (%f,%e)\n", sigmasq, tausq))
       }
@@ -142,13 +142,13 @@ MLE <- function(PIP, mu, omega, sigmasq, tausq, n, V, Dsq, VtXty, yty,
     }
   } else if (est_sigmasq) {
     g <- function(x) f(c(x, tausq))
-    
+
     res <- optim(sigmasq, g, method = "L-BFGS-B",
                  lower = sigmasq_range[1], upper = sigmasq_range[2])
-    
+
     if (res$convergence == 0) {
       sigmasq <- res$par
-      
+
       if (verbose) {
         cat(sprintf("Update sigma^2 to %f\n", sigmasq))
       }
@@ -156,14 +156,14 @@ MLE <- function(PIP, mu, omega, sigmasq, tausq, n, V, Dsq, VtXty, yty,
       warning(sprintf("sigma^2 update for iteration %d failed to converge; keeping previous parameters", it))
     }
   }
-  
+
   return(list(sigmasq = sigmasq, tausq = tausq))
 }
 
 #' SuSiE with random effects
 #'
-#' @param bhat
-#' @param shat
+#' @param bhat Vector of effect size estimates
+#' @param shat Standard error of bhat
 #' @param z Vector of z-scores
 #' @param var_y Variance of y
 #' @param n Sample size
@@ -232,35 +232,33 @@ MLE <- function(PIP, mu, omega, sigmasq, tausq, n, V, Dsq, VtXty, yty,
 #' output$sigmasq
 #' output$tausq
 #'
-#' # Work on original scale
+#' # Work on original scale with estimating infinitesimal effects
 #' output2 <- susie_inf(bhat = res$betahat, shat = res$sebetahat, var_y = var(y), n=n, L=5, LD = LD, null_weight = 0.3)
 #' output2$sigmasq
 #' output2$tausq
 #'
-#' PIP_SuSiE <- 1 - apply(1 - output$PIP, 1, prod)
-#' PIP_SuSiE_inf <- 1 - apply(1 - output2$PIP, 1, prod)
-#' plot(PIP_SuSiE_inf, PIP_SuSiE)
+#' plot(output2$spip, output$spip, xlab = "PIP of SuSiE-inf", ylab = "PIP of SuSiE")
 #' abline(a = 0,b = 1,col = "skyblue",lty = "dashed")
 #'
 #' # Work on standardized scale
 #' output3 <- susie_inf(z = z, n = n, L = 5, LD = LD, null_weight = 0.3)
 #' output3$sigmasq
 #' output3$tausq
-susie_inf <- function(bhat, shat, z, var_y, n, L, LD = NULL, V = NULL, Dsq = NULL,
+susie_inf <- function(bhat=NULL, shat=NULL, z=NULL, var_y=NULL, n, L, LD = NULL, V = NULL, Dsq = NULL,
                       est_ssq = TRUE, ssq = NULL, ssq_range = c(0, 1), pi = NULL, null_weight = 0,
                       est_sigmasq = TRUE, est_tausq = TRUE, sigmasq = 1, tausq = 0,
                       method = "moments", sigmasq_range = NULL, tausq_range = NULL,
-                      PIP = NULL, mu = NULL, maxiter = 100, PIP_tol = 1e-3, verbose = TRUE) {
-  
+                      PIP = NULL, mu = NULL, maxiter = 100, PIP_tol = 1e-3, verbose = FALSE) {
+
   suppressWarnings({
-    if (missing(z)) z <- bhat/shat
+    if (is.null(z)) z <- bhat/shat
     p <- length(z)
-    
+
     adj <- (n-1)/(z^2 + n - 2)
     z   <- sqrt(adj) * z
-    
+
     if (is.numeric(null_weight) && null_weight == 0) null_weight <- NULL
-    
+
     if (is.null(null_weight)) {
       if (is.null(pi)) {
         logpi <- rep(log(1.0/p), p)
@@ -282,12 +280,12 @@ susie_inf <- function(bhat, shat, z, var_y, n, L, LD = NULL, V = NULL, Dsq = NUL
       z <- c(z, 0)
       p <- p+1
     }
-    
+
     # Precompute V, D^2 in the SVD X = UDV', and V'X'y and y'y
     if ((is.null(V) || is.null(Dsq)) && is.null(LD)) {
       stop("Missing LD")
     } else if (is.null(V) || is.null(Dsq)) {
-      if (!missing(shat) & !missing(var_y)) {
+      if (!is.null(shat) & !is.null(var_y)) {
         XtXdiag <- var_y * adj/(shat^2)
         XtX <- t(LD * sqrt(XtXdiag)) * sqrt(XtXdiag)
         XtX <- (XtX + t(XtX))/2
@@ -301,8 +299,8 @@ susie_inf <- function(bhat, shat, z, var_y, n, L, LD = NULL, V = NULL, Dsq = NUL
     } else {
       Dsq <- pmax(Dsq, 0)
     }
-    
-    if (!missing(shat) & !missing(var_y)) {
+
+    if (!is.null(shat) & !is.null(var_y)) {
       Xty = z * sqrt(adj) * var_y / shat
       VtXty <- t(V) %*% Xty
       yty <- (n-1) * var_y
@@ -312,53 +310,53 @@ susie_inf <- function(bhat, shat, z, var_y, n, L, LD = NULL, V = NULL, Dsq = NUL
       VtXty <- t(V) %*% Xty
       yty <- (n-1)
     }
-    
-    
-    
+
+
+
     # Initialize diagonal variances, diag(X' Omega X), X' Omega y
     var <- tausq * Dsq + sigmasq
     diagXtOmegaX <- rowSums(sweep(V^2, 2, Dsq/var, "*"))
     XtOmegay <- V %*% (VtXty/var)
-    
+
     # Initialize s_l^2, PIP_j, mu_j, omega_j
     if (is.null(ssq)) ssq <- rep(0.2, L)
     if (is.null(PIP)) PIP <- matrix(1/p, nrow = p, ncol = L)
     if (is.null(mu)) mu <- matrix(0, nrow = p, ncol = L)
-    
+
     lbf_variable <- matrix(0, nrow = p, ncol = L)
     lbf <- numeric(L)
     omega <- outer(diagXtOmegaX, 1/ssq, "+")
-    
-    
-    
+
+
+
     # Main SuSiE iteration loop
     for (it in 1:maxiter) {
       if (verbose) cat(sprintf("Iteration %d\n", it))
       PIP_prev <- PIP
-      
+
       # Single effect regression for each effect l = 1,...,L
       for (l in 1:L) {
         # Compute X' Omega r_l for residual r_l
         b <- rowSums(mu * PIP) - mu[, l] * PIP[, l]
         XtOmegaXb <- V %*% (t(V) %*% b * Dsq/var)
         XtOmegar <- XtOmegay - XtOmegaXb
-        
+
         if (est_ssq) {
           # Update prior variance ssq[l]
           f <- function(x) {
-            -log(sum(exp(-0.5 * log(1 + x * diagXtOmegaX) + 
-                           x * XtOmegar^2/(2 * (1 + x * diagXtOmegaX)) + 
+            -log(sum(exp(-0.5 * log(1 + x * diagXtOmegaX) +
+                           x * XtOmegar^2/(2 * (1 + x * diagXtOmegaX)) +
                            logpi)))
           }
-          
+
           res <- optimize(f, interval = ssq_range)
           ssq[l] <- res$minimum
-          
+
           if (verbose) {
             cat(sprintf("Update s^2 for effect %d to %f\n", l, ssq[l]))
           }
         }
-        
+
         # Update omega, mu, and PIP
         omega[, l] <- diagXtOmegaX + 1/ssq[l]
         mu[, l] <- XtOmegar/omega[, l]
@@ -367,7 +365,7 @@ susie_inf <- function(bhat, shat, z, var_y, n, L, LD = NULL, V = NULL, Dsq = NUL
         lbf[l] <- log(sum(exp(logPIP)))
         PIP[, l] <- exp(logPIP - lbf[l])
       }
-      
+
       # Update variance components
       if (est_sigmasq || est_tausq) {
         if (method == "moments") {
@@ -383,13 +381,13 @@ susie_inf <- function(bhat, shat, z, var_y, n, L, LD = NULL, V = NULL, Dsq = NUL
         } else {
           stop("Unsupported variance estimation method")
         }
-        
+
         # Update X' Omega X, X' Omega y
         var <- tausq * Dsq + sigmasq
         diagXtOmegaX <- rowSums(sweep(V^2, 2, Dsq/var, "*"))
         XtOmegay <- V %*% (VtXty/var)
       }
-      
+
       # Determine convergence from PIP differences
       PIP_diff <- max(abs(PIP_prev - PIP))
       if (verbose) cat(sprintf("Maximum change in PIP: %f\n", PIP_diff))
@@ -398,15 +396,15 @@ susie_inf <- function(bhat, shat, z, var_y, n, L, LD = NULL, V = NULL, Dsq = NUL
         break
       }
     }
-    
+
     # Compute posterior means of b and alpha
     b <- rowSums(mu * PIP)
     XtOmegaXb <- V %*% (t(V) %*% b * Dsq/var)
     XtOmegar <- XtOmegay - XtOmegaXb
     alpha <- tausq * XtOmegar
     spip <- 1 - apply(1 - PIP, 1, prod)
-    if (is.null(null_weight)) spip <- spip[-p]
-    
+    if (!is.null(null_weight)) spip <- spip[-p]
+
     return(list(
       PIP = PIP,
       spip = spip,
@@ -417,7 +415,11 @@ susie_inf <- function(bhat, shat, z, var_y, n, L, LD = NULL, V = NULL, Dsq = NUL
       ssq = ssq,
       sigmasq = sigmasq,
       tausq = tausq,
-      alpha = alpha
+      alpha = alpha,
+      V = V,
+      Dsq = Dsq,
+      var = var,
+      XtOmegay = XtOmegay
     ))
   })
 }
@@ -436,52 +438,52 @@ susie_inf <- function(bhat, shat, z, var_y, n, L, LD = NULL, V = NULL, Dsq = NUL
 #'
 #' @return List of variable indices corresponding to credible sets
 #' @export
-cred <- function(PIP, coverage = 0.9, purity = 0.5, LD = NULL, V = NULL, Dsq = NULL, 
+cred <- function(PIP, coverage = 0.9, purity = 0.5, LD = NULL, V = NULL, Dsq = NULL,
                  n = NULL, dedup = TRUE) {
-  
+
   if ((is.null(V) || is.null(Dsq) || is.null(n)) && is.null(LD)) {
     stop("Missing inputs for purity filtering")
   }
-  
+
   # Compute credible sets
   cred_list <- list()
-  
+
   for (l in 1:ncol(PIP)) {
     sortinds <- order(PIP[, l], decreasing = TRUE)
     cumsum_pip <- cumsum(PIP[sortinds, l])
     ind <- min(which(cumsum_pip >= coverage))
     credset <- sortinds[1:(ind)]
-    
+
     # Filter by purity
     if (length(credset) == 1) {
       cred_list[[length(cred_list) + 1]] <- credset
       next
     }
-    
+
     if (length(credset) < 100) {
       rows <- credset
     } else {
       set.seed(123)
       rows <- sample(credset, size = 100, replace = FALSE)
     }
-    
+
     if (!is.null(LD)) {
       LDloc <- LD[rows, rows, drop = FALSE]
     } else {
       LDloc <- t(V[rows, , drop = FALSE] * Dsq) %*% V[rows, , drop = FALSE] / n
     }
-    
+
     if (min(abs(LDloc)) > purity) {
       cred_list[[length(cred_list) + 1]] <- sort(credset)
     }
   }
-  
+
   if (dedup) {
     # Remove duplicates while maintaining order
     cred_list_str <- sapply(cred_list, function(x) paste(x, collapse = ","))
     unique_indices <- !duplicated(cred_list_str)
     cred_list <- cred_list[unique_indices]
   }
-  
+
   return(cred_list)
 }

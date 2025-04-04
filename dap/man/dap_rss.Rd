@@ -24,6 +24,8 @@ dap_rss(
 
 \item{bhat}{The effect size estimates}
 
+\item{shat}{Standard error of bhat}
+
 \item{var_y}{The variance of the phenotype}
 
 \item{estimate_residual_variance}{Whether to estimate the residual variance}
