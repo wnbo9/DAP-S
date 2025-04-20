@@ -162,8 +162,6 @@ MLE <- function(PIP, mu, omega, sigmasq, tausq, n, V, Dsq, VtXty, yty,
 
 #' SuSiE with random effects
 #'
-#' @param bhat Vector of effect size estimates
-#' @param shat Standard error of bhat
 #' @param z Vector of z-scores
 #' @param var_y Variance of y
 #' @param n Sample size
@@ -244,74 +242,29 @@ MLE <- function(PIP, mu, omega, sigmasq, tausq, n, V, Dsq, VtXty, yty,
 #' output3 <- susie_inf(z = z, n = n, L = 5, LD = LD, null_weight = 0.3)
 #' output3$sigmasq
 #' output3$tausq
-susie_inf <- function(bhat=NULL, shat=NULL, z=NULL, var_y=NULL, n, L, LD = NULL, V = NULL, Dsq = NULL,
-                      est_ssq = TRUE, ssq = NULL, ssq_range = c(0, 1), pi = NULL, null_weight = 0,
+susie_inf <- function(z=NULL, var_y=NULL, n, L, LD = NULL, V = NULL, Dsq = NULL,
+                      est_ssq = TRUE, ssq = NULL, ssq_range = c(0, 1), pi = NULL,
                       est_sigmasq = TRUE, est_tausq = TRUE, sigmasq = 1, tausq = 0,
                       method = "moments", sigmasq_range = NULL, tausq_range = NULL,
                       PIP = NULL, mu = NULL, maxiter = 100, PIP_tol = 1e-3, verbose = FALSE) {
 
   suppressWarnings({
-    if (is.null(z)) z <- bhat/shat
     p <- length(z)
 
-    adj <- (n-1)/(z^2 + n - 2)
-    z   <- sqrt(adj) * z
+    eig <- eigen(LD, symmetric = TRUE)
+    idx <- order(eig$values)
+    # Sort values and vectors accordingly
+    eig_sorted <- list(
+      values = eig$values[idx],
+      vectors = eig$vectors[, idx]
+    )
+    V <- eig_sorted$vectors
+    Dsq <- pmax( (n-1) * eig_sorted$values, 0 )
+    Xty <- z * sqrt(n-1)
+    VtXty <- t(V) %*% Xty
+    yty <- (n-1)*var_y
 
-    if (is.numeric(null_weight) && null_weight == 0) null_weight <- NULL
-
-    if (is.null(null_weight)) {
-      if (is.null(pi)) {
-        logpi <- rep(log(1.0/p), p)
-      } else {
-        logpi <- rep(-Inf, p)
-        inds <- which(pi > 0)
-        logpi[inds] <- log(pi[inds])
-      }
-    } else {
-      if (is.null(pi)) {
-        logpi <- log(c(rep(1.0/p * (1-null_weight), p), null_weight))
-      } else {
-        pi <- c(pi * (1-null_weight), null_weight)
-        logpi <- rep(-Inf, p+1)
-        inds <- which(pi > 0)
-        logpi[inds] <- log(pi[inds])
-      }
-      LD <- cbind(rbind(LD,0), 0)
-      z <- c(z, 0)
-      p <- p+1
-    }
-
-    # Precompute V, D^2 in the SVD X = UDV', and V'X'y and y'y
-    if ((is.null(V) || is.null(Dsq)) && is.null(LD)) {
-      stop("Missing LD")
-    } else if (is.null(V) || is.null(Dsq)) {
-      if (!is.null(shat) & !is.null(var_y)) {
-        XtXdiag <- var_y * adj/(shat^2)
-        XtX <- t(LD * sqrt(XtXdiag)) * sqrt(XtXdiag)
-        XtX <- (XtX + t(XtX))/2
-        R <- XtX/(n-1)
-        eig <- eigen(R, symmetric = TRUE)
-      } else {
-        eig <- eigen(LD, symmetric = TRUE)
-      }
-      V <- eig$vectors
-      Dsq <- pmax( (n-1) * eig$values, 0 )
-    } else {
-      Dsq <- pmax(Dsq, 0)
-    }
-
-    if (!is.null(shat) & !is.null(var_y)) {
-      Xty = z * sqrt(adj) * var_y / shat
-      VtXty <- t(V) %*% Xty
-      yty <- (n-1) * var_y
-    } else {
-      # on standardized x and y
-      Xty <- sqrt(n-1) * z
-      VtXty <- t(V) %*% Xty
-      yty <- (n-1)
-    }
-
-
+    logpi <- rep(log(1.0/p), p)
 
     # Initialize diagonal variances, diag(X' Omega X), X' Omega y
     var <- tausq * Dsq + sigmasq
@@ -403,7 +356,6 @@ susie_inf <- function(bhat=NULL, shat=NULL, z=NULL, var_y=NULL, n, L, LD = NULL,
     XtOmegar <- XtOmegay - XtOmegaXb
     alpha <- tausq * XtOmegar
     spip <- 1 - apply(1 - PIP, 1, prod)
-    if (!is.null(null_weight)) spip <- spip[-p]
 
     return(list(
       PIP = PIP,

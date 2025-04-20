@@ -20,6 +20,7 @@ dap_inf(
   pir_threshold = 1e-06,
   r2_threshold = 0.25,
   coverage = NULL,
+  method = "moments",
   twas_weight = FALSE
 )
 }

@@ -93,6 +93,7 @@ dap_inf <- function(bhat = NULL, shat = NULL, z = NULL, var_y = NULL,
                     pir_threshold = 1e-6,
                     r2_threshold = 0.25,
                     coverage = NULL,
+                    method = "moments",
                     twas_weight = FALSE) {
 
   if (!is.null(bhat)) {
@@ -112,7 +113,7 @@ dap_inf <- function(bhat = NULL, shat = NULL, z = NULL, var_y = NULL,
 
   cat("Running SuSiE-inf...\n")
   susie_fit <- susie_inf(bhat = bhat, shat = shat, z = z, var_y = var_y,
-                      n = n, LD = LD, L = L,
+                      n = n, LD = LD, L = L, method = method,
                       pi = prior_weights, null_weight = prod(1 - prior_weights))
   fit <- NULL
   fit$alpha <- t(susie_fit$PIP)
