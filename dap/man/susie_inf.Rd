@@ -5,8 +5,6 @@
 \title{SuSiE with random effects}
 \usage{
 susie_inf(
-  bhat = NULL,
-  shat = NULL,
   z = NULL,
   var_y = NULL,
   n,
@@ -18,7 +16,6 @@ susie_inf(
   ssq = NULL,
   ssq_range = c(0, 1),
   pi = NULL,
-  null_weight = 0,
   est_sigmasq = TRUE,
   est_tausq = TRUE,
   sigmasq = 1,
@@ -34,10 +31,6 @@ susie_inf(
 )
 }
 \arguments{
-\item{bhat}{Vector of effect size estimates}
-
-\item{shat}{Standard error of bhat}
-
 \item{z}{Vector of z-scores}
 
 \item{var_y}{Variance of y}

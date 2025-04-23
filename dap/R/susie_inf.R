@@ -23,9 +23,7 @@ MoM <- function(PIP, mu, omega, sigmasq, tausq, n, V, Dsq, VtXty, Xty, yty,
   L <- ncol(mu)
 
   # Compute A
-  A <- matrix(c(n, sum(Dsq), sum(Dsq), sum(Dsq^2)), nrow = 2)
-
-  # Compute diag(V'MV)
+  A <- matrix(c(n, sum(Dsq), sum(Dsq), sum(Dsq^2)), nrow = 2)  
   b <- rowSums(mu * PIP)
   Vtb <- t(V) %*% b
   diagVtMV <- Vtb^2
@@ -35,12 +33,11 @@ MoM <- function(PIP, mu, omega, sigmasq, tausq, n, V, Dsq, VtXty, Xty, yty,
     bl <- mu[, l] * PIP[, l]
     Vtbl <- t(V) %*% bl
     diagVtMV <- diagVtMV - Vtbl^2
-    tmpD <- tmpD + PIP[, l] * (mu[, l]^2 + 1/omega[, l])
+    tmpD <- tmpD + PIP[, l] * (mu[, l]^2 + 1 / omega[, l])
   }
 
-  diagVtMV <- diagVtMV + colSums(t(V)^2 * tmpD)
+  diagVtMV <- diagVtMV + rowSums(sweep(t(V)^2, 2, tmpD, `*`))
 
-  # Compute x
   x <- numeric(2)
   x[1] <- yty - 2 * sum(b * Xty) + sum(Dsq * diagVtMV)
   x[2] <- sum(Xty^2) - 2 * sum(Vtb * VtXty * Dsq) + sum(Dsq^2 * diagVtMV)
@@ -67,6 +64,8 @@ MoM <- function(PIP, mu, omega, sigmasq, tausq, n, V, Dsq, VtXty, Xty, yty,
 
   return(list(sigmasq = sigmasq, tausq = tausq))
 }
+
+
 
 #' Maximum Likelihood Estimation (MLE) for sigma^2 and tau^2
 #'
@@ -111,7 +110,7 @@ MLE <- function(PIP, mu, omega, sigmasq, tausq, n, V, Dsq, VtXty, yty,
     tmpD <- tmpD + PIP[, l] * (mu[, l]^2 + 1/omega[, l])
   }
 
-  diagVtMV <- diagVtMV + colSums(t(V)^2 * tmpD)
+  diagVtMV <- diagVtMV + rowSums(sweep(t(V)^2, 2, tmpD, `*`))
 
   # Define negative ELBO as function of x = (sigma_e^2, sigma_g^2)
   f <- function(x) {
@@ -248,132 +247,129 @@ susie_inf <- function(z=NULL, var_y=NULL, n, L, LD = NULL, V = NULL, Dsq = NULL,
                       method = "moments", sigmasq_range = NULL, tausq_range = NULL,
                       PIP = NULL, mu = NULL, maxiter = 100, PIP_tol = 1e-3, verbose = FALSE) {
 
-  suppressWarnings({
-    p <- length(z)
+  p <- length(z)
 
-    eig <- eigen(LD, symmetric = TRUE)
-    idx <- order(eig$values)
-    # Sort values and vectors accordingly
-    eig_sorted <- list(
-      values = eig$values[idx],
-      vectors = eig$vectors[, idx]
-    )
-    V <- eig_sorted$vectors
-    Dsq <- pmax( (n-1) * eig_sorted$values, 0 )
-    Xty <- z * sqrt(n-1)
-    VtXty <- t(V) %*% Xty
-    yty <- (n-1)*var_y
+  if ((is.null(V) || is.null(Dsq)) && is.null(LD)) {
+    stop("Missing LD")
+  } else if (is.null(V) || is.null(Dsq)) {
+    eig <- eigen(LD)
+    V <- eig$vectors
+    Dsq <- pmax((n-1) * eig$values, 0)
+  } else {
+    Dsq <- pmax(Dsq, 0)
+  }
 
-    logpi <- rep(log(1.0/p), p)
+  Xty <- z * sqrt(n-1)
+  VtXty <- t(V) %*% Xty
+  yty <- (n-1)*var_y
 
-    # Initialize diagonal variances, diag(X' Omega X), X' Omega y
-    var <- tausq * Dsq + sigmasq
-    diagXtOmegaX <- rowSums(sweep(V^2, 2, Dsq/var, "*"))
-    XtOmegay <- V %*% (VtXty/var)
+  logpi <- rep(log(1.0/p), p)
 
-    # Initialize s_l^2, PIP_j, mu_j, omega_j
-    if (is.null(ssq)) ssq <- rep(0.2, L)
-    if (is.null(PIP)) PIP <- matrix(1/p, nrow = p, ncol = L)
-    if (is.null(mu)) mu <- matrix(0, nrow = p, ncol = L)
+  # Initialize diagonal variances, diag(X' Omega X), X' Omega y
+  var <- tausq * Dsq + sigmasq
+  diagXtOmegaX <- rowSums(sweep(V^2, 2, Dsq/var, "*"))
+  XtOmegay <- V %*% (VtXty/var)
 
-    lbf_variable <- matrix(0, nrow = p, ncol = L)
-    lbf <- numeric(L)
-    omega <- outer(diagXtOmegaX, 1/ssq, "+")
+  # Initialize s_l^2, PIP_j, mu_j, omega_j
+  if (is.null(ssq)) ssq <- rep(0.2, L)
+  if (is.null(PIP)) PIP <- matrix(1/p, nrow = p, ncol = L)
+  if (is.null(mu)) mu <- matrix(0, nrow = p, ncol = L)
+
+  lbf_variable <- matrix(0, nrow = p, ncol = L)
+  lbf <- numeric(L)
+  omega <- outer(diagXtOmegaX, 1/ssq, "+")
 
 
+  # Main SuSiE iteration loop
+  for (it in 1:maxiter) {
+    if (verbose) cat(sprintf("Iteration %d\n", it))
+    PIP_prev <- PIP
 
-    # Main SuSiE iteration loop
-    for (it in 1:maxiter) {
-      if (verbose) cat(sprintf("Iteration %d\n", it))
-      PIP_prev <- PIP
+    # Single effect regression for each effect l = 1,...,L
+    for (l in 1:L) {
+      # Compute X' Omega r_l for residual r_l
+      b <- rowSums(mu * PIP) - mu[, l] * PIP[, l]
+      XtOmegaXb <- V %*% (t(V) %*% b * Dsq/var)
+      XtOmegar <- XtOmegay - XtOmegaXb
 
-      # Single effect regression for each effect l = 1,...,L
-      for (l in 1:L) {
-        # Compute X' Omega r_l for residual r_l
-        b <- rowSums(mu * PIP) - mu[, l] * PIP[, l]
-        XtOmegaXb <- V %*% (t(V) %*% b * Dsq/var)
-        XtOmegar <- XtOmegay - XtOmegaXb
-
-        if (est_ssq) {
-          # Update prior variance ssq[l]
-          f <- function(x) {
-            -log(sum(exp(-0.5 * log(1 + x * diagXtOmegaX) +
-                           x * XtOmegar^2/(2 * (1 + x * diagXtOmegaX)) +
-                           logpi)))
-          }
-
-          res <- optimize(f, interval = ssq_range)
-          ssq[l] <- res$minimum
-
-          if (verbose) {
-            cat(sprintf("Update s^2 for effect %d to %f\n", l, ssq[l]))
-          }
+      if (est_ssq) {
+        # Update prior variance ssq[l]
+        f <- function(x) {
+          -log(sum(exp(-0.5 * log(1 + x * diagXtOmegaX) +
+                         x * XtOmegar^2/(2 * (1 + x * diagXtOmegaX)) +
+                         logpi)))
         }
+        res <- optimize(f, interval = ssq_range, tol = 1e-5)
+        ssq[l] <- res$minimum
 
-        # Update omega, mu, and PIP
-        omega[, l] <- diagXtOmegaX + 1/ssq[l]
-        mu[, l] <- XtOmegar/omega[, l]
-        lbf_variable[, l] <- XtOmegar^2/(2 * omega[, l]) - 0.5 * log(omega[, l] * ssq[l])
-        logPIP <- lbf_variable[, l] + logpi
-        lbf[l] <- log(sum(exp(logPIP)))
-        PIP[, l] <- exp(logPIP - lbf[l])
-      }
-
-      # Update variance components
-      if (est_sigmasq || est_tausq) {
-        if (method == "moments") {
-          result <- MoM(PIP, mu, omega, sigmasq, tausq, n, V, Dsq, VtXty, Xty, yty,
-                        est_sigmasq, est_tausq, verbose)
-          sigmasq <- result$sigmasq
-          tausq <- result$tausq
-        } else if (method == "MLE") {
-          result <- MLE(PIP, mu, omega, sigmasq, tausq, n, V, Dsq, VtXty, yty,
-                        est_sigmasq, est_tausq, sigmasq_range, tausq_range, it, verbose)
-          sigmasq <- result$sigmasq
-          tausq <- result$tausq
-        } else {
-          stop("Unsupported variance estimation method")
+        if (verbose) {
+          cat(sprintf("Update s^2 for effect %d to %f\n", l, ssq[l]))
         }
-
-        # Update X' Omega X, X' Omega y
-        var <- tausq * Dsq + sigmasq
-        diagXtOmegaX <- rowSums(sweep(V^2, 2, Dsq/var, "*"))
-        XtOmegay <- V %*% (VtXty/var)
       }
 
-      # Determine convergence from PIP differences
-      PIP_diff <- max(abs(PIP_prev - PIP))
-      if (verbose) cat(sprintf("Maximum change in PIP: %f\n", PIP_diff))
-      if (PIP_diff < PIP_tol) {
-        if (verbose) cat("CONVERGED\n")
-        break
-      }
+      # Update omega, mu, and PIP
+      omega[, l] <- diagXtOmegaX + 1/ssq[l]
+      mu[, l] <- XtOmegar/omega[, l]
+      lbf_variable[, l] <- XtOmegar^2/(2 * omega[, l]) - 0.5 * log(omega[, l] * ssq[l])
+      logPIP <- lbf_variable[, l] + logpi
+      lbf[l] <- log(sum(exp(logPIP)))
+      PIP[, l] <- exp(logPIP - lbf[l])
     }
 
-    # Compute posterior means of b and alpha
-    b <- rowSums(mu * PIP)
-    XtOmegaXb <- V %*% (t(V) %*% b * Dsq/var)
-    XtOmegar <- XtOmegay - XtOmegaXb
-    alpha <- tausq * XtOmegar
-    spip <- 1 - apply(1 - PIP, 1, prod)
+    # Update variance components
+    if (est_sigmasq || est_tausq) {
+      if (method == "moments") {
+        result <- MoM(PIP, mu, omega, sigmasq, tausq, n, V, Dsq, VtXty, Xty, yty,
+                      est_sigmasq, est_tausq, verbose)
+        sigmasq <- result$sigmasq
+        tausq <- result$tausq
+      } else if (method == "MLE") {
+        result <- MLE(PIP, mu, omega, sigmasq, tausq, n, V, Dsq, VtXty, yty,
+                      est_sigmasq, est_tausq, sigmasq_range, tausq_range, it, verbose)
+        sigmasq <- result$sigmasq
+        tausq <- result$tausq
+      } else {
+        stop("Unsupported variance estimation method")
+      }
 
-    return(list(
-      PIP = PIP,
-      spip = spip,
-      mu = mu,
-      omega = omega,
-      lbf = lbf,
-      lbf_variable = lbf_variable,
-      ssq = ssq,
-      sigmasq = sigmasq,
-      tausq = tausq,
-      alpha = alpha,
-      V = V,
-      Dsq = Dsq,
-      var = var,
-      XtOmegay = XtOmegay
-    ))
-  })
+      # Update X' Omega X, X' Omega y
+      var <- tausq * Dsq + sigmasq
+      diagXtOmegaX <- rowSums(sweep(V^2, 2, Dsq/var, "*"))
+      XtOmegay <- V %*% (VtXty/var)
+    }
+
+    # Determine convergence from PIP differences
+    PIP_diff <- max(abs(PIP_prev - PIP))
+    if (verbose) cat(sprintf("Maximum change in PIP: %f\n", PIP_diff))
+    if (PIP_diff < PIP_tol) {
+      if (verbose) cat("CONVERGED\n")
+      break
+    }
+  }
+
+  # Compute posterior means of b and alpha
+  b <- rowSums(mu * PIP)
+  XtOmegaXb <- V %*% (t(V) %*% b * Dsq/var)
+  XtOmegar <- XtOmegay - XtOmegaXb
+  alpha <- tausq * XtOmegar
+  spip <- 1 - apply(1 - PIP, 1, prod)
+
+  return(list(
+    PIP = PIP,
+    spip = spip,
+    mu = mu,
+    omega = omega,
+    lbf = lbf,
+    lbf_variable = lbf_variable,
+    ssq = ssq,
+    sigmasq = sigmasq,
+    tausq = tausq,
+    alpha = alpha,
+    V = V,
+    Dsq = Dsq,
+    var = var,
+    XtOmegay = XtOmegay
+  ))
 }
 
 
