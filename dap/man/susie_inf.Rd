@@ -5,13 +5,16 @@
 \title{SuSiE with random effects}
 \usage{
 susie_inf(
+  bhat = NULL,
+  shat = NULL,
   z = NULL,
   var_y = NULL,
   n,
-  L,
+  L = 10,
   LD = NULL,
   V = NULL,
   Dsq = NULL,
+  null_weight = 0,
   est_ssq = TRUE,
   ssq = NULL,
   ssq_range = c(0, 1),
@@ -31,6 +34,10 @@ susie_inf(
 )
 }
 \arguments{
+\item{bhat}{Vector of effect size estimates}
+
+\item{shat}{Vector of standard errors}
+
 \item{z}{Vector of z-scores}
 
 \item{var_y}{Variance of y}
@@ -44,6 +51,8 @@ susie_inf(
 \item{V}{Precomputed p x p matrix of eigenvectors of X'X}
 
 \item{Dsq}{Precomputed length-p vector of eigenvalues of X'X}
+
+\item{null_weight}{Null weight}
 
 \item{est_ssq}{Estimate prior effect size variances s^2 using MLE}
 

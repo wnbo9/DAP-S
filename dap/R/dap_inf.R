@@ -24,6 +24,7 @@
 #' @param coverage Coverage for credible set. If NULL, the algorithm will
 #' construct signal clusters.
 #' @param twas_weight Compute TWAS weights. Default is FALSE.
+#' @param verbose Print progress messages. Default is FALSE.
 #' @import Rfast
 #' @importFrom susieR susie
 #' @importFrom dplyr %>% arrange desc
@@ -81,9 +82,6 @@
 #' plot(rowSums(output$mu * output$PIP)[1:p], rst$twas_weights,
 #'     xlab = "Coefficients (sparse) of SuSiE-inf",
 #'     ylab = "Coefficients (sparse) of DAP-S") + abline(a=0,b=1)
-#'plot(rowSums(output$mu * output$PIP)[1:p] + output$alpha[1:p], rst$twas_weights,
-#'     xlab = "Coefficients (sparse+infinitesimal) of SuSiE-inf",
-#'     ylab = "Coefficients (sparse) of DAP-S") + abline(a=0,b=1)
 dap_inf <- function(bhat = NULL, shat = NULL, z = NULL, var_y = NULL,
                     n, LD = NULL, L = 10,
                     prior_weights = NULL, standardize = TRUE,
@@ -94,7 +92,8 @@ dap_inf <- function(bhat = NULL, shat = NULL, z = NULL, var_y = NULL,
                     r2_threshold = 0.25,
                     coverage = NULL,
                     method = "moments",
-                    twas_weight = FALSE) {
+                    twas_weight = FALSE,
+                    verbose = FALSE) {
 
   if (!is.null(bhat)) {
     p <- length(bhat)
@@ -113,8 +112,9 @@ dap_inf <- function(bhat = NULL, shat = NULL, z = NULL, var_y = NULL,
 
   cat("Running SuSiE-inf...\n")
   susie_fit <- susie_inf(bhat = bhat, shat = shat, z = z, var_y = var_y,
-                      n = n, LD = LD, L = L, method = method,
-                      pi = prior_weights, null_weight = prod(1 - prior_weights))
+                         n = n, LD = LD, L = L, method = method,
+                         pi = prior_weights, null_weight = prod(1 - prior_weights),
+                         verbose = verbose)
   fit <- NULL
   fit$alpha <- t(susie_fit$PIP)
   fit$V <- susie_fit$ssq

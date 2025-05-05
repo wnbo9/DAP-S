@@ -35,7 +35,7 @@
 #'
 #' @examples
 #' # DAP-S fine-mapping example
-#' set.seed(1)
+#' set.seed(1234)
 #' n = 1000
 #' p = 1000
 #' beta = rep(0, p)

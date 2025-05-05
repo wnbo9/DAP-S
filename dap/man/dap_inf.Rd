@@ -21,7 +21,8 @@ dap_inf(
   r2_threshold = 0.25,
   coverage = NULL,
   method = "moments",
-  twas_weight = FALSE
+  twas_weight = FALSE,
+  verbose = FALSE
 )
 }
 \arguments{
@@ -63,6 +64,8 @@ clusters. Default is 0.25.}
 construct signal clusters.}
 
 \item{twas_weight}{Compute TWAS weights. Default is FALSE.}
+
+\item{verbose}{Print progress messages. Default is FALSE.}
 
 \item{null_weight}{Null weight used in SuSiE. Default is calculated as
 \code{prod(1 - prior_weights)}.}
@@ -124,8 +127,5 @@ abline(a = 0,b = 1,col = "skyblue",lty = "dashed")
 # TWAS weight
 plot(rowSums(output$mu * output$PIP)[1:p], rst$twas_weights,
     xlab = "Coefficients (sparse) of SuSiE-inf",
-    ylab = "Coefficients (sparse) of DAP-S") + abline(a=0,b=1)
-plot(rowSums(output$mu * output$PIP)[1:p] + output$alpha[1:p], rst$twas_weights,
-    xlab = "Coefficients (sparse+infinitesimal) of SuSiE-inf",
     ylab = "Coefficients (sparse) of DAP-S") + abline(a=0,b=1)
 }
