@@ -6,10 +6,8 @@
 #' @param n Sample size
 #' @param L Number of modeled causal effects
 #' @param LD LD matrix
-#' @param null_weight Null weight used in SuSiE. Default is calculated as
-#' \code{prod(1 - prior_weights)}.
 #' @param prior_weights Vector of prior probabilities for each variant being
-#'   causal. Default is uniform priors
+#' causal. Default is uniform priors
 #' @param standardize Standardize each column of the genotype matrix. Default is
 #' TRUE.
 #' @param use_susie_variance_estimate Use SuSiE-estimated prior variance to
@@ -17,6 +15,8 @@
 #' @param grid Grid of prior variances, default is c(0.04, 0.16, 0.64). The
 #' upper bound is shifted to 1.28 if the maximum of SuSiE-estimated prior
 #' variance is greater than 1.
+#' @param null_weight Null weight used in SuSiE. Default is calculated as
+#' \code{prod(1 - prior_weights)}.
 #' @param overlapping Overlapping signal clusters. Default is TRUE.
 #' @param pir_threshold Threshold for PIR. Default is 1e-6.
 #' @param r2_threshold Threshold for genotype R2 when constructing signal
@@ -87,6 +87,7 @@ dap_inf <- function(bhat = NULL, shat = NULL, z = NULL, var_y = NULL,
                     prior_weights = NULL, standardize = TRUE,
                     use_susie_variance_estimate = TRUE,
                     grid = c(0.04, 0.16, 0.64),
+                    null_weight = NULL,
                     overlapping = TRUE,
                     pir_threshold = 1e-6,
                     r2_threshold = 0.25,
@@ -109,11 +110,12 @@ dap_inf <- function(bhat = NULL, shat = NULL, z = NULL, var_y = NULL,
 
   if (is.null(prior_weights)) prior_weights <- rep(1 / p, p)
   if (is.null(coverage)) coverage <- 2
-
+  if (is.null(null_weight)) null_weight <- prod(1 - prior_weights)
+  
   cat("Running SuSiE-inf...\n")
   susie_fit <- susie_inf(bhat = bhat, shat = shat, z = z, var_y = var_y,
                          n = n, LD = LD, L = L, method = method,
-                         pi = prior_weights, null_weight = prod(1 - prior_weights),
+                         pi = prior_weights, null_weight = null_weight,
                          verbose = verbose)
   fit <- NULL
   fit$alpha <- t(susie_fit$PIP)
@@ -122,7 +124,7 @@ dap_inf <- function(bhat = NULL, shat = NULL, z = NULL, var_y = NULL,
                       use_susie_variance_estimate, grid)
 
   susie_params <- list(
-    null_weight = prod(1 - prior_weights)
+    null_weight = null_weight
   )
 
   cat("Running DAP-S fine-mapping with infinitesimal effects...\n")
