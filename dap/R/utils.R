@@ -32,9 +32,9 @@ param_setup <- function(var_y, fit, overlapping,
     V <- fit$V[cols]
   }
 
-  # Remove duplicated columns caused by model overfitting
-  max_indices <- apply(mat, 2, which.max)
-  keep_cols <- !duplicated(max_indices) | max_indices == nrow(mat)
+  # Keep columns with unique top-5 index sets to remove redundancy
+  top5_index_sets <- apply(mat, 2, function(col) sort(order(col, decreasing = TRUE)[1:5]))
+  keep_cols <- !duplicated(as.data.frame(t(top5_index_sets)))
   mat <- mat[, keep_cols, drop = FALSE]
   V <- V[keep_cols]
 

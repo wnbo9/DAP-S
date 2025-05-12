@@ -351,6 +351,10 @@ susie_inf <- function(bhat = NULL, shat = NULL, z = NULL, var_y = NULL, n, L = 1
           res <- optimize(f, interval = ssq_range, tol = 1e-5)
           ssq[l] <- res$minimum
 
+          if (f(0) < f(ssq[l])) {
+            ssq[l] <- 0
+          }
+
           if (verbose) {
             cat(sprintf("Update s^2 for effect %d to %f\n", l, ssq[l]))
           }
@@ -359,7 +363,13 @@ susie_inf <- function(bhat = NULL, shat = NULL, z = NULL, var_y = NULL, n, L = 1
         # Update omega, mu, and PIP
         omega[, l] <- diagXtOmegaX + 1/ssq[l]
         mu[, l] <- XtOmegar/omega[, l]
-        lbf_variable[, l] <- XtOmegar^2/(2 * omega[, l]) - 0.5 * log(omega[, l] * ssq[l])
+
+        if (ssq[l] > 0) {
+          lbf_variable[, l] <- XtOmegar^2/(2 * omega[, l]) - 0.5 * log(omega[, l] * ssq[l])
+        } else {
+          lbf_variable[, l] <- 0
+        }
+
         logPIP <- lbf_variable[, l] + logpi
         lbf[l] <- log(sum(exp(logPIP)))
         PIP[, l] <- exp(logPIP - lbf[l])
@@ -453,8 +463,8 @@ cred <- function(PIP, coverage = 0.9, purity = 0.5, LD = NULL, V = NULL, Dsq = N
     ind_candidates <- which(cumsum_pip >= coverage)
     
     if (length(ind_candidates) == 0) {
-      warning(sprintf("No credible set found for column %d (max cumulative PIP = %.3f)", 
-                      l, max(cumsum_pip, na.rm = TRUE)))
+      #warning(sprintf("No credible set found for column %d (max cumulative PIP = %.3f)", 
+      #                l, max(cumsum_pip, na.rm = TRUE)))
       next
     }
     
