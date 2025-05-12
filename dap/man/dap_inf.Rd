@@ -16,6 +16,7 @@ dap_inf(
   standardize = TRUE,
   use_susie_variance_estimate = TRUE,
   grid = c(0.04, 0.16, 0.64),
+  null_weight = NULL,
   overlapping = TRUE,
   pir_threshold = 1e-06,
   r2_threshold = 0.25,
@@ -53,6 +54,9 @@ guide the grid upper bound. Default is TRUE.}
 upper bound is shifted to 1.28 if the maximum of SuSiE-estimated prior
 variance is greater than 1.}
 
+\item{null_weight}{Null weight used in SuSiE. Default is calculated as
+\code{prod(1 - prior_weights)}.}
+
 \item{overlapping}{Overlapping signal clusters. Default is TRUE.}
 
 \item{pir_threshold}{Threshold for PIR. Default is 1e-6.}
@@ -66,9 +70,6 @@ construct signal clusters.}
 \item{twas_weight}{Compute TWAS weights. Default is FALSE.}
 
 \item{verbose}{Print progress messages. Default is FALSE.}
-
-\item{null_weight}{Null weight used in SuSiE. Default is calculated as
-\code{prod(1 - prior_weights)}.}
 }
 \value{
 List of fine-mapping results.

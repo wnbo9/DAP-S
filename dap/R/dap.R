@@ -102,6 +102,7 @@ dap <- function(X, y, L = min(10, ncol(X)),
                 standardize = TRUE,
                 use_susie_variance_estimate = TRUE,
                 grid = c(0.04, 0.16, 0.64),
+                null_weight = NULL,
                 overlapping = TRUE,
                 pir_threshold = 1e-6,
                 r2_threshold = 0.25,
@@ -121,11 +122,12 @@ dap <- function(X, y, L = min(10, ncol(X)),
   cat("Initializing parameters...\n")
   if (is.null(prior_weights)) prior_weights <- rep(1 / p, p)
   if (is.null(coverage)) coverage <- 2
+  if (is.null(null_weight)) null_weight <- prod(1 - prior_weights)
 
   default_susie_params <- list(
     scaled_prior_variance = 0.2,
     residual_variance = NULL,
-    null_weight = prod(1 - prior_weights),
+    null_weight = null_weight,
     estimate_residual_variance = TRUE,
     estimate_prior_variance = TRUE
   )

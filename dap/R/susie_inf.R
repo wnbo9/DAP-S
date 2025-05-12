@@ -439,50 +439,60 @@ susie_inf <- function(bhat = NULL, shat = NULL, z = NULL, var_y = NULL, n, L = 1
 #' @export
 cred <- function(PIP, coverage = 0.9, purity = 0.5, LD = NULL, V = NULL, Dsq = NULL,
                  n = NULL, dedup = TRUE) {
-
+  
   if ((is.null(V) || is.null(Dsq) || is.null(n)) && is.null(LD)) {
     stop("Missing inputs for purity filtering")
   }
-
-  # Compute credible sets
+  
   cred_list <- list()
-
+  pip_sums <- c()  # store total PIP for each credible set
+  
   for (l in 1:ncol(PIP)) {
     sortinds <- order(PIP[, l], decreasing = TRUE)
     cumsum_pip <- cumsum(PIP[sortinds, l])
-    ind <- min(which(cumsum_pip >= coverage))
-    credset <- sortinds[1:(ind)]
-
+    ind_candidates <- which(cumsum_pip >= coverage)
+    
+    if (length(ind_candidates) == 0) {
+      warning(sprintf("No credible set found for column %d (max cumulative PIP = %.3f)", 
+                      l, max(cumsum_pip, na.rm = TRUE)))
+      next
+    }
+    
+    ind <- min(ind_candidates)
+    credset <- sortinds[1:ind]
+    
     # Filter by purity
     if (length(credset) == 1) {
       cred_list[[length(cred_list) + 1]] <- credset
+      pip_sums <- c(pip_sums, sum(PIP[credset, l], na.rm = TRUE))
       next
     }
-
+    
     if (length(credset) < 100) {
       rows <- credset
     } else {
       set.seed(123)
       rows <- sample(credset, size = 100, replace = FALSE)
     }
-
+    
     if (!is.null(LD)) {
       LDloc <- LD[rows, rows, drop = FALSE]
     } else {
       LDloc <- t(V[rows, , drop = FALSE] * Dsq) %*% V[rows, , drop = FALSE] / n
     }
-
+    
     if (min(abs(LDloc)) > purity) {
       cred_list[[length(cred_list) + 1]] <- sort(credset)
+      pip_sums <- c(pip_sums, sum(PIP[credset, l], na.rm = TRUE))
     }
   }
-
+  
   if (dedup) {
-    # Remove duplicates while maintaining order
     cred_list_str <- sapply(cred_list, function(x) paste(x, collapse = ","))
     unique_indices <- !duplicated(cred_list_str)
     cred_list <- cred_list[unique_indices]
+    pip_sums <- pip_sums[unique_indices]
   }
-
-  return(cred_list)
+  
+  return(list(sets = cred_list, coverage = pip_sums))
 }

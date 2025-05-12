@@ -13,6 +13,7 @@ dap(
   standardize = TRUE,
   use_susie_variance_estimate = TRUE,
   grid = c(0.04, 0.16, 0.64),
+  null_weight = NULL,
   overlapping = TRUE,
   pir_threshold = 1e-06,
   r2_threshold = 0.25,
@@ -44,6 +45,9 @@ guide the grid upper bound. Default is TRUE.}
 upper bound is shifted to 1.28 if the maximum of SuSiE-estimated prior
 variance is greater than 1.}
 
+\item{null_weight}{Null weight used in SuSiE. Default is calculated as
+\code{prod(1 - prior_weights)}.}
+
 \item{overlapping}{Overlapping signal clusters. Default is TRUE.}
 
 \item{pir_threshold}{Threshold for PIR. Default is 1e-6.}
@@ -61,9 +65,6 @@ variance of each non-zero element of b is \code{var(y)} *
 \code{scaled_prior_variance}. Default is 0.2.}
 
 \item{residual_variance}{Residual variance. Default is NULL.}
-
-\item{null_weight}{Null weight used in SuSiE. Default is calculated as
-\code{prod(1 - prior_weights)}.}
 }
 \value{
 List of fine-mapping results.

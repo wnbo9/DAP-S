@@ -24,18 +24,15 @@ vector<vector<int>> pir(const vector<vector<double>>& mat, double threshold) {
   uniqueModels.insert(vector<int>());
   updatedCombinations.push_back(nullModel); 
   
-  // 1-SNP models
-  for (int snp = 0; snp < p - 1; snp++) {
-    vector<int> model = {snp};
-    uniqueModels.insert(model);
-    updatedCombinations.push_back(model);
-  }
-
-  // return if L == 1
+  // include all 1-SNP models and return if L == 1
   if (L == 1) {
+    for (int snp = 0; snp < p - 1; snp++) {
+      vector<int> model = {snp};
+      uniqueModels.insert(model);
+      updatedCombinations.push_back(model);
+    }
     return updatedCombinations;
   }
-
 
   // L > 1, we do PIR
   double logThreshold = log10(threshold);
@@ -146,6 +143,16 @@ vector<vector<int>> pir(const vector<vector<double>>& mat, double threshold) {
         done = true;
     }
   }
+
+  for (int snp = 0; snp < p - 1; snp++) {
+    vector<int> singleton = {snp};
+    // If the singleton model is not already in the set, add it
+    if (uniqueModels.insert(singleton).second) {
+      uniqueModels.insert(singleton);
+      updatedCombinations.push_back(singleton);
+    }
+  }
+
 
   // return results; m*p matrix of combinations and m*1 matrix of missing models; index starts from 0.
   return updatedCombinations;

@@ -40,7 +40,10 @@ param_setup <- function(var_y, fit, overlapping,
 
   # Process matrix if not overlapping
   if (!overlapping) {
-    mat <- process_matrix(mat)
+    p <- nrow(mat)
+    tmp <- mat[-p, ]
+    tmp <- process_matrix(tmp)
+    tmp[p, ] <- mat[p, ]
   }
 
   # Set up scaled prior variance matrix
