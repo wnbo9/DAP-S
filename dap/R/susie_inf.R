@@ -23,7 +23,7 @@ MoM <- function(PIP, mu, omega, sigmasq, tausq, n, V, Dsq, VtXty, Xty, yty,
   L <- ncol(mu)
 
   # Compute A
-  A <- matrix(c(n, sum(Dsq), sum(Dsq), sum(Dsq^2)), nrow = 2)  
+  A <- matrix(c(n, sum(Dsq), sum(Dsq), sum(Dsq^2)), nrow = 2)
   b <- rowSums(mu * PIP)
   Vtb <- t(V) %*% b
   diagVtMV <- Vtb^2
@@ -142,7 +142,7 @@ MLE <- function(PIP, mu, omega, sigmasq, tausq, n, V, Dsq, VtXty, yty,
   } else if (est_sigmasq) {
     g <- function(x) f(c(x, tausq))
 
-    res <- optim(sigmasq, g, method = "L-BFGS-B",
+    res <- optim(sigmasq, g, method = "Brent",
                  lower = sigmasq_range[1], upper = sigmasq_range[2])
 
     if (res$convergence == 0) {
@@ -343,16 +343,23 @@ susie_inf <- function(bhat = NULL, shat = NULL, z = NULL, var_y = NULL, n, L = 1
 
         if (est_ssq) {
           # Update prior variance ssq[l]
-          f <- function(x) {
+          f <- function(logx) {
+            x <- exp(logx)
             -log(sum(exp(-0.5 * log(1 + x * diagXtOmegaX) +
                            x * XtOmegar^2/(2 * (1 + x * diagXtOmegaX)) +
                            logpi)))
           }
-          res <- optimize(f, interval = ssq_range, tol = 1e-5)
-          ssq[l] <- res$minimum
+          res <- optim(par = log(max(c(ssq[l], ssq_range[1], 1e-10))),
+                       fn = f,
+                       method = "Brent",
+                       lower = log(max((ssq_range[1]), 1e-10)),
+                       upper = log(ssq_range[2]))
 
-          if (f(0) < f(ssq[l])) {
+          f0 <- -log(sum(exp(logpi)))  # equivalent to f(0)
+          if (f0 < res$value) {
             ssq[l] <- 0
+          } else {
+            ssq[l] <- exp(res$par)
           }
 
           if (verbose) {
