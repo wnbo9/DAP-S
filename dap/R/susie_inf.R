@@ -127,7 +127,9 @@ MLE <- function(PIP, mu, omega, sigmasq, tausq, n, V, Dsq, VtXty, yty,
   if (est_tausq) {
     res <- optim(c(sigmasq, tausq), f, method = "L-BFGS-B",
                  lower = c(sigmasq_range[1], tausq_range[1]),
-                 upper = c(sigmasq_range[2], tausq_range[2]))
+                 upper = c(sigmasq_range[2], tausq_range[2]),
+                 control = list(ndeps = rep(1e-8, 2), lmm = 10,
+                                pgtol = 1e-5, factr = 1e7, maxit = 15000))
 
     if (res$convergence == 0) {
       sigmasq <- res$par[1]
