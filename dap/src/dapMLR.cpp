@@ -185,6 +185,192 @@ double MLR::log10_weighted_sum(const vector<double> &vec, const vector<double> &
     return (max + log10(sum));
 }
 
+
+// *** NEW: Class for infinitesimal model that mirrors MLR structure ***
+class MLR_infinitesimal {
+private:
+    int p;
+    gsl_matrix *XtOmegaX;  // *** NEW: Pre-computed for full X (like GtG in MLR) ***
+    gsl_vector *XtOmegay;  // *** NEW: Pre-computed for full X (like Gty in MLR) ***
+    NumericMatrix phi2_mat;
+
+public:
+    void init(const gsl_matrix *XtOmegaX_, const gsl_vector *XtOmegay_, const NumericMatrix &phi2_mat_);
+    vector<double> compute_log10_BF(const vector<int> &indicator, bool twas_weight);
+    double log10_weighted_sum(const vector<double> &vec, const vector<double> &wts);  // *** ADDED: Missing function ***
+    
+    ~MLR_infinitesimal() {
+        if (XtOmegaX != 0)
+            gsl_matrix_free(XtOmegaX);
+        if (XtOmegay != 0)
+            gsl_vector_free(XtOmegay);
+    }
+};
+
+void MLR_infinitesimal::init(const gsl_matrix *XtOmegaX_, const gsl_vector *XtOmegay_, const NumericMatrix &phi2_mat_) {
+    p = XtOmegaX_->size1;
+    phi2_mat = phi2_mat_;
+    
+    XtOmegaX = gsl_matrix_calloc(p, p);
+    XtOmegay = gsl_vector_calloc(p);
+    gsl_matrix_memcpy(XtOmegaX, XtOmegaX_);
+    gsl_vector_memcpy(XtOmegay, XtOmegay_);
+}
+
+vector<double> MLR_infinitesimal::compute_log10_BF(const vector<int> &indicator, bool twas_weight = false) {
+    vector<double> rstv;
+    vector<double> wv;
+    vector<double> result(p+1, 0.0);
+    
+    int ep = 0;
+    int count = 0;
+    map<int, int> imap;
+    
+    for (int i = 0; i < indicator.size(); i++) {
+        if (indicator[i] != p) {
+            ep++;
+            imap[i] = count++;
+        }
+    }
+    
+    if (ep == 0) {
+        return result;
+    }
+    
+    // *** CHANGED: Extract submatrix and subvector for the model (similar to MLR) ***
+    gsl_matrix *model_XtOmegaX = gsl_matrix_calloc(ep, ep);
+    gsl_vector *model_XtOmegay = gsl_vector_calloc(ep);
+    
+    // *** CHANGED: Extract from pre-computed full matrices instead of computing from scratch ***
+    for (int i = 0; i < indicator.size(); i++) {
+        if (indicator[i] == p)
+            continue;
+            
+        gsl_vector_set(model_XtOmegay, imap[i], gsl_vector_get(XtOmegay, indicator[i]));
+        
+        for (int j = 0; j < indicator.size(); j++) {
+            if (indicator[j] != p) {
+                double val = gsl_matrix_get(XtOmegaX, indicator[i], indicator[j]); // *** Extract from pre-computed ***
+                gsl_matrix_set(model_XtOmegaX, imap[i], imap[j], val);
+            }
+        }
+    }
+    
+    // Compute SVD once for this model
+    gsl_matrix *U = gsl_matrix_calloc(ep, ep);
+    gsl_matrix_memcpy(U, model_XtOmegaX);
+    gsl_matrix *V_svd = gsl_matrix_calloc(ep, ep);
+    gsl_vector *S = gsl_vector_calloc(ep);
+    gsl_vector *work = gsl_vector_calloc(ep);
+    gsl_linalg_SV_decomp(U, V_svd, S, work);
+    
+    // For each phi2 value
+    for (int t = 0; t < phi2_mat.nrow(); t++) {
+        double s2 = phi2_mat(t, 0);
+        double det = 1.0;
+        
+        // Build diagonal matrix for inverse computation (like MLR builds tt1)
+        gsl_matrix* tt1 = gsl_matrix_calloc(ep, ep);
+        for (int j = 0; j < ep; j++) {
+            double s_j = gsl_vector_get(S, j);
+            det *= (1.0 + s2 * s_j);
+            
+            double v = s_j + 1.0 / s2;
+            if (v > 1e-8) {
+                gsl_matrix_set(tt1, j, j, 1.0 / v);
+            }
+        }
+        
+        // Build the inverse matrix (like MLR builds IWV)
+        gsl_matrix* omega_inv = gsl_matrix_calloc(ep, ep);
+        gsl_matrix* temp2 = gsl_matrix_calloc(ep, ep);
+        gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1.0, V_svd, tt1, 0.0, temp2);
+        gsl_blas_dgemm(CblasNoTrans, CblasTrans, 1.0, temp2, V_svd, 0.0, omega_inv);
+        
+        // Calculate quadratic form (like MLR computes with tt3 and tt4)
+        gsl_vector* temp_vec = gsl_vector_calloc(ep);
+        gsl_blas_dgemv(CblasNoTrans, 1.0, omega_inv, model_XtOmegay, 0.0, temp_vec);
+        double quad_form = 0.0;
+        gsl_blas_ddot(model_XtOmegay, temp_vec, &quad_form);
+        
+        // Calculate log Bayes Factor
+        double log_bf = -0.5 * log(det) + 0.5 * quad_form;
+        double log10_bf = log_bf / log(10.0);
+        
+        rstv.push_back(log10_bf);
+        wv.push_back(1.0 / phi2_mat.nrow());
+        
+        // Free matrices allocated in loop (like MLR)
+        gsl_matrix_free(tt1);
+        gsl_matrix_free(temp2);
+        gsl_matrix_free(omega_inv);
+        gsl_vector_free(temp_vec);
+    }
+    
+    // *** CHANGED: Use log10_weighted_sum like MLR does ***
+    result[0] = log10_weighted_sum(rstv, wv);
+    
+    if (twas_weight) {
+        // Compute beta_hat = (X^T Ω X)^{-1} X^T Ω y using SVD (like MLR)
+        gsl_matrix *t1 = gsl_matrix_calloc(ep, ep);
+        for (int j = 0; j < ep; j++) {
+            double s_j = gsl_vector_get(S, j);
+            if (s_j > 1e-8) {
+                gsl_matrix_set(t1, j, j, 1.0 / s_j);
+            }
+        }
+        
+        gsl_matrix *t2 = gsl_matrix_calloc(ep, ep);
+        gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1.0, V_svd, t1, 0.0, t2);
+        
+        gsl_matrix *XtOmegaX_inv = gsl_matrix_calloc(ep, ep);
+        gsl_blas_dgemm(CblasNoTrans, CblasTrans, 1.0, t2, V_svd, 0.0, XtOmegaX_inv);
+        
+        // Compute beta = (X^T Ω X)^{-1} X^T Ω y
+        gsl_vector *beta_hat = gsl_vector_calloc(ep);
+        gsl_blas_dgemv(CblasNoTrans, 1.0, XtOmegaX_inv, model_XtOmegay, 0.0, beta_hat);
+        
+        // Store the results in the appropriate slots
+        for (int j = 0; j < indicator.size(); j++) {
+            if (indicator[j] == p)
+                continue;
+            
+            int pos = indicator[j];
+            double weight = gsl_vector_get(beta_hat, imap[j]);
+            result[pos + 1] = weight;
+        }
+        
+        gsl_matrix_free(t1);
+        gsl_matrix_free(t2);
+        gsl_matrix_free(XtOmegaX_inv);
+        gsl_vector_free(beta_hat);
+    }
+    
+    // Free allocated memory
+    gsl_matrix_free(model_XtOmegaX);
+    gsl_vector_free(model_XtOmegay);
+    gsl_matrix_free(U);
+    gsl_matrix_free(V_svd);
+    gsl_vector_free(S);
+    gsl_vector_free(work);
+    
+    return result;
+}
+
+double MLR_infinitesimal::log10_weighted_sum(const vector<double> &vec, const vector<double> &wts) {
+    double max = vec[0];
+    for (size_t i = 0; i < vec.size(); i++) {
+        if (vec[i] > max)
+            max = vec[i];
+    }
+    double sum = 0;
+    for (size_t i = 0; i < vec.size(); i++) {
+        sum += wts[i] * pow(10, (vec[i] - max));
+    }
+    return (max + log10(sum));
+}
+
+
 double compute_log10_prior(const std::vector<int> &mcfg, NumericVector pi_vec) {
     double lp = 0;
     int p = pi_vec.length();
@@ -203,177 +389,6 @@ double compute_log10_prior(const std::vector<int> &mcfg, NumericVector pi_vec) {
     }
     return lp / log(10);
 }
-
-// Function to compute log10 Bayes Factor for infinitesimal model (ss=2)
-// Returns a vector with log10_BF and regression weights (if twas_weight is true)
-vector<double> compute_log10_BF_infinitesimal(
-  const vector<int>& indicator,
-  const NumericMatrix& V,
-  const NumericVector& Dsq,
-  const NumericVector& var,
-  const NumericVector& XtOmegay,
-  const NumericMatrix& phi2_mat,
-  bool twas_weight = false) {
-  
-  vector<double> rstv;
-  vector<double> wv;
-  int p = Dsq.length() - 1;
-  vector<double> result(p+1, 0.0);
-  
-  int ep = 0;
-  int count = 0;
-  map<int, int> imap;
-
-  for (int i = 0; i < indicator.size(); i++) {
-    if (indicator[i] != p) {
-      ep++;
-      imap[i] = count++;
-    }
-  }
-
-  if (ep == 0) {
-    return result;
-  }
-  
-  // Extract model-specific matrices and vectors
-  gsl_matrix* model_V = gsl_matrix_calloc(ep, p);
-  gsl_vector* model_XtOmegay = gsl_vector_calloc(ep);
-  
-  // Fill model-specific matrices and vectors
-  for (int i = 0; i < indicator.size(); i++) {
-    if (indicator[i] == p)
-      continue;
-
-    gsl_vector_set(model_XtOmegay, imap[i], XtOmegay[indicator[i]]);
-
-    for (int j = 0; j < p; j++) {
-      gsl_matrix_set(model_V, imap[i], j, V(indicator[i], j));
-    }
-      
-  }
-  
-  // Compute X^T Ω X = V * (Dsq/var) * V^T
-  gsl_matrix* XtOmegaX = gsl_matrix_calloc(ep, ep);
-  // First create diagonal matrix with Dsq/var values
-  gsl_matrix* DsqVarInv = gsl_matrix_calloc(p, p);
-  for (int i = 0; i < p; i++) {
-      double dsq = Dsq[i];
-      double v = var[i];
-      double ratio = (v > 1e-8) ? dsq / v : dsq * 1e8;
-      gsl_matrix_set(DsqVarInv, i, i, ratio);
-  }
-  // Calculate V * (Dsq/var)
-  gsl_matrix* VDsqVarInv = gsl_matrix_calloc(ep, p);
-  gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1.0, model_V, DsqVarInv, 0.0, VDsqVarInv);
-  // Calculate (V * (Dsq/var)) * V^T
-  gsl_blas_dgemm(CblasNoTrans, CblasTrans, 1.0, VDsqVarInv, model_V, 0.0, XtOmegaX);
-  gsl_matrix_free(DsqVarInv);
-  gsl_matrix_free(VDsqVarInv);
-  gsl_matrix_free(model_V);
-
-
-  // Compute SVD of XtOmegaX
-  gsl_matrix* V_svd = gsl_matrix_calloc(ep, ep);
-  gsl_vector* S = gsl_vector_calloc(ep);
-  gsl_vector* work = gsl_vector_calloc(ep);
-  gsl_linalg_SV_decomp(XtOmegaX, V_svd, S, work);
-  gsl_matrix* XtOmegaX_inv = gsl_matrix_calloc(ep, ep);
-  gsl_matrix* temp_S_inv = gsl_matrix_calloc(ep, ep);
-  for (int j = 0; j < ep; j++) {
-    double s = gsl_vector_get(S, j);
-    if (s > 1e-8) {
-        gsl_matrix_set(temp_S_inv, j, j, 1.0 / s);
-    }
-  }
-  gsl_matrix* VS_inv = gsl_matrix_calloc(ep, ep);
-  gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1.0, V_svd, temp_S_inv, 0.0, VS_inv);
-  gsl_blas_dgemm(CblasNoTrans, CblasTrans, 1.0, VS_inv, V_svd, 0.0, XtOmegaX_inv);
-
-  for (int t = 0; t < phi2_mat.nrow(); t++) {
-    double det = 1.0;
-    double phi2 = phi2_mat(t, 0);
-    gsl_matrix* tt1 = gsl_matrix_calloc(ep, ep);
-    
-    for (int j = 0; j < ep; j++) {
-      // Calculate determinant of (s^2 * ω_Γ(s^2) = I+XtOmegaX)
-        double s = gsl_vector_get(S, j);
-        det *= (1.0 + phi2 * s);
-        
-        double v = s + 1.0 / phi2;  // Eigenvalue of (XtOmegaX + W)
-        if (v > 1e-8) {
-            gsl_matrix_set(tt1, j, j, 1.0 / v);
-        }
-    }
-
-    // Build the inverse of ω_Γ(s^2) = (XtOmegaX + W)
-    gsl_matrix* omega_inv = gsl_matrix_calloc(ep, ep);
-    gsl_matrix* temp2 = gsl_matrix_calloc(ep, ep);
-    gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1.0, V_svd, tt1, 0.0, temp2);
-    gsl_blas_dgemm(CblasNoTrans, CblasTrans, 1.0, temp2, V_svd, 0.0, omega_inv);
-
-    // Calculate quadratic form: z_Γ^T ω_Γ(s^2)^(-1) z_Γ
-    gsl_vector* temp_vec = gsl_vector_calloc(ep);
-    gsl_blas_dgemv(CblasNoTrans, 1.0, omega_inv, model_XtOmegay, 0.0, temp_vec);
-    double quad_form = 0.0;
-    gsl_blas_ddot(model_XtOmegay, temp_vec, &quad_form);
-    
-    // Calculate log Bayes Factor:
-    // log[det(s^2 * ω_Γ(s^2))^(-1/2) * exp(z_Γ^T ω_Γ(s^2)^(-1) z_Γ / 2)]
-    // = -0.5 * log(det) + 0.5 * quad_form
-    double log_bf = -0.5 * log(det) + 0.5 * quad_form;
-    double log10_bf = log_bf / log(10.0);
-    
-    rstv.push_back(log10_bf);
-    wv.push_back(1.0 / phi2_mat.nrow());
-
-    gsl_matrix_free(tt1);
-    gsl_matrix_free(temp2);
-    gsl_matrix_free(omega_inv);
-    gsl_vector_free(temp_vec);
-  }
-
-  // Weighted log10 BF
-  double max_log10_bf = rstv[0];
-  for (size_t i = 0; i < rstv.size(); i++) {
-    if (rstv[i] > max_log10_bf)
-      max_log10_bf = rstv[i];
-  }
-  double sum = 0.0;
-  for (size_t i = 0; i < rstv.size(); i++) {
-    sum += wv[i] * pow(10.0, rstv[i] - max_log10_bf);
-  }
-  result[0] = max_log10_bf + log10(sum);
-
-  if (twas_weight) {
-    gsl_vector* beta_hat = gsl_vector_calloc(ep);
-    gsl_blas_dgemv(CblasNoTrans, 1.0, XtOmegaX_inv, model_XtOmegay, 0.0, beta_hat);
-    
-    // Store the results in the appropriate slots of the results vector
-    for (int j = 0; j < indicator.size(); j++) {
-        if (indicator[j] == p)
-            continue;
-        
-        int pos = indicator[j];
-        double weight = gsl_vector_get(beta_hat, imap[j]);
-        result[pos + 1] = weight;
-    }
-    
-    gsl_vector_free(beta_hat);
-  }
-
-  // Free allocated memory
-  gsl_vector_free(model_XtOmegay);
-  gsl_matrix_free(XtOmegaX);
-  gsl_matrix_free(XtOmegaX_inv);
-  gsl_matrix_free(V_svd);
-  gsl_vector_free(S);
-  gsl_vector_free(work);
-  gsl_matrix_free(temp_S_inv);
-  gsl_matrix_free(VS_inv);
-
-  return result;
-}
-
 
 //' Compute log10 posterior scores for multiple model configurations
 //' @param cmfg_matrix An m*p matrix of model configurations
@@ -410,6 +425,8 @@ List compute_log10_posterior(
   int n = 0, p = 0, m = cmfg_matrix.size();
   double yty = 0.0;
   gsl_matrix *GtG = NULL, *Gty = NULL;
+  gsl_matrix *XtOmegaX_full = NULL;  // *** NEW: Pre-computed matrix for infinitesimal model ***
+  gsl_vector *XtOmegay_full = NULL;  // *** NEW: Pre-computed vector for infinitesimal model ***
   NumericMatrix V;
   NumericVector Dsq, var, XtOmegay;
 
@@ -464,12 +481,47 @@ List compute_log10_posterior(
       }
     }
   } else if (ss == 2) {
-    // Infinitesimal model mode
+    // *** CHANGED: Infinitesimal model mode - now pre-compute XtOmegaX for full X ***
     V = as<NumericMatrix>(V_input);
     Dsq = as<NumericVector>(Dsq_input);
     var = as<NumericVector>(var_input);
     XtOmegay = as<NumericVector>(XtOmegay_input);
-    p = Dsq.length() -1;
+    p = Dsq.length() - 1;
+    
+    // *** NEW: Pre-compute X^T Ω X for the full X matrix (like GtG in MLR) ***
+    XtOmegaX_full = gsl_matrix_calloc(p, p);
+    XtOmegay_full = gsl_vector_calloc(p);
+    
+    // Copy XtOmegay to GSL format
+    for (int i = 0; i < p; i++) {
+        gsl_vector_set(XtOmegay_full, i, XtOmegay[i]);
+    }
+    
+    // *** NEW: Compute X^T Ω X = V * (Dsq/var) * V^T for full matrix ***
+    gsl_matrix* DsqVarInv = gsl_matrix_calloc(p, p);
+    for (int i = 0; i < p; i++) {
+        double dsq = Dsq[i];
+        double v = var[i];
+        double ratio = (v > 1e-8) ? dsq / v : dsq * 1e8;
+        gsl_matrix_set(DsqVarInv, i, i, ratio);
+    }
+    
+    // Convert V to GSL format
+    gsl_matrix* V_gsl = gsl_matrix_calloc(p, p);
+    for (int i = 0; i < p; i++) {
+        for (int j = 0; j < p; j++) {
+            gsl_matrix_set(V_gsl, i, j, V(i, j));
+        }
+    }
+    
+    // Calculate V * (Dsq/var) * V^T
+    gsl_matrix* VDsqVarInv = gsl_matrix_calloc(p, p);
+    gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1.0, V_gsl, DsqVarInv, 0.0, VDsqVarInv);
+    gsl_blas_dgemm(CblasNoTrans, CblasTrans, 1.0, VDsqVarInv, V_gsl, 0.0, XtOmegaX_full);
+    
+    gsl_matrix_free(DsqVarInv);
+    gsl_matrix_free(VDsqVarInv);
+    gsl_matrix_free(V_gsl);
   }
   
   NumericVector log10_BF(m);
@@ -505,12 +557,15 @@ List compute_log10_posterior(
     }
 
   } else if (ss == 2) {
-    // Infinitesimal model mode
+    // *** CHANGED: Infinitesimal model mode - use pre-computed XtOmegaX with MLR_infinitesimal class ***
+    MLR_infinitesimal mlr_inf;
+    mlr_inf.init(XtOmegaX_full, XtOmegay_full, phi2_mat);  // *** NEW: Initialize with pre-computed matrices ***
+    
     for (int i = 0; i < m; i++) {
       // Extract the row
       vector<int> indicator = cmfg_matrix[i];
   
-      vector<double> rst = compute_log10_BF_infinitesimal(indicator, V, Dsq, var, XtOmegay, phi2_mat, twas_weight);
+      vector<double> rst = mlr_inf.compute_log10_BF(indicator, twas_weight);  // *** Uses optimized method ***
       log10_BF[i] = rst[0];
   
       if (twas_weight) {
@@ -522,13 +577,13 @@ List compute_log10_posterior(
       log10_prior[i] = compute_log10_prior(indicator, pi_vec);
       log10_posterior_score[i] = log10_BF[i] + log10_prior[i];
     }
-
-
   }
 
   // Free allocated memory
   gsl_matrix_free(GtG);
   gsl_matrix_free(Gty);
+  gsl_matrix_free(XtOmegaX_full);
+  gsl_vector_free(XtOmegay_full);
 
   return List::create(Named("log10_BF") = log10_BF,
                       Named("log10_prior") = log10_prior,
